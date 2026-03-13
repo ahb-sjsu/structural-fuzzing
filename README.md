@@ -686,6 +686,12 @@ pytest -v
 | `CompositionResult` | `order`, `order_names`, `mae_sequence`, `param_sequence` |
 | `StructuralFuzzReport` | `dim_names`, `subset_results`, `pareto_results`, `sensitivity_results`, `mri_result`, `adversarial_results`, `composition_result` |
 
+## Projects Using Structural Fuzzing
+
+- **[eris-econ](https://github.com/ahb-sjsu/eris-econ)** -- Geometric economics: multi-dimensional decision manifolds, A\* pathfinding, and Bond Geodesic Equilibrium. Uses structural fuzzing to validate a 9D ethical-economic parameter space against 16 behavioral economics prediction targets (ultimatum games, public goods games, Kahneman-Tversky prospect theory).
+
+- **[arc-prize](https://github.com/ahb-sjsu/arc-prize)** -- ARC-AGI-2 solver using geometric embeddings, hyperbolic rule inference, and adversarial structure probing. Applies fuzzing and adversarial threshold techniques to test robustness of learned geometric rule representations.
+
 ## License
 
 MIT
