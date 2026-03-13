@@ -18,7 +18,7 @@ from structural_fuzzing.pareto import pareto_frontier
 from structural_fuzzing.pipeline import StructuralFuzzReport, run_campaign
 from structural_fuzzing.sensitivity import SensitivityResult, sensitivity_profile
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "SubsetResult",

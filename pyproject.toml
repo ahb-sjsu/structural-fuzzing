@@ -4,22 +4,38 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "structural-fuzzing"
-version = "0.1.0"
+version = "0.2.0"
 description = "Structural fuzzing framework for parameterized model validation"
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.10"
 authors = [
     {name = "Andrew H. Bond", email = "andrew.bond@sjsu.edu"},
 ]
-keywords = ["fuzzing", "model-validation", "robustness", "sensitivity-analysis", "mutation-testing"]
+keywords = [
+    "fuzzing",
+    "model-validation",
+    "robustness",
+    "sensitivity-analysis",
+    "mutation-testing",
+    "adversarial-testing",
+    "pareto",
+    "feature-selection",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Developers",
+
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Software Development :: Testing",
+    "Typing :: Typed",
 ]
 dependencies = [
     "numpy>=1.24",
@@ -34,7 +50,18 @@ dev = [
     "pytest>=8.0",
     "pytest-cov>=4.0",
     "ruff>=0.3",
+    "build>=1.0",
+    "twine>=5.0",
 ]
+docs = [
+    "sphinx>=7.0",
+    "sphinx-rtd-theme>=2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/ahb-sjsu/structural-fuzzing"
+Repository = "https://github.com/ahb-sjsu/structural-fuzzing"
+Issues = "https://github.com/ahb-sjsu/structural-fuzzing/issues"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -49,3 +76,6 @@ select = ["E", "F", "W", "I"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+structural_fuzzing = ["py.typed"]

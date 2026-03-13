@@ -8,3 +8,6 @@ build/
 .ruff_cache/
 *.egg
 .eggs/
+*.docx
+~$*
+create_article.py
