@@ -1,11 +1,63 @@
 ---
-title: "Structural Fuzzing"
-subtitle: "Geometric Methods for Adversarial Model Validation"
+title: "Geometric Methods in Computational Modeling"
+subtitle: "From Manifolds to Production Systems"
 author: "Andrew H. Bond"
 date: "2026"
 ---
 
 \newpage
+
+# Preface
+
+Every computational model produces predictions. The standard practice for evaluating those predictions is to compute a single number --- accuracy, F1, RMSE --- and compare it to a threshold. This book argues that the standard practice is not merely incomplete but *structurally incapable* of answering the questions that matter most: Which inputs break the model? Which combinations of features carry the signal? Is the model robust, or does it sit on a knife edge? Where, exactly, are the tipping points?
+
+The remedy is geometry. Instead of collapsing a model's behavior to a scalar, we represent it as a point in a multi-dimensional space and bring the full power of geometric reasoning to bear --- distance, curvature, topology, symmetry, pathfinding. The result is a family of validation methods that see what scalar metrics cannot.
+
+## Who This Book Is For
+
+This book is written for two audiences that rarely share a bookshelf:
+
+**Machine learning engineers and applied scientists** who build models, ship them to production, and need validation methods that go beyond "the number went up." If you have built a model, computed a metric, and suspected the metric was hiding something important, this book gives you the tools to find out what.
+
+**Researchers in computational modeling** --- in machine learning, signal processing, behavioral science, ecology, or any field where models take parameters and produce multi-dimensional outputs --- who want a rigorous geometric framework for model analysis. The theorems are stated precisely and the proofs are in Appendix C, but the emphasis throughout is on *computational* geometry: every concept is implemented, every algorithm has code, every theorem has a worked example.
+
+If you are comfortable with linear algebra and basic probability, you have the prerequisites for Parts I and II. Familiarity with differential geometry and topology will deepen your reading of the foundational chapters but is not required --- Chapter 1 builds intuition before formalism, and the mathematical preliminaries are developed as needed. If you have never trained a model or written Python, Parts III and IV will be harder going, but the conceptual chapters stand on their own.
+
+## What This Book Is Not
+
+This is not a textbook on differential geometry, though it uses differential geometry. It is not a textbook on machine learning, though every example involves a learned model. It is not documentation for a software package, though it develops and uses the `structural-fuzzing` library throughout. It is a book about a *way of thinking* --- the idea that model validation is a geometric problem, and that treating it as one unlocks methods that are otherwise invisible.
+
+## How This Book Is Organized
+
+The book has four parts, each with a distinct character:
+
+**Part I: Foundations (Chapters 1--5)** builds the geometric toolkit. Chapter 1 motivates the entire programme with the Scalar Irrecoverability Theorem and a concrete example. Chapters 2--5 develop the four geometric settings you will need: Euclidean spaces with the Mahalanobis metric, hyperbolic spaces for hierarchical data, the manifold of symmetric positive definite matrices for covariance and spectral data, and topological data analysis for shape features that distance metrics miss.
+
+**Part II: Algorithms (Chapters 6--10)** puts the toolkit to work. Pathfinding on manifolds, equilibrium computation, Pareto optimization, adversarial robustness quantification (the Model Robustness Index), and adversarial probing. Each chapter follows the same cadence: motivate the problem, state the algorithm, prove its properties, implement it, and apply it to a concrete example.
+
+**Part III: Design Patterns (Chapters 11--15)** develops reusable patterns for combining the algorithms into complete analyses. Subset enumeration for systematic dimension exploration, compositional testing for greedy model building, group-theoretic data augmentation, gradient reversal for invariance training, and Cholesky parameterization for guaranteed positive-definiteness. These are the chapters that bridge theory and engineering.
+
+**Part IV: Systems (Chapters 16--20)** addresses the real world. Building geometric pipelines, scaling to high-dimensional spaces, deploying geometric validation in production, and two complete case studies: software defect prediction and cetacean bioacoustics. These chapters assume you have read (or can reference) the earlier material, and they focus on the engineering decisions that arise when geometric methods meet production constraints.
+
+## How to Read This Book
+
+**If you are an engineer** who wants to use these methods immediately: read Chapter 1 for motivation, skim Part I for the geometric intuitions, then jump to Part III (design patterns) and Part IV (systems). Return to Part I when you need the theory behind a specific method.
+
+**If you are a researcher** interested in the mathematical foundations: read Parts I and II carefully. The technical appendices (Appendix C) contain the proofs. Part III shows how the theory translates to practice.
+
+**If you are evaluating the framework** for a specific domain: read Chapter 1 and then the case study closest to your field --- Chapter 19 for software engineering, Chapter 20 for biological signal analysis. The case studies are designed to be self-contained with forward references to the relevant theory.
+
+Every chapter that introduces a geometric concept also shows its implementation. Code examples use Python and the `structural-fuzzing` library (Appendix B), but the ideas are not language-specific. If you prefer Julia, R, or C++, the algorithms translate directly.
+
+## The Origin of This Book
+
+This book grew from a practical frustration. Working on model validation across several domains --- defect prediction, behavioral economics, abstract reasoning, bioacoustics --- I kept encountering the same problem: scalar metrics that declared two configurations equivalent when they were fundamentally different, and validation pipelines that could not detect fragility until it was too late. The solution, in each case, turned out to be geometric: replace the scalar with a vector, replace the Euclidean distance with the right metric, and suddenly the structure that was always there became visible.
+
+The `structural-fuzzing` library on PyPI implements the computational core. This book provides the *why* behind the *what* --- the mathematical foundations, the design rationale, the worked examples, and the engineering patterns that make geometric validation practical at scale.
+
+## Acknowledgments
+
+The `structural-fuzzing` framework is open source (MIT license) and available at [pypi.org/project/structural-fuzzing](https://pypi.org/project/structural-fuzzing/). The geometric foundations draw on the broader programme of Geometric Ethics (Bond, 2026), which develops the mathematical structure of multi-dimensional evaluation in the moral domain. The extension to computational modeling is the subject of this book.
 
 \newpage
 
