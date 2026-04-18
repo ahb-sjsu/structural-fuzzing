@@ -107,7 +107,7 @@ class TestGeometricEconomics:
 
 
 # sklearn is an optional test dep - skip the defect-prediction examples if absent.
-sklearn = pytest.importorskip('sklearn')
+sklearn = pytest.importorskip("sklearn")
 
 
 class TestDefectPrediction:
