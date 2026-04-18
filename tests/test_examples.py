@@ -106,6 +106,10 @@ class TestGeometricEconomics:
         assert report.mri_result is not None
 
 
+# sklearn is an optional test dep — skip the defect-prediction examples if absent.
+sklearn = pytest.importorskip('sklearn')
+
+
 class TestDefectPrediction:
     def test_generate_data(self):
         """Test synthetic data generation."""
