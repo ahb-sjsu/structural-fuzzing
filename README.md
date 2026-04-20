@@ -111,6 +111,38 @@ This will run all six analyses and print a complete report showing that
 
 ## What the Campaign Runs
 
+```mermaid
+flowchart TB
+    U["User-provided<br/>evaluate_fn(params)<br/>-> (mae, errors)"]
+    DIM["Dimensions<br/>(named parameter groups)"]
+    R["run_campaign()"]
+
+    subgraph STEPS["6-step analysis"]
+      direction TB
+      S1[1. Subset Enumeration]
+      S2[2. Pareto Frontier]
+      S3[3. Sensitivity Profile]
+      S4[4. MRI<br/>Robustness Index]
+      S5[5. Adversarial Threshold]
+      S6[6. Compositional Testing]
+    end
+
+    BASE[Optional baselines<br/>forward select / backward elim]
+    OUT[CampaignResult<br/>best configs, rankings,<br/>thresholds, MRI scores]
+
+    U --> R
+    DIM --> R
+    R --> S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> OUT
+    R -.optional.-> BASE --> OUT
+
+    classDef input fill:#e3f2fd,stroke:#1565c0;
+    classDef step fill:#fff3e0,stroke:#e65100;
+    classDef out fill:#c8e6c9,stroke:#1b5e20;
+    class U,DIM input;
+    class S1,S2,S3,S4,S5,S6 step;
+    class OUT out;
+```
+
 `run_campaign()` executes six analyses in sequence, plus optional baselines:
 
 | Step | Analysis | What it reveals |
