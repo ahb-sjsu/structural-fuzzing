@@ -405,7 +405,7 @@ This chapter developed the adversarial probing framework:
 5. **The Decoder Robustness Index (DRI)** as MRI for signal-space perturbation with graduated semantic distance.
 6. **Topological analysis** of probe surfaces using persistent homology (Chapter 5).
 
-The unifying theme is the radar analogy: *the difference between "sent" and "received" encodes the structure of the system being probed*.
+The unifying theme is the radar analogy: *the difference between "sent" and "received" encodes the structure of the system being probed*. Chapter 22 pushes the same idea one level further—from probing a model's *parameters* and *signals* to probing the *relation* it is evaluated on—introducing the **cross-relation generalization gap** (the relation-space analogue of §10.1.3's sensitivity gap) and **probe calibration** (the intensity-zero identity of §10.2, applied to the evaluation instrument itself).
 
 ### 10.8.2 Connection to Part III
 

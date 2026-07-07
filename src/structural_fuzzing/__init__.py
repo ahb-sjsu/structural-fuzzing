@@ -13,6 +13,14 @@ from structural_fuzzing.core import (
     enumerate_subsets,
     optimize_subset,
 )
+from structural_fuzzing.generalization import (
+    GeneralizationGap,
+    ProbeCalibration,
+    auroc,
+    cross_relation_gap,
+    paired_bootstrap_auroc_delta,
+    probe_calibration,
+)
 from structural_fuzzing.mri import ModelRobustnessIndex, compute_mri
 from structural_fuzzing.pareto import pareto_frontier
 from structural_fuzzing.pipeline import StructuralFuzzReport, run_campaign
@@ -38,4 +46,10 @@ __all__ = [
     "forward_selection",
     "backward_elimination",
     "lasso_selection",
+    "auroc",
+    "paired_bootstrap_auroc_delta",
+    "ProbeCalibration",
+    "probe_calibration",
+    "GeneralizationGap",
+    "cross_relation_gap",
 ]
