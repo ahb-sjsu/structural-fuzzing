@@ -706,6 +706,10 @@ pytest -v
 | `lasso_selection()` | `baselines` | L1-penalized selection |
 | `format_report()` | `report` | Text summary |
 | `format_latex_tables()` | `report` | LaTeX tables for papers |
+| `probe_calibration()` | `generalization` | Check a probe against known-strong/weak references before trusting it |
+| `cross_relation_gap()` | `generalization` | Trained- vs independent-relation improvement (structure vs objective-memorization) |
+| `paired_bootstrap_auroc_delta()` | `generalization` | Paired bootstrap CI on an AUROC difference between two models |
+| `auroc()` | `generalization` | Rank-based AUROC (numpy-only) |
 
 ### Result Types
 
@@ -717,6 +721,8 @@ pytest -v
 | `AdversarialResult` | `dim`, `dim_name`, `base_value`, `threshold_value`, `threshold_ratio`, `target_flipped`, `direction` |
 | `CompositionResult` | `order`, `order_names`, `mae_sequence`, `param_sequence` |
 | `StructuralFuzzReport` | `dim_names`, `subset_results`, `pareto_results`, `sensitivity_results`, `mri_result`, `adversarial_results`, `composition_result` |
+| `ProbeCalibration` | `strong_score`, `weak_score`, `chance`, `passed`, `reason` |
+| `GeneralizationGap` | `trained_delta`, `trained_ci`, `independent_delta`, `independent_ci`, `gap`, `interpretation` |
 
 ## Projects Using Structural Fuzzing
 
