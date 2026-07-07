@@ -37,7 +37,7 @@ from structural_fuzzing.spectral_probe import (
     response_graph,
 )
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 
 __all__ = [
     "SubsetResult",
