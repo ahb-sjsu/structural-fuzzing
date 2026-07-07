@@ -78,6 +78,4 @@ class TestIntegrityReport:
     def test_random_graph_flagged_as_tangle(self):
         r = integrity_report(_random_graph())
         assert not r.is_manifold
-        assert (
-            "manifold" not in r.verdict.split("->")[-1] or "not a manifold" in r.verdict
-        )
+        assert "manifold" not in r.verdict.split("->")[-1] or "not a manifold" in r.verdict

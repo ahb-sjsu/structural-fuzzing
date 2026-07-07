@@ -101,18 +101,27 @@ def probe_calibration(
     """
     if strong_score <= chance + tol:
         return ProbeCalibration(
-            strong_score, weak_score, chance, False,
+            strong_score,
+            weak_score,
+            chance,
+            False,
             f"strong reference at chance ({strong_score:.3f} <= {chance + tol:.3f}): "
             "the probe measures surface, not the target",
         )
     if weak_score >= strong_score - tol:
         return ProbeCalibration(
-            strong_score, weak_score, chance, False,
+            strong_score,
+            weak_score,
+            chance,
+            False,
             f"weak reference scores as high as strong ({weak_score:.3f} vs {strong_score:.3f}): "
             "the probe leaks the answer",
         )
     return ProbeCalibration(
-        strong_score, weak_score, chance, True,
+        strong_score,
+        weak_score,
+        chance,
+        True,
         "strong reference clears chance and weak reference does not: probe is admissible",
     )
 

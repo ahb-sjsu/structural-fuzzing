@@ -256,9 +256,7 @@ class IntegrityReport:
         )
 
 
-def integrity_report(
-    A: np.ndarray, spread_tol: float = 0.4, rng=None
-) -> IntegrityReport:
+def integrity_report(A: np.ndarray, spread_tol: float = 0.4, rng=None) -> IntegrityReport:
     """Certify whether a response graph is a clean manifold or a tangle.
 
     The graph is certified geometric only when the dimension estimators agree

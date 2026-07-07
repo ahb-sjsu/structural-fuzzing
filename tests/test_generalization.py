@@ -58,13 +58,15 @@ class TestProbeCalibration:
 class TestCrossRelationGap:
     def _relation(self, rng, sep_adapted, sep_base, n=300):
         return (
-            rng.normal(sep_adapted, 0.2, n), rng.normal(0.0, 0.2, n),  # adapted pos, neg
-            rng.normal(sep_base, 0.2, n), rng.normal(0.0, 0.2, n),     # base pos, neg
+            rng.normal(sep_adapted, 0.2, n),
+            rng.normal(0.0, 0.2, n),  # adapted pos, neg
+            rng.normal(sep_base, 0.2, n),
+            rng.normal(0.0, 0.2, n),  # base pos, neg
         )
 
     def test_large_gap_is_specialization(self):
         rng = np.random.default_rng(3)
-        trained = self._relation(rng, sep_adapted=1.2, sep_base=0.4)     # big improvement
+        trained = self._relation(rng, sep_adapted=1.2, sep_base=0.4)  # big improvement
         independent = self._relation(rng, sep_adapted=0.42, sep_base=0.4)  # tiny improvement
         g = cross_relation_gap(trained, independent, n_boot=300, rng=np.random.default_rng(7))
         assert isinstance(g, GeneralizationGap)
