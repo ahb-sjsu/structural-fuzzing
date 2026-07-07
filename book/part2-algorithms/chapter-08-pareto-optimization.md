@@ -1,17 +1,17 @@
-# Chapter 8: Pareto Optimization
+# Chapter {{ch:pareto-optimization}}: Pareto Optimization
 
 > *"The optimum is not a point but a surface, and the task of the engineer is to understand that surface before choosing where to stand on it."*
 > --- Vilfredo Pareto, *Manual of Political Economy* (1906), adapted
 
-The preceding chapters have developed a geometric vocabulary for multi-dimensional model analysis: state vectors (Chapter 3), subset enumeration (Chapter 4), distance metrics, and sensitivity profiling. Each of these tools produces results in multiple dimensions. Yet at some point the practitioner must *decide*---which configuration to deploy, which feature set to adopt, how much complexity to tolerate. The temptation is to collapse the multi-dimensional result into a single number and optimize that number. This chapter explains why that temptation must be resisted, what to do instead, and how the structural fuzzing framework implements the alternative.
+The preceding chapters have developed a geometric vocabulary for multi-dimensional model analysis: state vectors (Chapter {{ch:hyperbolic-geometry}}), subset enumeration (Chapter {{ch:spd-manifolds}}), distance metrics, and sensitivity profiling. Each of these tools produces results in multiple dimensions. Yet at some point the practitioner must *decide*---which configuration to deploy, which feature set to adopt, how much complexity to tolerate. The temptation is to collapse the multi-dimensional result into a single number and optimize that number. This chapter explains why that temptation must be resisted, what to do instead, and how the structural fuzzing framework implements the alternative.
 
 The alternative is Pareto optimization: identifying the set of configurations that cannot be improved on one objective without sacrificing another, and then reasoning about the structure of that set directly. No weights are chosen. No objectives are combined. The geometry of the tradeoff surface speaks for itself.
 
 ---
 
-## 8.1 Pareto Dominance: The Fundamental Definition
+## {{ch:pareto-optimization}}.1 Pareto Dominance: The Fundamental Definition
 
-### 8.1.1 Dominance in Two Objectives
+### {{ch:pareto-optimization}}.1.1 Dominance in Two Objectives
 
 Consider two configurations $\mathbf{a}$ and $\mathbf{b}$, each evaluated on two objectives $f_1$ and $f_2$ that we wish to minimize. Configuration $\mathbf{a}$ *dominates* $\mathbf{b}$, written $\mathbf{a} \prec \mathbf{b}$, if and only if:
 
@@ -19,7 +19,7 @@ $$f_1(\mathbf{a}) \leq f_1(\mathbf{b}) \quad \text{and} \quad f_2(\mathbf{a}) \l
 
 with at least one strict inequality. Dominance is a partial order: given two arbitrary configurations, it is entirely possible that neither dominates the other. Configuration $\mathbf{a}$ may excel on $f_1$ while $\mathbf{b}$ excels on $f_2$. In this case the two are *mutually non-dominated*, and no amount of algorithmic cleverness can rank one above the other without introducing a preference between the objectives.
 
-### 8.1.2 The General Case
+### {{ch:pareto-optimization}}.1.2 The General Case
 
 For $m$ objectives $f_1, f_2, \ldots, f_m$ (all to be minimized), dominance generalizes naturally:
 
@@ -31,7 +31,7 @@ $$\mathcal{P} = \{\mathbf{a} \in \mathcal{S} : \nexists\, \mathbf{b} \in \mathca
 
 Every configuration not on the Pareto frontier is strictly inferior to at least one configuration that is: it can be improved on one or more objectives without cost to any other. The frontier is the irreducible set of optimal tradeoffs---the "efficient surface" in Pareto's original terminology.
 
-### 8.1.3 Geometric Interpretation
+### {{ch:pareto-optimization}}.1.3 Geometric Interpretation
 
 In the objective space $\mathbb{R}^m$, the Pareto frontier forms a $(m-1)$-dimensional surface. For two objectives, it is a curve. For three, a surface. The frontier separates the *attainable* region (objective vectors achievable by some configuration) from the *ideal* region (objective vectors better than anything achievable). The shape of this surface---its curvature, its extent, the gaps along it---encodes the fundamental tradeoff structure of the problem.
 
@@ -39,9 +39,9 @@ A convex Pareto frontier indicates that tradeoffs are smooth: small sacrifices i
 
 ---
 
-## 8.2 Why Scalarization Fails
+## {{ch:pareto-optimization}}.2 Why Scalarization Fails
 
-### 8.2.1 The Weighted-Sum Approach
+### {{ch:pareto-optimization}}.2.1 The Weighted-Sum Approach
 
 The most common approach to multi-objective optimization is *scalarization*: combine the objectives into a single scalar using a weighted sum,
 
@@ -49,9 +49,9 @@ $$\Phi(\mathbf{x}) = \sum_{i=1}^{m} w_i \, f_i(\mathbf{x})$$
 
 and then minimize $\Phi$. This reduces the problem to standard single-objective optimization, for which powerful algorithms exist.
 
-The difficulty is that scalarization destroys precisely the information that Chapter 1 argued is irrecoverable. Recall the Scalar Irrecoverability Theorem (Section 1.1.1): the projection $\phi : \mathbb{R}^m \to \mathbb{R}^1$ has a null space of dimension $m - 1$. Any two configurations that differ only within this null space are indistinguishable under $\phi$, yet they may occupy entirely different positions on the Pareto frontier. Choosing weights *before* understanding the frontier is choosing a projection *before* understanding the space---precisely the methodological error that the geometric approach is designed to prevent.
+The difficulty is that scalarization destroys precisely the information that Chapter {{ch:why-geometry}} argued is irrecoverable. Recall the Scalar Irrecoverability Theorem (Section {{ch:why-geometry}}.1.1): the projection $\phi : \mathbb{R}^m \to \mathbb{R}^1$ has a null space of dimension $m - 1$. Any two configurations that differ only within this null space are indistinguishable under $\phi$, yet they may occupy entirely different positions on the Pareto frontier. Choosing weights *before* understanding the frontier is choosing a projection *before* understanding the space---precisely the methodological error that the geometric approach is designed to prevent.
 
-### 8.2.2 The Convexity Limitation
+### {{ch:pareto-optimization}}.2.2 The Convexity Limitation
 
 Even when the practitioner is willing to choose weights, scalarization has a structural limitation: weighted-sum optimization can only find points on the *convex hull* of the Pareto frontier. If the frontier is non-convex---containing concave regions or "pockets"---no choice of positive weights can reach the configurations in those regions.
 
@@ -59,7 +59,7 @@ To see why, observe that minimizing $\Phi(\mathbf{x}) = \sum w_i f_i(\mathbf{x})
 
 In the structural fuzzing context, non-convex frontiers arise naturally. Consider the two objectives "number of feature groups" (dimensionality $k$) and "prediction error" (MAE). A configuration using two carefully chosen feature groups may outperform all three-group configurations---creating a non-convex pocket at $k = 3$. No weighted combination of $k$ and MAE can discover this pocket. Only direct enumeration and dominance-based filtering can find it.
 
-### 8.2.3 The Preference Inversion Problem
+### {{ch:pareto-optimization}}.2.3 The Preference Inversion Problem
 
 A subtler failure mode of scalarization is *preference inversion*: the optimal configuration under weights $\mathbf{w}_1$ may be ranked lower than a suboptimal configuration under slightly different weights $\mathbf{w}_2$, with no way to determine which weights are "correct" without external domain knowledge. In practice, this means that two teams analyzing the same data with slightly different weight choices can reach opposite conclusions about which configuration is best---and both are "right" within their respective scalarizations.
 
@@ -67,16 +67,16 @@ Pareto analysis avoids this entirely. The Pareto frontier is invariant to the ch
 
 ---
 
-## 8.3 Constructing the Pareto Frontier from Subset Results
+## {{ch:pareto-optimization}}.3 Constructing the Pareto Frontier from Subset Results
 
 In the structural fuzzing framework, the most natural pair of objectives is:
 
 - **Objective 1: Minimize dimensionality** $k$ (number of active feature groups). Fewer groups mean simpler models, faster training, easier interpretation.
 - **Objective 2: Minimize prediction error** (MAE). Lower error means better predictive accuracy.
 
-The `enumerate_subsets` function from Chapter 4 produces a list of `SubsetResult` objects, each recording the best MAE achievable with a particular subset of dimensions. The `pareto_frontier` function extracts the non-dominated configurations from this list.
+The `enumerate_subsets` function from Chapter {{ch:spd-manifolds}} produces a list of `SubsetResult` objects, each recording the best MAE achievable with a particular subset of dimensions. The `pareto_frontier` function extracts the non-dominated configurations from this list.
 
-### 8.3.1 The SubsetResult Data Structure
+### {{ch:pareto-optimization}}.3.1 The SubsetResult Data Structure
 
 Each subset optimization produces a `SubsetResult` that bundles the subset identity with its performance:
 
@@ -94,9 +94,9 @@ class SubsetResult:
 
 The `errors` dictionary provides a per-component breakdown---not just the aggregate MAE but how each evaluation metric (accuracy, precision, recall, F1, AUC) contributes to the total error. This decomposition is essential for understanding *why* a configuration performs as it does, not just *how well*. The `pareto_optimal` flag is initially `False` and is set by the Pareto frontier extraction algorithm.
 
-### 8.3.2 From Enumeration to Frontier
+### {{ch:pareto-optimization}}.3.2 From Enumeration to Frontier
 
-The connection between subset enumeration (Chapter 4) and Pareto analysis is direct. Subset enumeration explores the space of possible feature-group combinations:
+The connection between subset enumeration (Chapter {{ch:spd-manifolds}}) and Pareto analysis is direct. Subset enumeration explores the space of possible feature-group combinations:
 
 ```python
 def enumerate_subsets(
@@ -134,9 +134,9 @@ For $n$ dimensions with maximum subset size $k$, this generates $\sum_{j=1}^{k} 
 
 ---
 
-## 8.4 Non-Dominated Sorting: The Algorithm
+## {{ch:pareto-optimization}}.4 Non-Dominated Sorting: The Algorithm
 
-### 8.4.1 The Three-Phase Algorithm
+### {{ch:pareto-optimization}}.4.1 The Three-Phase Algorithm
 
 The `pareto_frontier` function implements non-dominated sorting in three phases:
 
@@ -191,11 +191,11 @@ $$\text{MAE}(k) < \text{best\_mae\_so\_far} - \epsilon$$
 
 The first candidate (lowest dimensionality) is always included, establishing the baseline. Each subsequent Pareto-optimal point must demonstrate that the additional complexity buys a meaningful improvement in accuracy.
 
-### 8.4.2 Complexity Analysis
+### {{ch:pareto-optimization}}.4.2 Complexity Analysis
 
 Phase 1 requires a single pass over all $m$ results: $O(m)$. Phase 2 sorts at most $n$ representatives: $O(n \log n)$, where $n$ is the number of distinct dimensionality levels. Phase 3 is a single linear scan: $O(n)$. The total complexity is $O(m + n \log n)$, which is dominated by the initial pass when $m \gg n$ (as is typical, since $m = \sum \binom{n}{j}$ grows combinatorially while $n$ is the number of dimensions).
 
-### 8.4.3 The Role of Tolerance
+### {{ch:pareto-optimization}}.4.3 The Role of Tolerance
 
 The `tolerance` parameter (default $\epsilon = 0.01$) deserves careful attention. Without tolerance ($\epsilon = 0$), the frontier includes every dimensionality level where the best MAE is even infinitesimally better than at lower dimensionalities. This produces a frontier cluttered with configurations that offer negligible improvement at the cost of additional complexity.
 
@@ -205,9 +205,9 @@ The tolerance also has a geometric interpretation. In the $(k, \text{MAE})$ plan
 
 ---
 
-## 8.5 The Structural Fuzzing Pareto Implementation
+## {{ch:pareto-optimization}}.5 The Structural Fuzzing Pareto Implementation
 
-### 8.5.1 Integration in the Campaign Pipeline
+### {{ch:pareto-optimization}}.5.1 Integration in the Campaign Pipeline
 
 The `run_campaign` function orchestrates the full structural fuzzing analysis, with Pareto extraction as its second stage:
 
@@ -252,21 +252,21 @@ pareto_results = pareto_frontier(subset_results)
 
 The result is a `StructuralFuzzReport` that carries both the full set of subset results and the extracted Pareto frontier, enabling downstream analysis to operate on either.
 
-### 8.5.2 Design Decisions
+### {{ch:pareto-optimization}}.5.2 Design Decisions
 
 Several design decisions in the implementation merit discussion.
 
 **Dimensionality as a discrete objective.** The framework treats dimensionality $k$ as a discrete integer objective rather than a continuous variable. This is a deliberate choice. The number of active feature groups is inherently discrete---you either include a group or you do not. Treating it as continuous (e.g., via regularization strength) blurs the distinction between "feature group present" and "feature group absent," producing configurations that are difficult to interpret. The discrete treatment preserves the structural clarity of subset-based analysis.
 
-**Mutation of the `pareto_optimal` flag.** The `pareto_frontier` function modifies the `pareto_optimal` flag on the input `SubsetResult` objects in place. This is a pragmatic choice: it allows downstream code (reporting, visualization) to query any result's Pareto status without maintaining a separate index. The tradeoff is that the function has a side effect, which violates the immutability principle discussed in Chapter 1. In practice, the Pareto computation is run exactly once per campaign, making the mutation harmless.
+**Mutation of the `pareto_optimal` flag.** The `pareto_frontier` function modifies the `pareto_optimal` flag on the input `SubsetResult` objects in place. This is a pragmatic choice: it allows downstream code (reporting, visualization) to query any result's Pareto status without maintaining a separate index. The tradeoff is that the function has a side effect, which violates the immutability principle discussed in Chapter {{ch:why-geometry}}. In practice, the Pareto computation is run exactly once per campaign, making the mutation harmless.
 
 **The first-candidate guarantee.** The algorithm always includes the lowest-dimensionality candidate in the frontier, even if its MAE is not strictly better than any other candidate (the `elif not pareto` branch). This ensures the frontier spans the full range of dimensionalities, giving the practitioner a baseline at minimum complexity. Without this guarantee, the frontier could start at $k = 3$ if no $k = 1$ or $k = 2$ configuration met the tolerance threshold---leaving the practitioner with no information about what simpler models can achieve.
 
 ---
 
-## 8.6 Visualizing Tradeoff Surfaces
+## {{ch:pareto-optimization}}.6 Visualizing Tradeoff Surfaces
 
-### 8.6.1 The Dimensionality-MAE Plot
+### {{ch:pareto-optimization}}.6.1 The Dimensionality-MAE Plot
 
 The primary visualization for Pareto analysis in the structural fuzzing framework is a scatter plot with dimensionality $k$ on the horizontal axis and MAE on the vertical axis. Every evaluated configuration appears as a point. The Pareto-optimal points are highlighted---typically with a different color or a connecting line---forming the frontier.
 
@@ -291,7 +291,7 @@ The visual encodes three pieces of information simultaneously:
 2. **The gap between dominated points and the frontier** shows how much room there is for subset selection to matter. A large gap means the choice of *which* dimensions to include is as important as *how many*.
 3. **The slope of the frontier** shows the marginal return to complexity. A steep section means the next dimension buys significant accuracy; a flat section means it does not.
 
-### 8.6.2 The Error Decomposition View
+### {{ch:pareto-optimization}}.6.2 The Error Decomposition View
 
 The aggregate MAE hides which components of the error improve as dimensions are added. A stacked bar chart, with one bar per Pareto-optimal configuration and segments for each error component, reveals this decomposition:
 
@@ -304,7 +304,7 @@ The aggregate MAE hides which components of the error improve as dimensions are 
 
 This table---derived from the `errors` dictionary on each `SubsetResult`---shows that recall error improves most dramatically between $k = 1$ and $k = 3$, while AUC error is already low at $k = 1$. The geometric interpretation: the feature groups added at $k = 2$ and $k = 3$ primarily improve the model's ability to detect positive cases (defective modules), while the model's ranking quality (AUC) is largely determined by the first feature group alone.
 
-### 8.6.3 Three-Objective Frontiers
+### {{ch:pareto-optimization}}.6.3 Three-Objective Frontiers
 
 When three objectives are present---say dimensionality, MAE, and robustness (MRI)---the Pareto frontier becomes a surface in $\mathbb{R}^3$. Visualization requires projection. Three useful projections are:
 
@@ -316,15 +316,15 @@ Each projection shows a two-dimensional Pareto frontier. A configuration that ap
 
 ---
 
-## 8.7 Pareto Analysis for Feature Selection
+## {{ch:pareto-optimization}}.7 Pareto Analysis for Feature Selection
 
-### 8.7.1 The Feature Selection Problem
+### {{ch:pareto-optimization}}.7.1 The Feature Selection Problem
 
 Feature selection is a classic multi-objective problem: include more features to improve accuracy, or exclude features to reduce overfitting, training time, and interpretive burden. Traditional approaches---filter methods, wrapper methods, embedded methods---ultimately reduce to a single-objective problem by fixing a feature count or a regularization strength. Pareto analysis treats the problem natively as multi-objective.
 
 In the structural fuzzing framework, features are organized into *groups* (the "dimensions" of the state space), and subset enumeration explores all combinations of groups up to a specified maximum size. This is a structured form of feature selection: rather than choosing among $2^{16}$ individual feature subsets (for 16 features), the practitioner chooses among $2^5 - 1 = 31$ group subsets (for 5 groups). The grouping reduces the combinatorial explosion while preserving the semantically meaningful structure of the feature space.
 
-### 8.7.2 Reading the Frontier for Feature Group Importance
+### {{ch:pareto-optimization}}.7.2 Reading the Frontier for Feature Group Importance
 
 The Pareto frontier reveals feature group importance more precisely than univariate sensitivity analysis. Consider a 5-group defect prediction model with groups {Size, Complexity, Halstead, OO, Process}. The frontier might look like:
 
@@ -345,7 +345,7 @@ Several observations follow immediately:
 
 This analysis is richer than a simple importance ranking. It tells you not just *which* groups matter but *how they combine*: Complexity and Process are jointly essential, Size is valuable but not critical, and OO and Halstead are dispensable.
 
-### 8.7.3 The Pareto-Guided Selection Rule
+### {{ch:pareto-optimization}}.7.3 The Pareto-Guided Selection Rule
 
 The frontier suggests a concrete decision procedure:
 
@@ -368,9 +368,9 @@ With a threshold of $\rho \geq 0.3$, the practitioner selects $k = 3$ (three fea
 
 ---
 
-## 8.8 The Defect Prediction Example
+## {{ch:pareto-optimization}}.8 The Defect Prediction Example
 
-### 8.8.1 Problem Setup
+### {{ch:pareto-optimization}}.8.1 Problem Setup
 
 The `examples/defect_prediction/model.py` file implements a complete defect prediction model with known ground truth, providing a controlled testbed for Pareto analysis. The model uses five feature groups, each containing related software metrics:
 
@@ -402,7 +402,7 @@ logit = (
 
 The coefficients reveal the ground truth importance: essential complexity (0.15) and revisions (0.12) are strongest, followed by cyclomatic complexity (0.10), authors (0.10), churn (0.08), design complexity (0.05), and LOC (0.03). OO metrics (coupling, cohesion, inheritance depth) have zero coefficient---they are pure noise.
 
-### 8.8.2 The Evaluation Function
+### {{ch:pareto-optimization}}.8.2 The Evaluation Function
 
 The `make_evaluate_fn` factory creates an evaluation function compatible with the structural fuzzing framework. For each configuration, feature groups with parameter values below 1000 are included; those at or above 1000 are excluded:
 
@@ -429,9 +429,9 @@ def evaluate_fn(params: np.ndarray) -> tuple[float, dict[str, float]]:
     # ... compute accuracy, precision, recall, F1, AUC ...
 ```
 
-The evaluation function trains a random forest on the active features, computes five performance metrics, and returns the average absolute deviation from target values as the MAE. The `errors` dictionary records each metric's deviation individually, enabling the error decomposition analysis discussed in Section 8.6.2.
+The evaluation function trains a random forest on the active features, computes five performance metrics, and returns the average absolute deviation from target values as the MAE. The `errors` dictionary records each metric's deviation individually, enabling the error decomposition analysis discussed in Section {{ch:pareto-optimization}}.6.2.
 
-### 8.8.3 Running the Pareto Analysis
+### {{ch:pareto-optimization}}.8.3 Running the Pareto Analysis
 
 A complete Pareto analysis of the defect prediction model proceeds as follows:
 
@@ -460,7 +460,7 @@ for r in frontier:
 
 For 5 groups with `max_dims=4`, the enumeration evaluates $\binom{5}{1} + \binom{5}{2} + \binom{5}{3} + \binom{5}{4} = 5 + 10 + 10 + 5 = 30$ subsets. Each 1D subset requires 20 evaluations (grid search), each 2D subset requires 400 (grid product), and each 3D or 4D subset requires 5000 (random search). The total evaluation budget is $5 \times 20 + 10 \times 400 + 10 \times 5000 + 5 \times 5000 = 100 + 4000 + 50{,}000 + 25{,}000 = 79{,}100$ model evaluations.
 
-### 8.8.4 Interpreting the Results
+### {{ch:pareto-optimization}}.8.4 Interpreting the Results
 
 The Pareto frontier for this model recovers the known ground truth. The frontier typically contains:
 
@@ -475,9 +475,9 @@ This result validates the Pareto approach: without any knowledge of the ground-t
 
 ---
 
-## 8.9 Beyond Two Objectives: Multi-Objective Extensions
+## {{ch:pareto-optimization}}.9 Beyond Two Objectives: Multi-Objective Extensions
 
-### 8.9.1 Adding Robustness as a Third Objective
+### {{ch:pareto-optimization}}.9.1 Adding Robustness as a Third Objective
 
 The campaign pipeline computes the Model Robustness Index (MRI) for the best configuration found during enumeration. But MRI can also be computed for every Pareto-optimal configuration, creating a three-objective problem: minimize dimensionality, minimize MAE, and minimize MRI (lower MRI indicates greater robustness).
 
@@ -485,41 +485,41 @@ This extension reveals an important phenomenon: the most accurate configuration 
 
 The three-objective Pareto frontier makes this tradeoff explicit. A configuration that is Pareto-optimal in (dimensionality, MAE) may be dominated when robustness is included, and vice versa. The three-way frontier is the correct object for decision-making when all three concerns---simplicity, accuracy, and stability---are relevant.
 
-### 8.9.2 Fairness and Subgroup Performance
+### {{ch:pareto-optimization}}.9.2 Fairness and Subgroup Performance
 
 In applications where the model serves diverse populations, subgroup performance metrics become additional objectives. For defect prediction, relevant subgroups might be "large modules vs. small modules" or "legacy code vs. new code." Each subgroup's recall or precision becomes an objective to be minimized (or maximized, after negation).
 
-The Pareto frontier in this expanded objective space identifies configurations that balance performance across subgroups without requiring the practitioner to assign relative importance to each subgroup a priori. This connects directly to Chapter 1's discussion of hidden compensation (Section 1.1.3): a scalar metric can mask disparities that the Pareto frontier reveals.
+The Pareto frontier in this expanded objective space identifies configurations that balance performance across subgroups without requiring the practitioner to assign relative importance to each subgroup a priori. This connects directly to Chapter {{ch:why-geometry}}'s discussion of hidden compensation (Section {{ch:why-geometry}}.1.3): a scalar metric can mask disparities that the Pareto frontier reveals.
 
-### 8.9.3 Computational Cost
+### {{ch:pareto-optimization}}.9.3 Computational Cost
 
-The cost of Pareto frontier extraction grows with the number of objectives, but only modestly. The non-dominated sorting algorithm from Section 8.4 generalizes straightforwardly: for $m$ objectives and $n$ candidates, a naive pairwise dominance check requires $O(n^2 m)$ comparisons. For the structural fuzzing application, $n$ is the number of distinct dimensionality levels (at most equal to the number of feature groups, typically 5--10) and $m$ is the number of objectives (typically 2--4). The Pareto extraction itself is never the bottleneck; the model evaluations within `enumerate_subsets` dominate the computation.
+The cost of Pareto frontier extraction grows with the number of objectives, but only modestly. The non-dominated sorting algorithm from Section {{ch:pareto-optimization}}.4 generalizes straightforwardly: for $m$ objectives and $n$ candidates, a naive pairwise dominance check requires $O(n^2 m)$ comparisons. For the structural fuzzing application, $n$ is the number of distinct dimensionality levels (at most equal to the number of feature groups, typically 5--10) and $m$ is the number of objectives (typically 2--4). The Pareto extraction itself is never the bottleneck; the model evaluations within `enumerate_subsets` dominate the computation.
 
 ---
 
-## 8.10 Common Pitfalls
+## {{ch:pareto-optimization}}.10 Common Pitfalls
 
-### 8.10.1 Confusing the Frontier with the Optimum
+### {{ch:pareto-optimization}}.10.1 Confusing the Frontier with the Optimum
 
 The Pareto frontier is not a single answer. It is a *set* of answers, each optimal under a different implicit weighting of the objectives. Practitioners accustomed to single-objective optimization sometimes extract the frontier and then immediately select the point with the lowest MAE, discarding the dimensionality information. This defeats the purpose. The frontier exists precisely so that the tradeoff can be examined and a deliberate choice made.
 
-### 8.10.2 Over-Interpreting Small Frontiers
+### {{ch:pareto-optimization}}.10.2 Over-Interpreting Small Frontiers
 
 When the number of dimensionality levels is small (say, 3--5), the frontier contains very few points and its shape is difficult to interpret. A frontier with two points---one at $k = 1$ and one at $k = 5$---tells you only that intermediate configurations do not improve enough over $k = 1$ to meet the tolerance. It does not tell you that $k = 2, 3, 4$ are useless; it tells you that the *best* configurations at those sizes were not sufficiently better than at $k = 1$. The distinction matters when the number of candidate subsets at each size is small.
 
-### 8.10.3 Tolerance Sensitivity
+### {{ch:pareto-optimization}}.10.3 Tolerance Sensitivity
 
 The tolerance parameter $\epsilon$ has outsized influence on small frontiers. Setting $\epsilon = 0$ produces the maximum number of Pareto-optimal points; setting $\epsilon$ too large collapses the frontier to a single point. There is no universally correct value. A principled approach is to set $\epsilon$ equal to the standard deviation of the optimization noise---the variation in MAE that arises from the stochastic elements of the search (random initialization, random search in 3D+ subsets). Improvements smaller than this noise floor are not reliably meaningful.
 
 ---
 
-## 8.11 Connection to What Follows
+## {{ch:pareto-optimization}}.11 Connection to What Follows
 
 The Pareto frontier identifies *which* configurations represent optimal tradeoffs. It does not, by itself, reveal *how fragile* those tradeoffs are. A configuration sitting on the frontier may occupy a broad, stable region of the parameter space, or it may perch on a narrow ridge where small perturbations send it tumbling off the frontier entirely.
 
-Chapter 9 addresses this question directly through adversarial robustness testing. Where this chapter asks "what are the best tradeoffs?", Chapter 9 asks "how far can we push each tradeoff before it breaks?" The two analyses compose naturally: first identify the Pareto-optimal configurations (this chapter), then stress-test each one to find its breaking points (Chapter 9). Together, they provide a complete picture of the tradeoff landscape---not just its surface, but its depth and stability.
+Chapter {{ch:adversarial-robustness}} addresses this question directly through adversarial robustness testing. Where this chapter asks "what are the best tradeoffs?", Chapter {{ch:adversarial-robustness}} asks "how far can we push each tradeoff before it breaks?" The two analyses compose naturally: first identify the Pareto-optimal configurations (this chapter), then stress-test each one to find its breaking points (Chapter {{ch:adversarial-robustness}}). Together, they provide a complete picture of the tradeoff landscape---not just its surface, but its depth and stability.
 
-The progression from enumeration (Chapter 4) through Pareto analysis (this chapter) to adversarial probing (Chapter 9) reflects a general principle of the geometric approach: understanding a space requires examining it at multiple scales. Enumeration maps the space coarsely. Pareto analysis identifies the interesting regions. Adversarial testing probes the fine structure of those regions. Each step narrows the focus while increasing the resolution, building toward the complete geometric characterization that is the goal of the structural fuzzing framework.
+The progression from enumeration (Chapter {{ch:spd-manifolds}}) through Pareto analysis (this chapter) to adversarial probing (Chapter {{ch:adversarial-robustness}}) reflects a general principle of the geometric approach: understanding a space requires examining it at multiple scales. Enumeration maps the space coarsely. Pareto analysis identifies the interesting regions. Adversarial testing probes the fine structure of those regions. Each step narrows the focus while increasing the resolution, building toward the complete geometric characterization that is the goal of the structural fuzzing framework.
 
 ---
 

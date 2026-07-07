@@ -1,10 +1,10 @@
-# Chapter 2: Mahalanobis Distance and Weighted Metric Spaces
+# Chapter {{ch:mahalanobis-distance}}: Mahalanobis Distance and Weighted Metric Spaces
 
 > *"Not all dimensions are created equal."*
 
-In Chapter 1, we introduced the idea that models live in parameter spaces and that systematic exploration of those spaces -- structural fuzzing -- reveals which dimensions actually matter. But we deferred a critical question: how do we *measure* the distance between two points in a space where different dimensions have different units, different scales, and different degrees of importance? The Euclidean distance is a blunt instrument. This chapter introduces the Mahalanobis distance and the family of weighted metric spaces that arise naturally when we take the structure of data seriously.
+In Chapter {{ch:why-geometry}}, we introduced the idea that models live in parameter spaces and that systematic exploration of those spaces -- structural fuzzing -- reveals which dimensions actually matter. But we deferred a critical question: how do we *measure* the distance between two points in a space where different dimensions have different units, different scales, and different degrees of importance? The Euclidean distance is a blunt instrument. This chapter introduces the Mahalanobis distance and the family of weighted metric spaces that arise naturally when we take the structure of data seriously.
 
-## 2.1 From Euclidean to Mahalanobis
+## {{ch:mahalanobis-distance}}.1 From Euclidean to Mahalanobis
 
 The Euclidean distance between two points $\mathbf{a}$ and $\mathbf{b}$ in $\mathbb{R}^n$ is the formula every student learns first:
 
@@ -43,7 +43,7 @@ def mahalanobis_distance(
 Three lines of arithmetic, but the matrix `sigma_inv` encodes the entire learned structure of the space.
 
 
-## 2.2 Covariance Matrices as Learned Metrics
+## {{ch:mahalanobis-distance}}.2 Covariance Matrices as Learned Metrics
 
 The covariance matrix $\Sigma$ is a symmetric, positive-definite $n \times n$ matrix. Its entries encode two kinds of information:
 
@@ -104,7 +104,7 @@ sigma_inv = np.linalg.inv(sigma)
 **Cultural heterogeneity.** A powerful consequence of encoding the metric in $\Sigma$ is that different populations -- different cultures, different market segments, different user cohorts -- can be modeled with different covariance structures. A culture that prioritizes fairness over economic efficiency would have a smaller $\sigma_{2,2}$ (making fairness deviations more costly) and a larger $\sigma_{0,0}$ (making monetary differences less significant). The *same* underlying model, the *same* distance function, but different $\Sigma$ matrices. This is metric learning applied to behavioral science, and it is one of the most compelling aspects of the geometric approach.
 
 
-## 2.3 The Inverse Covariance as an Attention Mechanism
+## {{ch:mahalanobis-distance}}.3 The Inverse Covariance as an Attention Mechanism
 
 The precision matrix $\Sigma^{-1}$ has a natural interpretation as an *attention* mechanism. Each diagonal entry $(\Sigma^{-1})_{ii}$ determines how much the distance metric "pays attention" to dimension $i$. Large values mean high attention; small values mean the dimension is effectively ignored.
 
@@ -126,14 +126,14 @@ weights = np.where(params < 1e5, 1.0 / np.maximum(params, 1e-6), 0.0)
 sigma_inv = np.diag(weights)
 ```
 
-When `params[i]` is set to $10^6$ (the `inactive_value`), the corresponding weight drops to zero, effectively removing that dimension from the metric entirely. This is how the subset enumeration in Chapter 1 works: for each subset of "active" dimensions, the inactive dimensions receive zero attention. The structural fuzzing framework then asks: which *attention pattern* -- which assignment of precision across dimensions -- best explains the empirical data?
+When `params[i]` is set to $10^6$ (the `inactive_value`), the corresponding weight drops to zero, effectively removing that dimension from the metric entirely. This is how the subset enumeration in Chapter {{ch:why-geometry}} works: for each subset of "active" dimensions, the inactive dimensions receive zero attention. The structural fuzzing framework then asks: which *attention pattern* -- which assignment of precision across dimensions -- best explains the empirical data?
 
 There is a deeper connection worth noting. In Gaussian graphical models, the sparsity pattern of $\Sigma^{-1}$ encodes *conditional independence*: if $(\Sigma^{-1})_{ij} = 0$, then dimensions $i$ and $j$ are conditionally independent given all other dimensions. A sparse precision matrix is one where most dimensions interact only indirectly, through chains of conditionally dependent neighbors. When the structural fuzzing framework sets most diagonal entries to zero (by assigning `inactive_value` to those dimensions), it is effectively imposing an extreme form of sparsity on $\Sigma^{-1}$ -- asserting that only a small subset of dimensions participates in the conditional dependency structure at all.
 
 This framing connects classical statistics (covariance estimation, graphical models), modern machine learning (attention mechanisms, sparse transformers), and the structural fuzzing framework (dimension subset search) under a single geometric umbrella.
 
 
-## 2.4 Log-Space Parameterization
+## {{ch:mahalanobis-distance}}.4 Log-Space Parameterization
 
 A persistent challenge in parameter optimization is the problem of *scale*. When a parameter might take values anywhere from 0.01 to 100, a uniform grid over that range is wasteful: 99% of the grid points fall in the interval $[1, 100]$, while the potentially important region $[0.01, 1]$ receives almost no coverage.
 
@@ -168,7 +168,7 @@ for _ in range(n_random):
 This principle extends beyond grid search. Gradient-based optimizers also benefit from log-space parameterization, because the gradient of $\log(\sigma)$ with respect to a loss function has more uniform magnitude across the parameter range than the gradient of $\sigma$ itself. To see why, consider the chain rule: if $\sigma = 10^\theta$, then $\partial \mathcal{L}/\partial \theta = (\partial \mathcal{L}/\partial \sigma) \cdot \sigma \cdot \ln(10)$. The multiplicative factor of $\sigma$ compensates for the fact that $\partial \mathcal{L}/\partial \sigma$ tends to be inversely proportional to $\sigma$ for scale-sensitive losses. The result is that gradient steps in $\theta$-space produce proportional changes in $\sigma$ regardless of the current scale. We exploit this property in the Cholesky factorization discussed next.
 
 
-## 2.5 Cholesky Factorization for Positive-Definiteness
+## {{ch:mahalanobis-distance}}.5 Cholesky Factorization for Positive-Definiteness
 
 We now confront a fundamental challenge in metric learning: how do we optimize over the space of valid covariance matrices?
 
@@ -281,7 +281,7 @@ Several details warrant discussion.
 **Numerical stability.** The exponential mapping $\ell_{ii} = e^{\theta_i}$ can produce very large or very small diagonal entries if $\theta_i$ drifts far from zero. In practice, it is wise to add bounds: $\theta_i \in [-5, 5]$ constrains the diagonal to $[e^{-5}, e^5] \approx [0.007, 148]$, which is more than adequate for most applications. This is easily incorporated into L-BFGS-B via its `bounds` parameter.
 
 
-## 2.6 Diagonal-Only Simplification
+## {{ch:mahalanobis-distance}}.6 Diagonal-Only Simplification
 
 The full Cholesky parameterization has $n(n+1)/2$ free parameters. For $n = 9$, this is 45 -- manageable but potentially overparameterized when the training signal is weak. The `eris-econ` model has 16 prediction targets. Fitting 45 parameters to 16 targets risks overfitting: the precision matrix may learn spurious correlations that capture noise rather than structure.
 
@@ -318,10 +318,10 @@ Here `params[i]` plays the role of $\sigma_i^2$, and `weights[i]` $= 1/\sigma_i^
 
 **Bootstrap confidence intervals.** To assess the reliability of the learned metric, draw $B$ bootstrap samples from the targets (sampling with replacement), fit $\Sigma^{-1}$ to each bootstrap sample, and examine the distribution of the resulting parameters. Dimensions whose precision estimates have tight bootstrap intervals are reliably important. Dimensions with wide intervals are uncertain -- the data does not strongly constrain their contribution to the metric.
 
-For the `eris-econ` model, bootstrap analysis reveals that dimensions 0 (Consequences), 2 (Fairness), and 4 (Trust) consistently receive high precision across bootstrap samples, while dimensions 3 (Autonomy) and 7 (Legitimacy) are unstable. This aligns with the structural fuzzing results from Chapter 1: the Pareto frontier is dominated by subsets containing Consequences and Fairness.
+For the `eris-econ` model, bootstrap analysis reveals that dimensions 0 (Consequences), 2 (Fairness), and 4 (Trust) consistently receive high precision across bootstrap samples, while dimensions 3 (Autonomy) and 7 (Legitimacy) are unstable. This aligns with the structural fuzzing results from Chapter {{ch:why-geometry}}: the Pareto frontier is dominated by subsets containing Consequences and Fairness.
 
 
-## 2.7 Putting It Together: From Distance to Decision
+## {{ch:mahalanobis-distance}}.7 Putting It Together: From Distance to Decision
 
 To see how the Mahalanobis metric drives actual predictions, consider how the `eris-econ` model predicts ultimatum game rejection rates.
 
@@ -340,7 +340,7 @@ At low stakes, the temperature is high -- choices are noisy and the model predic
 The entire behavioral prediction reduces to a geometric computation in a weighted metric space, and the problem of *calibrating* the model reduces to the problem of *learning the metric* -- finding the $\Sigma^{-1}$ that makes the model's predictions match empirical data. This is not a metaphor. The 16 prediction targets in the `eris-econ` model -- ultimatum rejection rates, dictator giving levels, public goods contributions, Kahneman-Tversky prospect choices -- are all functions of Mahalanobis distances. The structural fuzzing campaign over dimension subsets is literally a search over the sparsity pattern and scale of the precision matrix.
 
 
-## 2.8 Summary and Looking Ahead
+## {{ch:mahalanobis-distance}}.8 Summary and Looking Ahead
 
 This chapter developed the Mahalanobis distance as the natural generalization of Euclidean distance for spaces with non-uniform, correlated dimensions. The key ideas are:
 
@@ -354,4 +354,4 @@ This chapter developed the Mahalanobis distance as the natural generalization of
 
 5. **Diagonal simplification** reduces the parameter count to $n$ when the full covariance is overparameterized, with cross-validation and bootstrap analysis for regularization and uncertainty quantification.
 
-In Chapter 3, we turn to the *search* problem: given a space equipped with a Mahalanobis metric, how do we systematically explore the subsets of dimensions that contribute to it? This is the core algorithmic problem of structural fuzzing, and it connects the geometric foundations of this chapter to the combinatorial enumeration machinery that makes the framework practical.
+In Chapter {{ch:hyperbolic-geometry}}, we turn to the *search* problem: given a space equipped with a Mahalanobis metric, how do we systematically explore the subsets of dimensions that contribute to it? This is the core algorithmic problem of structural fuzzing, and it connects the geometric foundations of this chapter to the combinatorial enumeration machinery that makes the framework practical.

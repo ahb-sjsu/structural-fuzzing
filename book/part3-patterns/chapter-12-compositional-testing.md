@@ -1,23 +1,23 @@
-# Chapter 12: Compositional Testing
+# Chapter {{ch:compositional-testing}}: Compositional Testing
 
 > *"The whole is other than the sum of its parts."*
 > --- Kurt Koffka, *Principles of Gestalt Psychology* (1935)
 
-Chapters 11 and 9 developed two complementary views of multi-dimensional model behavior. Subset enumeration (Chapter 11) asks: which combinations of dimensions produce the best fit? Sensitivity profiling (Chapter 9) asks: how much does each dimension contribute to the baseline? Both are indispensable. Both are incomplete.
+Chapters {{ch:subset-enumeration}} and {{ch:adversarial-robustness}} developed two complementary views of multi-dimensional model behavior. Subset enumeration (Chapter {{ch:subset-enumeration}}) asks: which combinations of dimensions produce the best fit? Sensitivity profiling (Chapter {{ch:adversarial-robustness}}) asks: how much does each dimension contribute to the baseline? Both are indispensable. Both are incomplete.
 
 Subset enumeration tests every combination independently, but it does not reveal *how* dimensions interact---whether the combination of Complexity and Process is better than expected from their individual contributions, or merely the sum of two independent effects. Sensitivity profiling measures the marginal contribution of each dimension by ablation, but it holds all other dimensions fixed, missing the cases where removing two dimensions simultaneously is far worse (or far better) than removing each alone.
 
 The gap between these methods is the subject of this chapter. Compositional testing fills the gap by systematically measuring the *interactions* between dimensions---the synergies and redundancies that emerge when dimensions are combined. The key insight is that interaction effects are not anomalies to be ignored but first-class geometric features of the model's behavior landscape. A dimension pair that exhibits strong synergy occupies a qualitatively different region of the evaluation space than a pair whose contributions are merely additive. Detecting, quantifying, and interpreting these interactions is essential for understanding why a model works and when it will break.
 
-We begin with a precise definition of what single-dimension analysis misses (Section 12.1), develop the interaction matrix formalism (Section 12.2), introduce the compositional testing algorithm implemented in the structural fuzzing framework (Section 12.3), discuss interpretation of results (Section 12.4), connect compositional testing to sensitivity profiling (Section 12.5), and close with the forward connection to Chapter 13.
+We begin with a precise definition of what single-dimension analysis misses (Section {{ch:compositional-testing}}.1), develop the interaction matrix formalism (Section {{ch:compositional-testing}}.2), introduce the compositional testing algorithm implemented in the structural fuzzing framework (Section {{ch:compositional-testing}}.3), discuss interpretation of results (Section {{ch:compositional-testing}}.4), connect compositional testing to sensitivity profiling (Section {{ch:compositional-testing}}.5), and close with the forward connection to Chapter {{ch:group-theoretic-augmentation}}.
 
 ---
 
-## 12.1 The Limits of Single-Dimension Analysis
+## {{ch:compositional-testing}}.1 The Limits of Single-Dimension Analysis
 
-### 12.1.1 Ablation Assumes Independence
+### {{ch:compositional-testing}}.1.1 Ablation Assumes Independence
 
-Recall the sensitivity profiling function from Chapter 9. Given a baseline parameter vector and an evaluation function, it measures the effect of deactivating each dimension one at a time:
+Recall the sensitivity profiling function from Chapter {{ch:adversarial-robustness}}. Given a baseline parameter vector and an evaluation function, it measures the effect of deactivating each dimension one at a time:
 
 ```python
 def sensitivity_profile(
@@ -56,7 +56,7 @@ def sensitivity_profile(
 
 The structure is clean: iterate over dimensions, ablate one, measure the damage. The result is a ranked list of importance scores. But notice the implicit assumption: the delta for dimension $i$ is computed while *all other dimensions remain active*. This is a conditional measurement, not a marginal one. The sensitivity of dimension $i$ depends on the presence of dimensions $j, k, \ldots$, and that dependency is never measured.
 
-### 12.1.2 The Interaction Problem
+### {{ch:compositional-testing}}.1.2 The Interaction Problem
 
 To see why this matters, consider a model with five dimensions and the following behavior:
 
@@ -69,7 +69,7 @@ This failure mode is not exotic. It arises whenever two dimensions provide *comp
 
 The general principle: single-dimension analysis decomposes a multi-dimensional space into independent axes. When the structure of the problem aligns with those axes, the decomposition is faithful. When the structure is *rotated* relative to the axes---when the important directions in the space are diagonal, not axis-aligned---single-dimension analysis misses the structure entirely.
 
-### 12.1.3 Quantifying What Is Missed
+### {{ch:compositional-testing}}.1.3 Quantifying What Is Missed
 
 Let $f(\mathbf{x})$ denote the MAE for parameter vector $\mathbf{x}$, and let $\mathbf{x}^{(-i)}$ denote the vector with dimension $i$ set to its inactive value. The sensitivity profile computes:
 
@@ -93,9 +93,9 @@ The interaction matrix $\Phi \in \mathbb{R}^{n \times n}$ collects all pairwise 
 
 ---
 
-## 12.2 The Interaction Matrix
+## {{ch:compositional-testing}}.2 The Interaction Matrix
 
-### 12.2.1 Construction
+### {{ch:compositional-testing}}.2.1 Construction
 
 Computing the full interaction matrix for $n$ dimensions requires evaluating $\binom{n}{2}$ pairwise ablations, plus the $n$ single-dimension ablations from the sensitivity profile, plus the baseline. The total cost is:
 
@@ -141,7 +141,7 @@ def build_interaction_matrix(
     return phi
 ```
 
-### 12.2.2 Reading the Matrix
+### {{ch:compositional-testing}}.2.2 Reading the Matrix
 
 The interaction matrix is symmetric with zero diagonal. Its entries directly answer the question: "Do these two dimensions interact?"
 
@@ -163,7 +163,7 @@ Several patterns are immediately visible:
 
 3. **Near-additive: Size + Complexity** ($\Phi = +0.02$). These dimensions contribute nearly independently. Knowing one tells you almost nothing about the other's effect.
 
-### 12.2.3 Higher-Order Interactions
+### {{ch:compositional-testing}}.2.3 Higher-Order Interactions
 
 Pairwise interactions do not tell the complete story. A triple of dimensions $\{i, j, k\}$ can exhibit a three-way interaction that is invisible to any pair:
 
@@ -173,13 +173,13 @@ The three-way interaction is the residual after accounting for all individual an
 
 In practice, higher-order interactions are rarer than pairwise ones, and when they do occur they tend to involve dimensions that already exhibit strong pairwise interactions. A practical strategy is to compute the full pairwise matrix first, identify the pairs with the largest $|\Phi_{ij}|$, and then compute three-way interactions only for triples that include at least one strongly interacting pair.
 
-This strategy connects directly to the subset enumeration of Chapter 11. Subset enumeration tests all combinations up to a maximum size, producing a complete picture of model behavior across the combinatorial space. The interaction matrix provides a *structured decomposition* of those results: instead of a flat list of subset performances, the matrix reveals *why* certain subsets perform well (synergistic interactions among their members) and others poorly (redundancy among their members). Subset enumeration is the exhaustive search; compositional testing is the analytical lens that makes the search results interpretable.
+This strategy connects directly to the subset enumeration of Chapter {{ch:subset-enumeration}}. Subset enumeration tests all combinations up to a maximum size, producing a complete picture of model behavior across the combinatorial space. The interaction matrix provides a *structured decomposition* of those results: instead of a flat list of subset performances, the matrix reveals *why* certain subsets perform well (synergistic interactions among their members) and others poorly (redundancy among their members). Subset enumeration is the exhaustive search; compositional testing is the analytical lens that makes the search results interpretable.
 
 ---
 
-## 12.3 The Compositional Testing Algorithm
+## {{ch:compositional-testing}}.3 The Compositional Testing Algorithm
 
-### 12.3.1 Greedy Dimension Building
+### {{ch:compositional-testing}}.3.1 Greedy Dimension Building
 
 The structural fuzzing framework implements compositional testing through a greedy dimension-building strategy. Rather than exhaustively evaluating all possible orderings, it constructs a single optimal ordering by starting with one dimension and iteratively adding the dimension that produces the greatest improvement:
 
@@ -262,7 +262,7 @@ The algorithm produces a `CompositionResult` containing four parallel sequences:
 - `mae_sequence`: the optimized MAE at each step, after re-optimizing all active dimensions jointly.
 - `param_sequence`: the full parameter vector at each step.
 
-### 12.3.2 Re-optimization at Each Step
+### {{ch:compositional-testing}}.3.2 Re-optimization at Each Step
 
 A critical design decision in the implementation is that `optimize_subset` is called at every step with *all* currently active dimensions. When dimension $j$ is added to the active set $\{d_1, d_2, \ldots, d_k\}$, the optimization does not merely find the best value for $j$ while holding $d_1, \ldots, d_k$ fixed. It re-optimizes the entire $(k+1)$-dimensional subset jointly.
 
@@ -312,7 +312,7 @@ else:
 
 For one or two active dimensions, grid search in log-space is exhaustive and exact. For three or more, random search in log-space provides good coverage at controllable cost. The log-space parameterization ensures that the search covers both fine-grained and coarse-grained parameter values uniformly, which is critical when parameters span multiple orders of magnitude.
 
-### 12.3.3 Computational Cost
+### {{ch:compositional-testing}}.3.3 Computational Cost
 
 The greedy compositional test starting from one dimension with $n - 1$ candidates requires the following number of `optimize_subset` calls:
 
@@ -324,13 +324,13 @@ The greedy compositional test starting from one dimension with $n - 1$ candidate
 
 The total is $1 + \sum_{k=1}^{n-1}(n-k) = 1 + \frac{n(n-1)}{2}$, which is $O(n^2)$. Each call's internal cost varies with dimensionality, but the outer structure is quadratic in $n$. For typical structural fuzzing applications with $n \leq 10$, this is entirely tractable.
 
-Compare this to the full subset enumeration of Chapter 11, which tests $\sum_{k=1}^{n} \binom{n}{k} = 2^n - 1$ subsets. The compositional test is exponentially cheaper but produces a single greedy ordering rather than the complete combinatorial picture. The two analyses are complementary: enumeration maps the full landscape, while compositional testing traces a single efficient path through it.
+Compare this to the full subset enumeration of Chapter {{ch:subset-enumeration}}, which tests $\sum_{k=1}^{n} \binom{n}{k} = 2^n - 1$ subsets. The compositional test is exponentially cheaper but produces a single greedy ordering rather than the complete combinatorial picture. The two analyses are complementary: enumeration maps the full landscape, while compositional testing traces a single efficient path through it.
 
 ---
 
-## 12.4 Interpreting Compositional Results
+## {{ch:compositional-testing}}.4 Interpreting Compositional Results
 
-### 12.4.1 The MAE Sequence
+### {{ch:compositional-testing}}.4.1 The MAE Sequence
 
 The primary output of compositional testing is the MAE sequence: a list of error values, one for each step of the greedy construction. A typical result might look like:
 
@@ -353,11 +353,11 @@ This sequence encodes several types of information.
 
 The gains exhibit strong diminishing returns: the first dimension added (Process) produces a gain of 1.72, while the last (Halstead) produces only 0.07. This is a common pattern. It arises because each successive dimension can only capture the variance unexplained by the already-active dimensions, and that unexplained variance shrinks with each addition.
 
-**Diminishing-returns elbow.** The point where marginal gains transition from substantial to negligible---the "elbow" of the MAE curve---is a natural place to draw a complexity boundary. In the example above, the elbow occurs at step 2 (adding Size), after which further dimensions contribute less than 0.15 MAE each. A practitioner might reasonably conclude that three dimensions (Complexity, Process, Size) capture the essential behavior and the remaining two add complexity without proportionate benefit. This connects directly to the Pareto analysis of Chapter 8: the elbow in the compositional sequence often corresponds to a Pareto-optimal point on the (dimensionality, MAE) frontier.
+**Diminishing-returns elbow.** The point where marginal gains transition from substantial to negligible---the "elbow" of the MAE curve---is a natural place to draw a complexity boundary. In the example above, the elbow occurs at step 2 (adding Size), after which further dimensions contribute less than 0.15 MAE each. A practitioner might reasonably conclude that three dimensions (Complexity, Process, Size) capture the essential behavior and the remaining two add complexity without proportionate benefit. This connects directly to the Pareto analysis of Chapter {{ch:pareto-optimization}}: the elbow in the compositional sequence often corresponds to a Pareto-optimal point on the (dimensionality, MAE) frontier.
 
 **Interaction signatures.** The marginal gains also encode interaction information, though less directly than the interaction matrix. If the gain from adding dimension $j$ to the set $\{d_1, \ldots, d_k\}$ is much larger than $j$'s individual ablation delta from the sensitivity profile, then $j$ is synergistic with the current active set: it contributes more in combination than it does alone. Conversely, if the gain is much smaller than the ablation delta, the current set already captures most of $j$'s information---a signature of redundancy.
 
-### 12.4.2 Synergy versus Redundancy
+### {{ch:compositional-testing}}.4.2 Synergy versus Redundancy
 
 The interaction matrix $\Phi_{ij}$ provides the precise decomposition, but the compositional test's MAE sequence offers a sequential view that is often more actionable. Define the *expected marginal gain* at step $k$ as the ablation delta $\Delta_{j}$ of the dimension $j$ being added (measured from the full model). Then:
 
@@ -367,7 +367,7 @@ The interaction matrix $\Phi_{ij}$ provides the precise decomposition, but the c
 
 This comparison is not exact---the sensitivity profile's $\Delta_j$ is measured from the full model, not from the current partial model---but it provides a useful diagnostic. Large discrepancies between expected and actual marginal gains are strong signals of interaction effects that warrant further investigation.
 
-### 12.4.3 Order Dependence
+### {{ch:compositional-testing}}.4.3 Order Dependence
 
 The greedy ordering is not necessarily unique. When two candidate dimensions produce similar MAE improvements at a given step, the algorithm breaks ties arbitrarily (in practice, by iteration order). Different starting dimensions can also produce different orderings.
 
@@ -377,11 +377,11 @@ To probe order dependence, run the compositional test from multiple starting dim
 
 ---
 
-## 12.5 Connection to Sensitivity Profiling
+## {{ch:compositional-testing}}.5 Connection to Sensitivity Profiling
 
-### 12.5.1 Ablation as a Special Case
+### {{ch:compositional-testing}}.5.1 Ablation as a Special Case
 
-Sensitivity profiling (Chapter 9) and compositional testing are two perspectives on the same underlying question: how does model behavior depend on dimension membership? The connection is precise.
+Sensitivity profiling (Chapter {{ch:adversarial-robustness}}) and compositional testing are two perspectives on the same underlying question: how does model behavior depend on dimension membership? The connection is precise.
 
 Sensitivity profiling *removes* dimensions from a full model one at a time. It answers: "Given everything, what happens when we lose this?" The result is a vector of individual importance scores.
 
@@ -389,7 +389,7 @@ Compositional testing *adds* dimensions to an empty (or minimal) model one at a 
 
 These are dual perspectives. In a purely additive model---one where $\Phi_{ij} = 0$ for all pairs---the sensitivity ranking and the compositional ordering are exact reverses of each other: the most important dimension to remove is the most important to add. In a model with interactions, they diverge, and the divergence is precisely the interaction structure.
 
-### 12.5.2 The Pipeline Integration
+### {{ch:compositional-testing}}.5.2 The Pipeline Integration
 
 The structural fuzzing pipeline runs both analyses as part of a complete campaign. Examining the pipeline orchestration reveals the design:
 
@@ -442,9 +442,9 @@ class StructuralFuzzReport:
     backward_results: list[SubsetResult] = field(default_factory=list)
 ```
 
-An analyst examining the report can compare the sensitivity ranking (which dimensions are most important to *keep*) with the compositional ordering (which dimensions are most important to *add*). Agreement between the two provides confidence in a clean, additive dimension structure. Disagreement signals interaction effects that require the interaction matrix analysis of Section 12.2 to resolve.
+An analyst examining the report can compare the sensitivity ranking (which dimensions are most important to *keep*) with the compositional ordering (which dimensions are most important to *add*). Agreement between the two provides confidence in a clean, additive dimension structure. Disagreement signals interaction effects that require the interaction matrix analysis of Section {{ch:compositional-testing}}.2 to resolve.
 
-### 12.5.3 Reconciling the Two Views
+### {{ch:compositional-testing}}.5.3 Reconciling the Two Views
 
 When sensitivity and composition disagree, the reconciliation procedure is:
 
@@ -457,9 +457,9 @@ This reconciliation procedure transforms a confusing disagreement between two an
 
 ---
 
-## 12.6 Practical Patterns
+## {{ch:compositional-testing}}.6 Practical Patterns
 
-### 12.6.1 Choosing the Starting Dimension
+### {{ch:compositional-testing}}.6.1 Choosing the Starting Dimension
 
 The `compositional_test` function requires a `start_dim` parameter. This choice affects the resulting ordering and can bias the analysis. Three strategies are common:
 
@@ -467,11 +467,11 @@ The `compositional_test` function requires a `start_dim` parameter. This choice 
 
 **Start from the least important dimension.** Starting from the weakest dimension reveals whether apparently weak dimensions become important in combination. If the greedy algorithm selects unexpected dimensions early in the sequence, the model has strong interactions that sensitivity profiling would miss.
 
-**Start from each dimension in turn.** Run $n$ compositional tests, one from each starting dimension, and compare the orderings. This is the most thorough approach and directly reveals order dependence (Section 12.4.3). The cost is $n$ times higher, but for models with $n \leq 10$ it remains practical.
+**Start from each dimension in turn.** Run $n$ compositional tests, one from each starting dimension, and compare the orderings. This is the most thorough approach and directly reveals order dependence (Section {{ch:compositional-testing}}.4.3). The cost is $n$ times higher, but for models with $n \leq 10$ it remains practical.
 
 The pipeline's default behavior uses `start_dim=0`, which corresponds to the first dimension in the names list. For a thorough analysis, the pipeline supports overriding this parameter, and running multiple compositional tests with different starting points is recommended when the interaction structure is unknown.
 
-### 12.6.2 Detecting Emergent Dimensions
+### {{ch:compositional-testing}}.6.2 Detecting Emergent Dimensions
 
 An *emergent dimension* is one whose compositional marginal gain far exceeds its individual ablation delta. Formally, if the marginal gain of adding dimension $j$ at step $k$ is $G_j^{(k)}$ and the ablation delta is $\Delta_j$, then the emergence ratio is:
 
@@ -481,7 +481,7 @@ An emergence ratio substantially greater than 1.0 indicates that dimension $j$ i
 
 Emergence often arises in models where dimensions encode different *aspects* of the same underlying phenomenon. A model predicting material failure might have one dimension for stress and another for temperature. Neither alone predicts failure well (both have low $\Delta$), but together they define the stress-temperature failure envelope: a region in the joint space where failure probability is high. The emergence ratio captures this synergy quantitatively.
 
-### 12.6.3 Diagnosing Redundancy Clusters
+### {{ch:compositional-testing}}.6.3 Diagnosing Redundancy Clusters
 
 When a group of dimensions are mutually redundant, the compositional test reveals this as a cluster of diminishing marginal gains. After the first dimension in the cluster is added, subsequent cluster members contribute very little because their information is already represented.
 
@@ -491,13 +491,13 @@ To identify redundancy clusters from the compositional result:
 2. Compute the ratio $R_j = G_j / \Delta_j$ (gain relative to individual importance).
 3. Group consecutive dimensions with $R_j < 0.3$ (or another threshold) into clusters.
 
-Each cluster represents a set of dimensions that are largely interchangeable. The model could use any one of them as a representative, reducing dimensionality without significant loss of information. This directly connects to the dimensionality reduction motivation of Chapter 8's Pareto analysis: redundancy clusters are the mechanism by which models achieve good performance with fewer dimensions.
+Each cluster represents a set of dimensions that are largely interchangeable. The model could use any one of them as a representative, reducing dimensionality without significant loss of information. This directly connects to the dimensionality reduction motivation of Chapter {{ch:pareto-optimization}}'s Pareto analysis: redundancy clusters are the mechanism by which models achieve good performance with fewer dimensions.
 
 ---
 
-## 12.7 A Geometric Interpretation
+## {{ch:compositional-testing}}.7 A Geometric Interpretation
 
-### 12.7.1 The Composition Path in Evaluation Space
+### {{ch:compositional-testing}}.7.1 The Composition Path in Evaluation Space
 
 Each step of the compositional test produces a point in the evaluation space: a (dimensionality, MAE) pair. The sequence of points traces a *composition path* from the starting dimension to the full model. This path is a one-dimensional curve through the $n$-dimensional parameter space, projected onto the two-dimensional (dimensionality, MAE) plane.
 
@@ -508,17 +508,17 @@ The geometry of this path encodes interaction information:
 - **Plateau** indicates complete redundancy: the new dimension adds no information.
 - **Ascent** (MAE increases) is theoretically possible if re-optimization of the expanded set finds a worse optimum than the restricted set. In practice, this is rare because the search space strictly expands with each added dimension, but it can occur with random search in high dimensions where the search budget is insufficient.
 
-### 12.7.2 Composition Paths and the Pareto Frontier
+### {{ch:compositional-testing}}.7.2 Composition Paths and the Pareto Frontier
 
-The composition path can be overlaid on the Pareto frontier from Chapter 8. Pareto-optimal points represent the best possible MAE for each dimensionality, while the composition path represents the MAE achieved by a particular greedy construction. The gap between the composition path and the Pareto frontier measures the cost of the greedy approximation: how much worse the greedy ordering is compared to the optimal subset at each dimensionality.
+The composition path can be overlaid on the Pareto frontier from Chapter {{ch:pareto-optimization}}. Pareto-optimal points represent the best possible MAE for each dimensionality, while the composition path represents the MAE achieved by a particular greedy construction. The gap between the composition path and the Pareto frontier measures the cost of the greedy approximation: how much worse the greedy ordering is compared to the optimal subset at each dimensionality.
 
 If the composition path lies close to the Pareto frontier at every step, the greedy algorithm is performing well---the interaction structure is sufficiently captured by the greedy choices. If the composition path deviates significantly from the Pareto frontier at some step, the greedy algorithm has made a suboptimal choice at that point, and the interaction structure contains non-greedy features (e.g., a triple of dimensions that is strong as a unit but whose pairwise components are weak).
 
-This comparison provides a calibration of the compositional test's reliability. When the gap is small, the compositional ordering can be trusted as a faithful representation of the dimension importance hierarchy. When the gap is large, the full combinatorial analysis of Chapter 11 is needed to understand the true structure.
+This comparison provides a calibration of the compositional test's reliability. When the gap is small, the compositional ordering can be trusted as a faithful representation of the dimension importance hierarchy. When the gap is large, the full combinatorial analysis of Chapter {{ch:subset-enumeration}} is needed to understand the true structure.
 
-### 12.7.3 The Interaction Matrix as a Metric Tensor
+### {{ch:compositional-testing}}.7.3 The Interaction Matrix as a Metric Tensor
 
-There is a deeper geometric interpretation of the interaction matrix $\Phi$ that connects to the Riemannian framework of Chapters 6 and 9. Consider the space of *dimension activation vectors* $\mathbf{a} \in \{0, 1\}^n$, where $a_i = 1$ indicates that dimension $i$ is active. The evaluation function restricted to this discrete space defines a function $f : \{0, 1\}^n \to \mathbb{R}$.
+There is a deeper geometric interpretation of the interaction matrix $\Phi$ that connects to the Riemannian framework of Chapters {{ch:pathfinding-on-manifolds}} and {{ch:adversarial-robustness}}. Consider the space of *dimension activation vectors* $\mathbf{a} \in \{0, 1\}^n$, where $a_i = 1$ indicates that dimension $i$ is active. The evaluation function restricted to this discrete space defines a function $f : \{0, 1\}^n \to \mathbb{R}$.
 
 If we approximate $f$ by a second-order expansion around the all-active point $\mathbf{a} = \mathbf{1}$:
 
@@ -530,21 +530,21 @@ This is not merely an analogy. When the discrete activation space is relaxed to 
 
 ---
 
-## 12.8 Limitations and Extensions
+## {{ch:compositional-testing}}.8 Limitations and Extensions
 
-### 12.8.1 Greedy Suboptimality
+### {{ch:compositional-testing}}.8.1 Greedy Suboptimality
 
 The compositional test is greedy: at each step, it adds the single best dimension without lookahead. This can fail when the optimal sequence requires adding a dimension that is individually suboptimal but enables a strong subsequent addition. For example, if dimensions B and C are strongly synergistic but individually weak, the greedy algorithm will never discover their combination because it will always prefer individually stronger dimensions A and D at the first two steps.
 
-The full subset enumeration of Chapter 11 does not suffer from this limitation---it tests all combinations---but it is exponentially more expensive. A practical middle ground is *beam search*: at each step, retain the top $b$ candidates (not just the best one) and continue from each. With beam width $b = 3$, the cost increases by a factor of 3 but the algorithm can discover dimension combinations that are invisible to the purely greedy approach.
+The full subset enumeration of Chapter {{ch:subset-enumeration}} does not suffer from this limitation---it tests all combinations---but it is exponentially more expensive. A practical middle ground is *beam search*: at each step, retain the top $b$ candidates (not just the best one) and continue from each. With beam width $b = 3$, the cost increases by a factor of 3 but the algorithm can discover dimension combinations that are invisible to the purely greedy approach.
 
-### 12.8.2 Sensitivity to Starting Point
+### {{ch:compositional-testing}}.8.2 Sensitivity to Starting Point
 
-As discussed in Section 12.6.1, the starting dimension affects the resulting ordering. More subtly, the starting dimension determines the *evaluation baseline* for all subsequent marginal gains. Starting from a strong dimension means that subsequent gains are measured against a strong baseline, making them appear smaller. Starting from a weak dimension means that gains are measured against a weak baseline, making them appear larger.
+As discussed in Section {{ch:compositional-testing}}.6.1, the starting dimension affects the resulting ordering. More subtly, the starting dimension determines the *evaluation baseline* for all subsequent marginal gains. Starting from a strong dimension means that subsequent gains are measured against a strong baseline, making them appear smaller. Starting from a weak dimension means that gains are measured against a weak baseline, making them appear larger.
 
 This is not a bias in the statistical sense---both orderings are correct descriptions of the greedy construction from their respective starting points---but it means that marginal gains from different starting points are not directly comparable. When comparing orderings from different starting points, compare the MAE values at each step, not the marginal gains.
 
-### 12.8.3 Scaling to High Dimensions
+### {{ch:compositional-testing}}.8.3 Scaling to High Dimensions
 
 The quadratic cost of the compositional test ($O(n^2)$ calls to `optimize_subset`) makes it tractable for $n \leq 20$ but expensive beyond that. For high-dimensional spaces, two strategies reduce the cost:
 
@@ -556,7 +556,7 @@ Both strategies sacrifice completeness for tractability. The structural fuzzing 
 
 ---
 
-## 12.9 Summary
+## {{ch:compositional-testing}}.9 Summary
 
 Compositional testing addresses a fundamental gap in single-dimension analysis: the interaction structure between dimensions. The key contributions of this chapter are:
 
@@ -570,11 +570,11 @@ Compositional testing addresses a fundamental gap in single-dimension analysis: 
 
 5. **The geometric interpretation.** The interaction matrix functions as a metric tensor on the dimension activation space, encoding how curvature in the activation space maps to curvature in the evaluation space. Compositional testing traces an approximately geodesic path through this space.
 
-The analysis developed in this chapter is *local*: it characterizes interactions around a specific baseline configuration (for ablation) or along a specific greedy path (for composition). It does not guarantee that the interaction structure is the same in other regions of the parameter space. For models with strongly nonlinear evaluation functions, interactions can appear and disappear as the baseline moves. Chapter 13 extends the analysis by examining how compositional structures change under perturbation, connecting the local interaction picture to the global robustness framework developed in Chapter 7.
+The analysis developed in this chapter is *local*: it characterizes interactions around a specific baseline configuration (for ablation) or along a specific greedy path (for composition). It does not guarantee that the interaction structure is the same in other regions of the parameter space. For models with strongly nonlinear evaluation functions, interactions can appear and disappear as the baseline moves. Chapter {{ch:group-theoretic-augmentation}} extends the analysis by examining how compositional structures change under perturbation, connecting the local interaction picture to the global robustness framework developed in Chapter {{ch:equilibrium-on-manifolds}}.
 
 ---
 
-## 12.10 Exercises
+## {{ch:compositional-testing}}.10 Exercises
 
 **12.1.** Given a model with four dimensions and the following ablation deltas: $\Delta_A = 1.0$, $\Delta_B = 0.5$, $\Delta_C = 0.3$, $\Delta_D = 0.1$, and the pairwise ablation results $f(\mathbf{x}^{(-AB)}) - f(\mathbf{x}) = 2.0$, $f(\mathbf{x}^{(-AC)}) - f(\mathbf{x}) = 1.2$, $f(\mathbf{x}^{(-AD)}) - f(\mathbf{x}) = 1.1$, compute the interaction matrix entries $\Phi_{AB}$, $\Phi_{AC}$, and $\Phi_{AD}$. Classify each pair as synergistic, additive, or redundant.
 
@@ -588,4 +588,4 @@ The analysis developed in this chapter is *local*: it characterizes interactions
 
 ---
 
-*Chapter 13 extends the compositional framework by examining how interaction structures respond to perturbation. Where this chapter asks "which dimensions interact?", Chapter 13 asks "how stable are those interactions?"---connecting the local composition picture developed here to the global robustness analysis of the full campaign pipeline.*
+*Chapter {{ch:group-theoretic-augmentation}} extends the compositional framework by examining how interaction structures respond to perturbation. Where this chapter asks "which dimensions interact?", Chapter {{ch:group-theoretic-augmentation}} asks "how stable are those interactions?"---connecting the local composition picture developed here to the global robustness analysis of the full campaign pipeline.*

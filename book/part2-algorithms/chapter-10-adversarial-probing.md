@@ -1,17 +1,17 @@
-# Chapter 10: Adversarial Probing
+# Chapter {{ch:adversarial-probing}}: Adversarial Probing
 
 > *"The best way to understand a system is to try to break it---and then listen carefully to the sound it makes."*
 > --- Attributed to Richard Hamming
 
-The Model Robustness Index developed in Chapter 9 answers a critical question: *how stable is this configuration under random perturbation?* But random perturbation is blunt. It tells you that a model is fragile without telling you *why*, and it tells you that a model is robust without telling you *to what*. This chapter sharpens the MRI into a family of directed probing tools that interrogate model internals with the precision of a radar system. Where Chapter 9 threw noise at a model and measured the aggregate response, this chapter sends *specific, controlled signals* and reads the reflections.
+The Model Robustness Index developed in Chapter {{ch:adversarial-robustness}} answers a critical question: *how stable is this configuration under random perturbation?* But random perturbation is blunt. It tells you that a model is fragile without telling you *why*, and it tells you that a model is robust without telling you *to what*. This chapter sharpens the MRI into a family of directed probing tools that interrogate model internals with the precision of a radar system. Where Chapter {{ch:adversarial-robustness}} threw noise at a model and measured the aggregate response, this chapter sends *specific, controlled signals* and reads the reflections.
 
-We develop this idea into three concrete tools: the StructureProbe scanner (Section 10.3), parametric intensity sweeps (Section 10.4), and compositional interaction testing (Section 10.5). Section 10.6 then shows how the same mathematical framework extends from parameter-space fuzzing to signal-space fuzzing through the Decoder Robustness Index (DRI), applying MRI principles to acoustic decoders where semantic distance replaces raw error.
+We develop this idea into three concrete tools: the StructureProbe scanner (Section {{ch:adversarial-probing}}.3), parametric intensity sweeps (Section {{ch:adversarial-probing}}.4), and compositional interaction testing (Section {{ch:adversarial-probing}}.5). Section {{ch:adversarial-probing}}.6 then shows how the same mathematical framework extends from parameter-space fuzzing to signal-space fuzzing through the Decoder Robustness Index (DRI), applying MRI principles to acoustic decoders where semantic distance replaces raw error.
 
 ---
 
-## 10.1 The Radar Analogy
+## {{ch:adversarial-probing}}.1 The Radar Analogy
 
-### 10.1.1 From Physical Radar to Computational Probing
+### {{ch:adversarial-probing}}.1.1 From Physical Radar to Computational Probing
 
 A radar transmitter emits a pulse of known shape $s(t)$. The environment reflects it, and the receiver records $r(t)$. The object of interest is the *transfer function* $H$ such that $r = H(s)$. By sweeping the frequency of $s$ and recording the response, the radar constructs a spectral signature of the target.
 
@@ -21,7 +21,7 @@ $$\delta(\alpha) = d\bigl(M(x),\; M(T_\alpha(x))\bigr)$$
 
 where $d$ is an appropriate distance function---$L^2$ norm in representation space, MAE in prediction space, or semantic distance in classification space. The function $\delta : [0, 1] \to \mathbb{R}_{\geq 0}$ is the *intensity-response curve*, and its shape encodes the model's structural relationship to the perturbation.
 
-### 10.1.2 Reading the Reflection Profile
+### {{ch:adversarial-probing}}.1.2 Reading the Reflection Profile
 
 Three canonical profiles emerge across domains:
 
@@ -31,16 +31,16 @@ Three canonical profiles emerge across domains:
 
 **Linear profile** ($\delta(\alpha) \approx k\alpha$). Proportional degradation with no hidden tipping points---the most benign failure mode.
 
-### 10.1.3 Invariance and Sensitivity as Structural Signatures
+### {{ch:adversarial-probing}}.1.3 Invariance and Sensitivity as Structural Signatures
 
 Transforms divide into *invariant* (semantics-preserving) and *stress* (semantics-destroying), a domain-dependent classification:
 
-In parameter-space fuzzing (Chapter 9):
+In parameter-space fuzzing (Chapter {{ch:adversarial-robustness}}):
 
 - **Invariant perturbations** are small multiplicative shifts. A model robust to 10% parameter variation occupies a broad minimum---desirable for deployment.
 - **Stress perturbations** are large directional shifts or dimension ablations. A model that does not respond when an entire feature group is deactivated has not learned to use that group.
 
-In acoustic decoder testing (Section 10.5):
+In acoustic decoder testing (Section {{ch:adversarial-probing}}.5):
 
 - **Invariant transforms** include amplitude scaling and circular time shifts. A correct decoder should recognize the same coda regardless of recording volume or temporal alignment.
 - **Stress transforms** include Doppler shift, multipath echo, and click dropout. These degrade the signal in ways that may legitimately change the decoder's output.
@@ -49,9 +49,9 @@ The *sensitivity gap*---the ratio of mean displacement under stress transforms t
 
 ---
 
-## 10.2 Parametric Transforms: The Intensity-Zero Identity
+## {{ch:adversarial-probing}}.2 Parametric Transforms: The Intensity-Zero Identity
 
-### 10.2.1 The Design Principle
+### {{ch:adversarial-probing}}.2.1 The Design Principle
 
 Every parametric transform must satisfy one non-negotiable property:
 
@@ -78,9 +78,9 @@ class AcousticTransform:
         return lambda signal, sr: self(signal, sr, intensity)
 ```
 
-The `at_intensity` method returns a closure with fixed perturbation strength, enabling composition into chains (Section 10.5) or integration with higher-order functions.
+The `at_intensity` method returns a closure with fixed perturbation strength, enabling composition into chains (Section {{ch:adversarial-probing}}.5) or integration with higher-order functions.
 
-### 10.2.2 Intensity Sweeps
+### {{ch:adversarial-probing}}.2.2 Intensity Sweeps
 
 The most informative single measurement is the *intensity sweep*: evaluating the model's response at uniformly spaced levels from 0 to 1:
 
@@ -98,7 +98,7 @@ def intensity_sweep(self, decoder, signals, sr, transform, n_points=10):
 
 Plotting all transform sweeps on a single figure produces the model's *sensitivity fingerprint*---a visual summary revealing which transforms the model tolerates, which it resists, and at what intensities transitions occur.
 
-### 10.2.3 Adversarial Threshold Search
+### {{ch:adversarial-probing}}.2.3 Adversarial Threshold Search
 
 Where the sweep gives a coarse picture, binary search finds the exact threshold:
 
@@ -126,13 +126,13 @@ def find_adversarial_threshold(self, decoder, signal, sr, transform,
     return high
 ```
 
-A threshold of 0.95 means near-total robustness; 0.05 means the faintest perturbation flips the answer. The algorithm is identical to Chapter 9's parameter-space adversarial search---binary search on a monotone predicate finds the transition in $O(\log(1/\epsilon))$ evaluations regardless of domain.
+A threshold of 0.95 means near-total robustness; 0.05 means the faintest perturbation flips the answer. The algorithm is identical to Chapter {{ch:adversarial-robustness}}'s parameter-space adversarial search---binary search on a monotone predicate finds the transition in $O(\log(1/\epsilon))$ evaluations regardless of domain.
 
 ---
 
-## 10.3 StructureProbe: The Probe Response Matrix
+## {{ch:adversarial-probing}}.3 StructureProbe: The Probe Response Matrix
 
-### 10.3.1 The Measurement Protocol
+### {{ch:adversarial-probing}}.3.1 The Measurement Protocol
 
 Given a model $M$, an input corpus $\{x_1, \ldots, x_N\}$, and $K$ parametric transforms, the StructureProbe scanner constructs a $K \times J$ *probe response matrix* where entry $(k, j)$ is the mean displacement when transform $T_k$ is applied at intensity $\alpha_j$:
 
@@ -140,9 +140,9 @@ $$\bar{\delta}_{kj} = \frac{1}{N} \sum_{i=1}^{N} d\bigl(M(x_i),\; M(T_k(x_i, \al
 
 Each row is an intensity-response curve. Each column is a cross-transform sensitivity snapshot.
 
-### 10.3.2 From Ablation to Graded Perturbation
+### {{ch:adversarial-probing}}.3.2 From Ablation to Graded Perturbation
 
-Chapter 9's sensitivity profile ablates each dimension (on/off). The probe response matrix generalizes this to *graded* perturbation. For dimension $i$ with baseline value $\theta_i$, define:
+Chapter {{ch:adversarial-robustness}}'s sensitivity profile ablates each dimension (on/off). The probe response matrix generalizes this to *graded* perturbation. For dimension $i$ with baseline value $\theta_i$, define:
 
 $$T_i(\theta, \alpha) = \theta \text{ with } \theta_i \leftarrow \theta_i \cdot e^{\alpha \cdot \sigma}$$
 
@@ -166,21 +166,21 @@ def probe_response_matrix(params, dim_names, evaluate_fn,
     return matrix
 ```
 
-### 10.3.3 Topological Analysis of Probe Surfaces
+### {{ch:adversarial-probing}}.3.3 Topological Analysis of Probe Surfaces
 
-When the probe response matrix is analyzed with persistent homology (Chapter 5), additional structure emerges. Treating the matrix as a height function on a grid, the Vietoris-Rips complex reveals connected components (clusters of transforms with similar profiles) and loops (closed sensitivity circuits suggesting redundancy in the transform library). This connection---TDA applied to the outputs of adversarial probing---is a key integrative theme: geometric tools analyzing the results of other geometric tools.
+When the probe response matrix is analyzed with persistent homology (Chapter {{ch:topological-data-analysis}}), additional structure emerges. Treating the matrix as a height function on a grid, the Vietoris-Rips complex reveals connected components (clusters of transforms with similar profiles) and loops (closed sensitivity circuits suggesting redundancy in the transform library). This connection---TDA applied to the outputs of adversarial probing---is a key integrative theme: geometric tools analyzing the results of other geometric tools.
 
 ---
 
-## 10.4 Compositional Testing: Probing Dimension Interactions
+## {{ch:adversarial-probing}}.4 Compositional Testing: Probing Dimension Interactions
 
-### 10.4.1 Beyond Single-Dimension Probing
+### {{ch:adversarial-probing}}.4.1 Beyond Single-Dimension Probing
 
 The probe response matrix perturbs one dimension at a time, revealing *marginal* sensitivity but missing *interactions*. Two dimensions might individually show low sensitivity but produce catastrophic failure when perturbed simultaneously---the parameter-space analogue of drug interactions in pharmacology.
 
 Exhaustive pairwise probing (testing all $\binom{n}{2}$ dimension pairs at multiple intensities) is feasible for small $n$ but scales quadratically. For larger problems, the compositional testing framework provides a structured alternative that reveals the most important interactions without exhaustive search.
 
-### 10.4.2 Greedy Dimension-Building Sequences
+### {{ch:adversarial-probing}}.4.2 Greedy Dimension-Building Sequences
 
 The `compositional_test` function builds dimension subsets incrementally, revealing interactions:
 
@@ -206,7 +206,7 @@ At each step, the algorithm tries adding each remaining dimension, re-optimizes 
 
 The trajectory's shape is diagnostic: steep initial descent means a few key dimensions dominate; gradual uniform descent means all dimensions contribute equally; plateau-then-drop indicates synergistic interactions detectable only through combinatorial probing.
 
-### 10.4.3 Transform Chains in Signal Space
+### {{ch:adversarial-probing}}.4.3 Transform Chains in Signal Space
 
 The compositional principle extends to signal space through *transform chains*:
 
@@ -240,9 +240,9 @@ A model that handles each individual transform at intensity 0.6 but fails under 
 
 ---
 
-## 10.5 The Decoder Robustness Index: MRI for Signal Space
+## {{ch:adversarial-probing}}.5 The Decoder Robustness Index: MRI for Signal Space
 
-### 10.5.1 From Parameters to Signals
+### {{ch:adversarial-probing}}.5.1 From Parameters to Signals
 
 The DRI applies the MRI's mathematical structure to *input perturbation* rather than *parameter perturbation*. The formula carries over unchanged:
 
@@ -250,7 +250,7 @@ $$\text{DRI} = 0.5 \cdot \bar{\omega} + 0.3 \cdot P_{75}(\omega) + 0.2 \cdot P_{
 
 where each $\omega_i$ is now the displacement between baseline and perturbed predictions, and lower DRI indicates greater robustness.
 
-### 10.5.2 Graduated Omega via Semantic Distance
+### {{ch:adversarial-probing}}.5.2 Graduated Omega via Semantic Distance
 
 The DRI's key innovation is *semantic distance* rather than binary match/mismatch. For a cetacean decoder classifying whale codas, misclassifying *rhythm* (fundamental structure) is worse than misclassifying *ornamentation* (fine detail):
 
@@ -286,7 +286,7 @@ class CodaSemanticDistance:
 
 The hybrid formula---minimum 0.5 penalty for any flip, scaling to 1.0 for maximally different predictions---ensures the DRI never ignores a decision flip. An ornamentation change gets $\omega \approx 0.54$; a rhythm change gets $\omega \approx 0.93$. The graduated omega reflects the domain's feature hierarchy.
 
-### 10.5.3 The Full DRI Pipeline
+### {{ch:adversarial-probing}}.5.3 The Full DRI Pipeline
 
 The `DecoderRobustnessIndex.measure` method orchestrates four phases---per-transform intensity sweeps, compositional chain testing, adversarial threshold search, and DRI computation---mirroring the structure of the `run_campaign` pipeline in the structural fuzzing framework:
 
@@ -305,7 +305,7 @@ The `DRIResult` provides three granularity levels:
 2. **DRI by category.** Separate values for invariant and stress transforms, revealing whether weaknesses lie in unlearned symmetries or over-sensitivity to legitimate distortion.
 3. **Per-transform diagnostics.** Mean omega per transform, chain results, and adversarial thresholds---the full radar image.
 
-### 10.5.4 The Acoustic Transform Suite
+### {{ch:adversarial-probing}}.5.4 The Acoustic Transform Suite
 
 Nine transforms form the probing library, categorized by invariance expectation:
 
@@ -325,9 +325,9 @@ The `is_invariant` flag drives separate `dri_invariant` and `dri_stress` aggrega
 
 ---
 
-## 10.6 Connection to the Structural Fuzzing Pipeline
+## {{ch:adversarial-probing}}.6 Connection to the Structural Fuzzing Pipeline
 
-### 10.6.1 The Six-Step Campaign
+### {{ch:adversarial-probing}}.6.1 The Six-Step Campaign
 
 The structural fuzzing pipeline orchestrates all probing tools into a unified analysis:
 
@@ -352,11 +352,11 @@ report = run_campaign(
 | 5 | Adversarial thresholds | 10 | Where does each dimension break? |
 | 6 | Compositional testing | 12 | How do dimensions interact? |
 
-### 10.6.2 The Report as a Geometric Object
+### {{ch:adversarial-probing}}.6.2 The Report as a Geometric Object
 
 The `StructuralFuzzReport` returned by `run_campaign` is itself a geometric object. Its fields encode: a set of *points* in the (dimensions, MAE) plane (subset results), a *frontier* in this plane (Pareto-optimal configurations), a *vector* of importances (sensitivity profile), a *scalar* with supporting distribution (the MRI and its omega distribution), a set of *boundaries* in parameter space (adversarial thresholds), and a *path* through subset space (the compositional building sequence). Taken together, these define the geometric structure of the model's configuration space as explored by the probing campaign.
 
-### 10.6.3 Portability of the Framework
+### {{ch:adversarial-probing}}.6.3 Portability of the Framework
 
 The MRI/DRI mathematical structure is domain-agnostic. The specific transforms change, but the measurement protocol, aggregation formula, and diagnostic decomposition remain identical:
 
@@ -376,25 +376,25 @@ with $\omega$ computed as domain-appropriate distance between baseline and pertu
 
 ---
 
-## 10.7 Practical Considerations
+## {{ch:adversarial-probing}}.7 Practical Considerations
 
-### 10.7.1 Computational Budget
+### {{ch:adversarial-probing}}.7.1 Computational Budget
 
 A full DRI measurement with 9 transforms, 3 intensity levels, 50 chains, and 100 signals requires approximately 7,800 model evaluations. Three strategies reduce cost: subsample the corpus (if the profile is stable at $N = 20$, use 20); reduce the intensity grid (3 levels captures most curves); and parallelize (transform evaluations are embarrassingly parallel).
 
-### 10.7.2 Deterministic Seeding
+### {{ch:adversarial-probing}}.7.2 Deterministic Seeding
 
 All stochastic transforms are seeded from the input's content hash, ensuring identical perturbations across model comparisons and enabling differential analysis of model updates.
 
-### 10.7.3 Choosing the Distance Function
+### {{ch:adversarial-probing}}.7.3 Choosing the Distance Function
 
 The distance function must match the output space: $L^2$ norm for continuous outputs, semantic distance for classifications, edit distance for sequences. The DRI's graduated semantic distance is a general pattern for any classification domain where some errors are worse than others.
 
 ---
 
-## 10.8 Summary and Forward Connections
+## {{ch:adversarial-probing}}.8 Summary and Forward Connections
 
-### 10.8.1 What This Chapter Established
+### {{ch:adversarial-probing}}.8.1 What This Chapter Established
 
 This chapter developed the adversarial probing framework:
 
@@ -403,16 +403,16 @@ This chapter developed the adversarial probing framework:
 3. **Intensity sweeps and adversarial threshold search** for precise failure-boundary characterization.
 4. **Compositional testing** via greedy dimension-building and transform chains, revealing interaction effects.
 5. **The Decoder Robustness Index (DRI)** as MRI for signal-space perturbation with graduated semantic distance.
-6. **Topological analysis** of probe surfaces using persistent homology (Chapter 5).
+6. **Topological analysis** of probe surfaces using persistent homology (Chapter {{ch:topological-data-analysis}}).
 
-The unifying theme is the radar analogy: *the difference between "sent" and "received" encodes the structure of the system being probed*. Chapter 22 pushes the same idea one level further—from probing a model's *parameters* and *signals* to probing the *relation* it is evaluated on—introducing the **cross-relation generalization gap** (the relation-space analogue of §10.1.3's sensitivity gap) and **probe calibration** (the intensity-zero identity of §10.2, applied to the evaluation instrument itself).
+The unifying theme is the radar analogy: *the difference between "sent" and "received" encodes the structure of the system being probed*. Chapter {{ch:case-study-legal-embeddings}} pushes the same idea one level further—from probing a model's *parameters* and *signals* to probing the *relation* it is evaluated on—introducing the **cross-relation generalization gap** (the relation-space analogue of §10.1.3's sensitivity gap) and **probe calibration** (the intensity-zero identity of §10.2, applied to the evaluation instrument itself).
 
-### 10.8.2 Connection to Part III
+### {{ch:adversarial-probing}}.8.2 Connection to Part III
 
 Part III shifts from developing tools in isolation to deploying them in integrated systems. The probing framework is central:
 
-- **Chapter 11** applies probing to continuous monitoring, tracking how sensitivity fingerprints evolve and triggering alerts when adversarial thresholds drop.
-- **Chapter 12** integrates probing with pathfinding (Chapter 6), navigating from fragile to robust configurations along geodesics using the probe response surface as the cost function.
-- **Chapter 13** combines probing with multi-objective optimization, computing Pareto frontiers in the (MAE, DRI) plane to select configurations that are simultaneously accurate and robust.
+- **Chapter {{ch:subset-enumeration}}** applies probing to continuous monitoring, tracking how sensitivity fingerprints evolve and triggering alerts when adversarial thresholds drop.
+- **Chapter {{ch:compositional-testing}}** integrates probing with pathfinding (Chapter {{ch:pathfinding-on-manifolds}}), navigating from fragile to robust configurations along geodesics using the probe response surface as the cost function.
+- **Chapter {{ch:group-theoretic-augmentation}}** combines probing with multi-objective optimization, computing Pareto frontiers in the (MAE, DRI) plane to select configurations that are simultaneously accurate and robust.
 
 The transition from Part II to Part III mirrors the transition from constructing individual instruments to building an orchestra. Each instrument---subset enumeration, Pareto analysis, sensitivity profiling, MRI, adversarial probing, TDA---has been developed and tested in isolation. Part III teaches them to play together.

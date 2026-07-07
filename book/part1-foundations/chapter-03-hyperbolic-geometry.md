@@ -1,4 +1,4 @@
-# Chapter 3: Hyperbolic Geometry for Hierarchical Data
+# Chapter {{ch:hyperbolic-geometry}}: Hyperbolic Geometry for Hierarchical Data
 
 *Geometric Methods in Computational Modeling — Andrew H. Bond*
 
@@ -10,9 +10,9 @@ This chapter develops the Poincaré ball model from first principles, derives th
 
 ---
 
-## 3.1 Why Hyperbolic Space?
+## {{ch:hyperbolic-geometry}}.1 Why Hyperbolic Space?
 
-### 3.1.1 The Exponential Growth Problem
+### {{ch:hyperbolic-geometry}}.1.1 The Exponential Growth Problem
 
 Consider a complete binary tree of depth $d$. It contains $2^{d+1} - 1$ nodes and $2^d$ leaves. More generally, a $k$-ary tree of depth $d$ contains $\Theta(k^d)$ nodes. This exponential growth is not an inconvenience — it is the defining structural property of hierarchical data.
 
@@ -22,11 +22,11 @@ $$\alpha \cdot d_T(u,v) \;\leq\; d_X\bigl(f(u), f(v)\bigr) \;\leq\; \beta \cdot 
 
 The *distortion* of the embedding is $\beta / \alpha$. The celebrated result of Bourgain (1985) shows that any $n$-point metric space embeds into $\ell_2$ with distortion $O(\log n)$. But for trees the situation in Euclidean space is much worse.
 
-**Theorem 3.1 (Linial, London, and Rabinovich, 1995).** Any embedding of the complete binary tree of depth $d$ into $\mathbb{R}^k$ with the Euclidean metric incurs distortion $\Omega\!\bigl(\sqrt{\log n}\,\bigr)$ when $k$ is fixed, and achieving $O(1)$ distortion requires dimension $k = \Omega(n)$.
+**Theorem {{ch:hyperbolic-geometry}}.1 (Linial, London, and Rabinovich, 1995).** Any embedding of the complete binary tree of depth $d$ into $\mathbb{R}^k$ with the Euclidean metric incurs distortion $\Omega\!\bigl(\sqrt{\log n}\,\bigr)$ when $k$ is fixed, and achieving $O(1)$ distortion requires dimension $k = \Omega(n)$.
 
 The intuition is geometric. In $\mathbb{R}^k$, the volume of a ball of radius $r$ grows as $r^k$ — polynomially in $r$. A tree, however, has exponentially many nodes at distance $d$ from the root. No polynomial-growth space can accommodate exponential branching without either stretching nearby nodes apart or crushing distant nodes together.
 
-### 3.1.2 Exponential Volume Growth in Hyperbolic Space
+### {{ch:hyperbolic-geometry}}.1.2 Exponential Volume Growth in Hyperbolic Space
 
 Hyperbolic space $\mathbb{H}^k$ of constant sectional curvature $-1$ has a fundamentally different volume growth profile. The volume of a geodesic ball of radius $r$ in $\mathbb{H}^k$ satisfies:
 
@@ -34,15 +34,15 @@ $$\text{Vol}\bigl(B_r^{\mathbb{H}^k}\bigr) \;=\; \omega_{k-1} \int_0^r \sinh^{k-
 
 for large $r$, where $\omega_{k-1}$ is the volume of the unit $(k-1)$-sphere. The volume grows *exponentially* in the radius — exactly matching the branching pattern of trees.
 
-**Theorem 3.2 (Gromov, 1987; Sarkar, 2011).** Any finite tree with $n$ nodes and weighted edges embeds into the Poincaré disk $\mathbb{H}^2$ with distortion $1 + \varepsilon$ for any $\varepsilon > 0$, using only two dimensions.
+**Theorem {{ch:hyperbolic-geometry}}.2 (Gromov, 1987; Sarkar, 2011).** Any finite tree with $n$ nodes and weighted edges embeds into the Poincaré disk $\mathbb{H}^2$ with distortion $1 + \varepsilon$ for any $\varepsilon > 0$, using only two dimensions.
 
 This is a dramatic improvement: from $\Omega(n)$ dimensions in Euclidean space to just 2 in hyperbolic space, with arbitrarily low distortion. In practice, one works with moderate dimensions ($d \in [16, 64]$) and adjustable curvature to balance fidelity against numerical stability.
 
-### 3.1.3 The Poincaré Ball Model
+### {{ch:hyperbolic-geometry}}.1.3 The Poincaré Ball Model
 
 Among the five classical models of hyperbolic geometry (Poincaré ball, Poincaré half-space, Klein, hyperboloid, and hemisphere), the Poincaré ball is the most convenient for machine learning because it lives inside a bounded subset of $\mathbb{R}^d$ and thus interfaces cleanly with standard optimizers and neural network layers.
 
-**Definition 3.1 (Poincaré Ball).** For curvature parameter $c > 0$, the Poincaré ball of dimension $d$ is the open ball
+**Definition {{ch:hyperbolic-geometry}}.1 (Poincaré Ball).** For curvature parameter $c > 0$, the Poincaré ball of dimension $d$ is the open ball
 
 $$\mathbb{B}^d_c \;=\; \bigl\{\, x \in \mathbb{R}^d \;:\; c\,\|x\|^2 < 1 \,\bigr\}$$
 
@@ -54,13 +54,15 @@ where $g^E$ is the Euclidean metric and $\lambda_x^c$ is the *conformal factor*.
 
 The conformal factor $\lambda_x^c$ diverges as $\|x\| \to 1/\sqrt{c}$, meaning that distances near the boundary of the ball are enormously magnified — a small Euclidean step near the boundary corresponds to a large geodesic distance. This is precisely why exponentially many tree leaves can be packed near the boundary while maintaining their pairwise distances.
 
+> **Caution — exponential *count* is not exponential *metric*.** Hyperbolic space is the right home for data whose *metric* balls grow exponentially with radius. A structure whose element *count* grows exponentially under some generative rule is not automatically hyperbolic: repeated subdivision or rewriting can inflate the number of nodes while the graph stays Euclidean-leaning, or simply high-dimensional and non-manifold. Before embedding a graph in the Poincaré ball, test the hypothesis with controls — a tree (positive) and a torus (negative) — using a growth-law or Gromov-$\delta$ discriminator (Chapter {{ch:spectral-geometry-and-the-angular-basis}}). In the author's experiments, "tangled" model-response graphs that *looked* hyperbolic were, under controls, Euclidean-leaning high-dimensional non-manifolds, and the reframe was rejected. Reach for hyperbolic geometry when a control-validated test says the metric is negatively curved — not merely because something grows fast.
+
 ---
 
-## 3.2 Core Operations on the Poincaré Ball
+## {{ch:hyperbolic-geometry}}.2 Core Operations on the Poincaré Ball
 
 All practical algorithms on $\mathbb{B}^d_c$ reduce to five operations: Möbius addition, geodesic distance, the exponential map, the logarithmic map, and projection back into the ball. We derive each in turn and provide numerically stable implementations.
 
-### 3.2.1 Möbius Addition
+### {{ch:hyperbolic-geometry}}.2.1 Möbius Addition
 
 The group operation on $\mathbb{B}^d_c$ generalizes vector addition. For $x, y \in \mathbb{B}^d_c$, the *Möbius addition* is:
 
@@ -104,9 +106,9 @@ class PoincareBall:
         return self.project(numerator / denominator)
 ```
 
-The final `project` call (Section 3.2.5) ensures the result remains inside the ball even under floating-point error.
+The final `project` call (Section {{ch:hyperbolic-geometry}}.2.5) ensures the result remains inside the ball even under floating-point error.
 
-### 3.2.2 Geodesic Distance
+### {{ch:hyperbolic-geometry}}.2.2 Geodesic Distance
 
 The geodesic distance between two points $x, y \in \mathbb{B}^d_c$ has a closed form in terms of Möbius addition:
 
@@ -133,9 +135,9 @@ Since $\text{arctanh}(z) = \frac{1}{2}\ln\!\bigl(\frac{1+z}{1-z}\bigr)$, the dis
         return (2.0 / sqrt_c) * torch.atanh(arg)
 ```
 
-**Remark 3.1.** The clamping of the `arctanh` argument is essential. Without it, points at the boundary produce `arctanh(1) = ∞`, which propagates `NaN` through all subsequent gradients. The choice of `1 - EPS` with `EPS = 1e-5` provides a good balance between numerical range and stability.
+**Remark {{ch:hyperbolic-geometry}}.1.** The clamping of the `arctanh` argument is essential. Without it, points at the boundary produce `arctanh(1) = ∞`, which propagates `NaN` through all subsequent gradients. The choice of `1 - EPS` with `EPS = 1e-5` provides a good balance between numerical range and stability.
 
-### 3.2.3 Exponential Map
+### {{ch:hyperbolic-geometry}}.2.3 Exponential Map
 
 The exponential map $\exp_x^c: T_x\mathbb{B}^d_c \to \mathbb{B}^d_c$ takes a point $x$ on the manifold and a tangent vector $v \in T_x\mathbb{B}^d_c$ and returns the point reached by following the geodesic from $x$ in direction $v$ for unit time:
 
@@ -174,7 +176,7 @@ where $\lambda_x^c = \frac{2}{1 - c\|x\|^2}$ is the conformal factor at $x$.
 
 The exponential map is the primary mechanism by which gradient updates in tangent space (which is Euclidean and compatible with standard optimizers like Adam) are transferred onto the manifold.
 
-### 3.2.4 Logarithmic Map
+### {{ch:hyperbolic-geometry}}.2.4 Logarithmic Map
 
 The logarithmic map $\log_x^c: \mathbb{B}^d_c \to T_x\mathbb{B}^d_c$ is the inverse of the exponential map. Given two points $x, y \in \mathbb{B}^d_c$, it returns the tangent vector at $x$ pointing toward $y$ whose magnitude equals the geodesic distance:
 
@@ -209,7 +211,7 @@ $$\log_x^c(y) \;=\; \frac{2}{\sqrt{c}\,\lambda_x^c}\,\text{arctanh}\!\bigl(\sqrt
 
 Together, the exponential and logarithmic maps provide a *Riemannian optimization* workflow: parameters live on the manifold, gradients are computed in the ambient Euclidean space, retracted to the tangent space via the Riemannian metric, and then mapped back to the manifold via $\exp_x^c$.
 
-### 3.2.5 Projection onto the Ball
+### {{ch:hyperbolic-geometry}}.2.5 Projection onto the Ball
 
 Floating-point arithmetic can push points outside the open ball. Since operations on $\mathbb{B}^d_c$ are undefined for $c\|x\|^2 \geq 1$, we must project points back inside:
 
@@ -236,17 +238,17 @@ The choice of $r_{\max} = 0.95$ deserves comment. Setting it too close to 1 risk
 
 ---
 
-## 3.3 Embedding Taxonomies
+## {{ch:hyperbolic-geometry}}.3 Embedding Taxonomies
 
 We now apply the Poincaré ball to a concrete task: embedding a biological taxonomy so that taxonomic distance is faithfully represented by geodesic distance.
 
-### 3.3.1 Problem Setup
+### {{ch:hyperbolic-geometry}}.3.1 Problem Setup
 
 Let $\mathcal{T}$ be a taxonomy (a rooted tree) with $n$ species. Define the *taxonomic distance matrix* $D \in \mathbb{R}^{n \times n}$ where $D_{ij}$ is the number of edges on the path from species $i$ to species $j$ in $\mathcal{T}$. Our goal is to find an embedding $f: \{1, \ldots, n\} \to \mathbb{B}^d_c$ that minimizes the stress:
 
 $$\mathcal{L} \;=\; \sum_{i < j} \Bigl(d_c\bigl(f(i), f(j)\bigr) - D_{ij}\Bigr)^2$$
 
-### 3.3.2 Spectral Initialization
+### {{ch:hyperbolic-geometry}}.3.2 Spectral Initialization
 
 Random initialization in hyperbolic space converges slowly and often gets trapped in poor local minima. A spectral initialization based on the Gaussian kernel over $D$ provides a much better starting point.
 
@@ -305,7 +307,7 @@ def spectral_init(distance_matrix: np.ndarray, dim: int = 2,
     return coords
 ```
 
-### 3.3.3 Example: Cetacean Taxonomy
+### {{ch:hyperbolic-geometry}}.3.3 Example: Cetacean Taxonomy
 
 To make this concrete, consider embedding a small cetacean taxonomy. The order Cetacea splits into Mysticeti (baleen whales) and Odontoceti (toothed whales). Under Mysticeti we have families like Balaenopteridae (rorquals: blue whale, humpback) and Balaenidae (right whales: bowhead). Under Odontoceti we have Delphinidae (dolphins: bottlenose, orca) and Phocoenidae (porpoises: harbor porpoise).
 
@@ -315,11 +317,11 @@ This "onion-like" structure — general concepts near the center, specific insta
 
 ---
 
-## 3.4 Hyperbolic Multinomial Logistic Regression
+## {{ch:hyperbolic-geometry}}.4 Hyperbolic Multinomial Logistic Regression
 
 Having embedded data into the Poincaré ball, we need classifiers that operate natively in hyperbolic space. Ganea et al. (2018) showed that the standard multinomial logistic regression (MLR) generalizes naturally to the Poincaré ball.
 
-### 3.4.1 From Euclidean to Hyperbolic
+### {{ch:hyperbolic-geometry}}.4.1 From Euclidean to Hyperbolic
 
 In Euclidean MLR, the logit for class $k$ is $\langle a_k, x \rangle + b_k$, which measures signed distance from $x$ to the hyperplane $\{z : \langle a_k, z \rangle + b_k = 0\}$. In hyperbolic space, hyperplanes are replaced by *geodesic hyperplanes* (totally geodesic submanifolds of codimension 1), and signed distance to such a hyperplane takes the form:
 
@@ -329,7 +331,7 @@ where $p_k \in \mathbb{B}^d_c$ is the *prototype* for class $k$ and $a_k \in T_{
 
 In practice, a simpler distance-based formulation often works as well or better:
 
-### 3.4.2 Prototype-Based Classification
+### {{ch:hyperbolic-geometry}}.4.2 Prototype-Based Classification
 
 For each class $k$, learn a prototype $p_k \in \mathbb{B}^d_c$ and a temperature $\tau_k > 0$. The logit for class $k$ is the negative scaled geodesic distance:
 
@@ -402,11 +404,11 @@ A key design choice: prototypes are *parameterized in the tangent space at the o
 
 ---
 
-## 3.5 Hyperbolic Rule Encoding
+## {{ch:hyperbolic-geometry}}.5 Hyperbolic Rule Encoding
 
 The most sophisticated application of hyperbolic geometry in this book comes from the ARC-AGI system, where hyperbolic space is used to encode *rules* — the discrete transformation programs that map input grids to output grids. The key insight is that rules have natural hierarchical structure: general rules (e.g., "apply color mapping") subsume specific sub-rules (e.g., "map red to blue in the upper-left quadrant"), forming a tree of increasing specificity.
 
-### 3.5.1 Architecture
+### {{ch:hyperbolic-geometry}}.5.1 Architecture
 
 The `HyperbolicRuleEncoder` is a neural module that maps from a Euclidean latent space $\mathbb{R}^m$ (produced by an upstream encoder) to the Poincaré ball $\mathbb{B}^d_c$:
 
@@ -490,7 +492,7 @@ class HyperbolicRuleEncoder(nn.Module):
         return self.ball.distance(origin, h)
 ```
 
-### 3.5.2 Interpreting the Embedding
+### {{ch:hyperbolic-geometry}}.5.2 Interpreting the Embedding
 
 The `HyperbolicRuleEncoder` exploits three properties of the Poincaré ball:
 
@@ -504,7 +506,7 @@ $$d_c(\mathbf{0}, h) \;=\; \frac{2}{\sqrt{c}}\,\text{arctanh}\!\bigl(\sqrt{c}\,\
 
 3. **Exponential packing capacity.** Because the volume of the ball grows exponentially near the boundary, there is room for exponentially many specific rules without crowding. A single general rule near the center can have $2^k$ specialized descendants at depth $k$, all well-separated.
 
-### 3.5.3 Training Signal
+### {{ch:hyperbolic-geometry}}.5.3 Training Signal
 
 The encoder is trained end-to-end with the downstream task. The loss typically includes:
 
@@ -517,11 +519,11 @@ $$\mathcal{L}_{\text{hier}} \;=\; \sum_{(r, r') \in \text{parent-child}} \max\bi
 
 ---
 
-## 3.6 Einstein Midpoint for Aggregation
+## {{ch:hyperbolic-geometry}}.6 Einstein Midpoint for Aggregation
 
 A recurring operation in hyperbolic neural networks is *weighted averaging* — computing the centroid of a set of points on the ball. The Euclidean weighted mean $\bar{x} = \sum_i w_i x_i / \sum_i w_i$ does not generalize directly because $\mathbb{B}^d_c$ is not a vector space.
 
-### 3.6.1 Derivation
+### {{ch:hyperbolic-geometry}}.6.1 Derivation
 
 The *Einstein midpoint* provides a principled solution. It arises from the Klein model of hyperbolic geometry (which has straight-line geodesics) and can be transferred to the Poincaré ball model.
 
@@ -535,7 +537,7 @@ $$\gamma_c(x) \;=\; \frac{1}{1 - c\,\|x\|^2}$$
 
 The Lorentz factor upweights points near the boundary, which is geometrically correct: points near the boundary of the Poincaré ball are "further out" in the actual hyperbolic space, and their positions should contribute more strongly to the midpoint computation to avoid the midpoint being biased toward the origin.
 
-**Proposition 3.1.** The Einstein midpoint of a set of points in $\mathbb{B}^d_c$ lies in $\mathbb{B}^d_c$ (i.e., the formula is closed), and it reduces to the Euclidean weighted mean in the limit $c \to 0$.
+**Proposition {{ch:hyperbolic-geometry}}.1.** The Einstein midpoint of a set of points in $\mathbb{B}^d_c$ lies in $\mathbb{B}^d_c$ (i.e., the formula is closed), and it reduces to the Euclidean weighted mean in the limit $c \to 0$.
 
 *Proof sketch.* By convexity of the open ball and the fact that the $\gamma$-weighted combination is a convex combination (all $\gamma_i w_i \geq 0$ and we normalize by their sum), the result lies in the convex hull of the $x_i$, which is contained in $\mathbb{B}^d_c$. The limit $c \to 0$ sends all $\gamma_i \to 1$, recovering the Euclidean formula. $\square$
 
@@ -574,7 +576,7 @@ The Lorentz factor upweights points near the boundary, which is geometrically co
         return self.project(midpoint)
 ```
 
-### 3.6.2 Application: Aggregating Rule Embeddings
+### {{ch:hyperbolic-geometry}}.6.2 Application: Aggregating Rule Embeddings
 
 In the ARC-AGI system, a single input-output example may activate multiple candidate rules. The Einstein midpoint aggregates their hyperbolic representations into a single summary vector:
 
@@ -607,7 +609,7 @@ The attention weights typically come from a cross-attention mechanism that score
 
 ---
 
-## 3.7 Numerical Considerations and Best Practices
+## {{ch:hyperbolic-geometry}}.7 Numerical Considerations and Best Practices
 
 Working with hyperbolic embeddings introduces numerical challenges that do not arise in Euclidean models. We summarize the key lessons:
 
@@ -625,7 +627,7 @@ Working with hyperbolic embeddings introduces numerical challenges that do not a
 
 ---
 
-## 3.8 Summary and Connections
+## {{ch:hyperbolic-geometry}}.8 Summary and Connections
 
 Hyperbolic geometry provides a mathematically principled framework for representing hierarchical data in continuous space. The Poincaré ball model offers:
 
@@ -635,11 +637,11 @@ Hyperbolic geometry provides a mathematically principled framework for represent
 
 We saw three applications:
 
-- *Taxonomy embedding* (Section 3.3): encoding species trees with spectral initialization and stress minimization.
-- *Hyperbolic MLR* (Section 3.4): prototype-based classification using geodesic distance as the logit.
-- *Hyperbolic rule encoding* (Section 3.5): mapping program synthesis rules to the Poincaré ball so that general rules sit near the center and specific sub-rules fan out toward the boundary.
+- *Taxonomy embedding* (Section {{ch:hyperbolic-geometry}}.3): encoding species trees with spectral initialization and stress minimization.
+- *Hyperbolic MLR* (Section {{ch:hyperbolic-geometry}}.4): prototype-based classification using geodesic distance as the logit.
+- *Hyperbolic rule encoding* (Section {{ch:hyperbolic-geometry}}.5): mapping program synthesis rules to the Poincaré ball so that general rules sit near the center and specific sub-rules fan out toward the boundary.
 
-The Einstein midpoint (Section 3.6) provides the aggregation primitive needed to combine multiple hyperbolic representations — a building block we will use extensively in Part II when we develop hyperbolic attention mechanisms and tree-structured decoders.
+The Einstein midpoint (Section {{ch:hyperbolic-geometry}}.6) provides the aggregation primitive needed to combine multiple hyperbolic representations — a building block we will use extensively in Part II when we develop hyperbolic attention mechanisms and tree-structured decoders.
 
 In the next chapter, we turn to *product manifolds* — spaces formed by taking Cartesian products of Euclidean, hyperbolic, and spherical components. These mixed-curvature spaces can simultaneously capture hierarchical, flat, and cyclical structure in a single embedding, extending the ideas of this chapter to data with heterogeneous geometric character.
 

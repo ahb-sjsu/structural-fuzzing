@@ -1,17 +1,17 @@
-# Chapter 18: Deploying Geometric Validation in Production
+# Chapter {{ch:production-deployment}}: Deploying Geometric Validation in Production
 
 > *"What gets measured gets managed---but only if it gets measured automatically, continuously, and with enough dimensionality to detect the failures that matter."*
 > --- Adapted from Peter Drucker
 
-The geometric methods developed across Chapters 3--15 and composed into pipelines in Chapter 16 are powerful precisely because they replace scalar summaries with multi-dimensional analysis. But power in a notebook is not the same as power in production. A geometric validation that runs manually once per quarter provides a snapshot; a geometric validation that runs on every pull request, monitors every deployed model, and alerts on every frontier degradation provides a *system*. This chapter bridges the gap between the two.
+The geometric methods developed across Chapters {{ch:hyperbolic-geometry}}--15 and composed into pipelines in Chapter {{ch:geometric-pipelines}} are powerful precisely because they replace scalar summaries with multi-dimensional analysis. But power in a notebook is not the same as power in production. A geometric validation that runs manually once per quarter provides a snapshot; a geometric validation that runs on every pull request, monitors every deployed model, and alerts on every frontier degradation provides a *system*. This chapter bridges the gap between the two.
 
-We begin with the mechanics of integrating the `structural-fuzzing` package into CI/CD pipelines as a PyPI dependency. We then develop automated regression testing against MRI thresholds (Chapter 9), monitoring of Pareto frontier stability over time, and alerting when geometric baselines degrade. The middle sections address the engineering concerns that distinguish production from research: performance budgets, timeout handling, and designing `evaluate_fn` for models that live behind API endpoints. We close with LaTeX report generation for stakeholder communication and the versioning of geometric baselines---the production analog of the "save your weights" practice in model training.
+We begin with the mechanics of integrating the `structural-fuzzing` package into CI/CD pipelines as a PyPI dependency. We then develop automated regression testing against MRI thresholds (Chapter {{ch:adversarial-robustness}}), monitoring of Pareto frontier stability over time, and alerting when geometric baselines degrade. The middle sections address the engineering concerns that distinguish production from research: performance budgets, timeout handling, and designing `evaluate_fn` for models that live behind API endpoints. We close with LaTeX report generation for stakeholder communication and the versioning of geometric baselines---the production analog of the "save your weights" practice in model training.
 
 ---
 
-## 18.1 The structural-fuzzing Package as a Production Dependency
+## {{ch:production-deployment}}.1 The structural-fuzzing Package as a Production Dependency
 
-### 18.1.1 Installation and Pinning
+### {{ch:production-deployment}}.1.1 Installation and Pinning
 
 The `structural-fuzzing` package is published on PyPI and requires Python 3.10 or later. Its only hard dependency is NumPy (>= 1.24). This minimal dependency footprint is a deliberate design decision: a validation tool that drags in a hundred transitive dependencies becomes a liability in production environments where dependency conflicts are a constant source of breakage.
 
@@ -33,7 +33,7 @@ pip install structural-fuzzing==0.2.0 --index-url https://pypi.internal.corp.exa
 
 The optional `examples` extras (`scikit-learn`, `pandas`) are development conveniences and should not be installed in production images. If your `evaluate_fn` requires scikit-learn, that dependency belongs in your application's dependency list, not in the validation tool's.
 
-### 18.1.2 Import Patterns for Production Code
+### {{ch:production-deployment}}.1.2 Import Patterns for Production Code
 
 In production systems, import the pipeline entry point and the report types directly:
 
@@ -48,9 +48,9 @@ Avoid star imports. Avoid importing the entire `structural_fuzzing` namespace. E
 
 ---
 
-## 18.2 Integrating Structural Fuzzing into CI/CD Pipelines
+## {{ch:production-deployment}}.2 Integrating Structural Fuzzing into CI/CD Pipelines
 
-### 18.2.1 The Baseline CI Configuration
+### {{ch:production-deployment}}.2.1 The Baseline CI Configuration
 
 The project's own CI pipeline (`.github/workflows/ci.yaml`) provides the template. It runs tests across Python 3.10--3.13, installs in editable mode with dev extras, and runs `pytest` with coverage. A production integration extends this pattern by adding a *validation job* that runs structural fuzzing against the model under test.
 
@@ -103,13 +103,13 @@ jobs:
 
 Three design decisions merit attention.
 
-**The `schedule` trigger.** Structural fuzzing on every commit is often too expensive. The workflow above runs the full campaign weekly on a schedule, while PR-triggered runs execute a lighter check (Section 18.4). The scheduled run establishes the baseline; PR runs check for regressions against it.
+**The `schedule` trigger.** Structural fuzzing on every commit is often too expensive. The workflow above runs the full campaign weekly on a schedule, while PR-triggered runs execute a lighter check (Section {{ch:production-deployment}}.4). The scheduled run establishes the baseline; PR runs check for regressions against it.
 
-**The `timeout-minutes` limit.** Production CI must have a hard upper bound on execution time. A campaign that runs indefinitely---because an `evaluate_fn` hangs, because a combinatorial explosion was not anticipated---blocks the pipeline and erodes trust in the validation system. Section 18.5 discusses timeout handling in detail.
+**The `timeout-minutes` limit.** Production CI must have a hard upper bound on execution time. A campaign that runs indefinitely---because an `evaluate_fn` hangs, because a combinatorial explosion was not anticipated---blocks the pipeline and erodes trust in the validation system. Section {{ch:production-deployment}}.5 discusses timeout handling in detail.
 
-**Artifact retention.** Campaign results are uploaded as CI artifacts with a 90-day retention window. This creates a versioned history of geometric baselines that can be compared over time (Section 18.8).
+**Artifact retention.** Campaign results are uploaded as CI artifacts with a 90-day retention window. This creates a versioned history of geometric baselines that can be compared over time (Section {{ch:production-deployment}}.8).
 
-### 18.2.2 The Validation Script
+### {{ch:production-deployment}}.2.2 The Validation Script
 
 The `run_validation.py` script is the bridge between the CI environment and the structural fuzzing API. Its structure follows the `run_campaign` function signature from `structural_fuzzing.pipeline`:
 
@@ -182,11 +182,11 @@ The critical design element is the serialization of structured results to JSON. 
 
 ---
 
-## 18.3 Automated Regression Testing with MRI Thresholds
+## {{ch:production-deployment}}.3 Automated Regression Testing with MRI Thresholds
 
-### 18.3.1 Defining Threshold Policies
+### {{ch:production-deployment}}.3.1 Defining Threshold Policies
 
-The Model Robustness Index (Chapter 9) compresses the perturbation response distribution into a single score that explicitly accounts for tail risk. In production, this score becomes a *gate*: if the MRI exceeds a threshold, the pipeline fails and the change does not merge.
+The Model Robustness Index (Chapter {{ch:adversarial-robustness}}) compresses the perturbation response distribution into a single score that explicitly accounts for tail risk. In production, this score becomes a *gate*: if the MRI exceeds a threshold, the pipeline fails and the change does not merge.
 
 A threshold policy specifies acceptable bounds on the campaign results:
 
@@ -206,11 +206,11 @@ class ThresholdPolicy:
     max_sensitivity_delta: float = 5.0
 ```
 
-The `max_mri` threshold deserves careful calibration. An MRI of 2.0 means the weighted combination of mean deviation, 75th percentile, and 95th percentile is at most 2.0---the model's error roughly doubles under the worst perturbations seen during validation. Whether this is acceptable depends on the domain. For a defect prediction model that informs code review priorities, an MRI of 2.0 may be fine. For a model that triggers automated security responses, an MRI above 1.0 may be unacceptable. Chapter 9 provides guidance on setting these thresholds based on domain-specific risk tolerance.
+The `max_mri` threshold deserves careful calibration. An MRI of 2.0 means the weighted combination of mean deviation, 75th percentile, and 95th percentile is at most 2.0---the model's error roughly doubles under the worst perturbations seen during validation. Whether this is acceptable depends on the domain. For a defect prediction model that informs code review priorities, an MRI of 2.0 may be fine. For a model that triggers automated security responses, an MRI above 1.0 may be unacceptable. Chapter {{ch:adversarial-robustness}} provides guidance on setting these thresholds based on domain-specific risk tolerance.
 
 The `max_mri_p95` threshold independently bounds the tail of the perturbation distribution. A model can have a low composite MRI (because the mean is low) while still exhibiting catastrophic behavior in the worst 5% of perturbations. Bounding P95 separately catches this case.
 
-### 18.3.2 The Threshold Checker
+### {{ch:production-deployment}}.3.2 The Threshold Checker
 
 The `check_thresholds.py` script loads the JSON results and applies the policy:
 
@@ -281,7 +281,7 @@ if __name__ == "__main__":
 
 The exit code is the contract with the CI system: zero means pass, non-zero means fail. When `check_thresholds.py` exits with code 1, the GitHub Actions step fails, the PR check turns red, and the change cannot merge without an explicit override.
 
-### 18.3.3 Baseline Comparison Mode
+### {{ch:production-deployment}}.3.3 Baseline Comparison Mode
 
 Threshold checking against fixed constants is a starting point. The more powerful mode compares against a *previous baseline*:
 
@@ -334,11 +334,11 @@ The 20% MRI degradation tolerance and 10% MAE tolerance are configurable paramet
 
 ---
 
-## 18.4 Designing evaluate_fn for Production Models
+## {{ch:production-deployment}}.4 Designing evaluate_fn for Production Models
 
-### 18.4.1 The Contract
+### {{ch:production-deployment}}.4.1 The Contract
 
-The `run_campaign` function (Chapter 16) requires a single callable with the signature:
+The `run_campaign` function (Chapter {{ch:geometric-pipelines}}) requires a single callable with the signature:
 
 ```python
 evaluate_fn: Callable[[np.ndarray], tuple[float, dict[str, float]]]
@@ -348,7 +348,7 @@ The function takes a parameter vector (a NumPy array of length $n$, where $n$ is
 
 In research, `evaluate_fn` typically wraps a scikit-learn model and a local dataset. In production, the model may live behind a gRPC endpoint, the dataset may be sampled from a data warehouse, and the function must handle network failures, authentication, and rate limits.
 
-### 18.4.2 Wrapping a Production Model
+### {{ch:production-deployment}}.4.2 Wrapping a Production Model
 
 The following pattern wraps a model served via HTTP:
 
@@ -433,9 +433,9 @@ Three aspects of this implementation matter for production reliability.
 
 **Rate limit handling.** Production model endpoints often enforce rate limits. The `429` handler respects the `Retry-After` header, adapting to the server's back-pressure signal.
 
-**Timeout per request.** The `timeout_seconds` parameter bounds individual evaluations. This is distinct from the campaign-level timeout (Section 18.5) which bounds the entire run.
+**Timeout per request.** The `timeout_seconds` parameter bounds individual evaluations. This is distinct from the campaign-level timeout (Section {{ch:production-deployment}}.5) which bounds the entire run.
 
-### 18.4.3 Caching Evaluations
+### {{ch:production-deployment}}.4.3 Caching Evaluations
 
 Structural fuzzing explores many parameter configurations, and some may be evaluated more than once (e.g., the all-dimensions baseline appears in both subset enumeration and MRI computation). Caching eliminates redundant evaluations:
 
@@ -468,9 +468,9 @@ The rounding in the cache key prevents floating-point drift from defeating cache
 
 ---
 
-## 18.5 Performance Budgets and Timeout Handling
+## {{ch:production-deployment}}.5 Performance Budgets and Timeout Handling
 
-### 18.5.1 Estimating Campaign Cost
+### {{ch:production-deployment}}.5.1 Estimating Campaign Cost
 
 A structural fuzzing campaign's computational cost is determined by the number of `evaluate_fn` calls, which depends on the configuration:
 
@@ -492,7 +492,7 @@ For the default configuration with $n = 5$ dimensions, $K = 4$, $N_\text{pert} =
 
 Total: roughly 104,000 evaluations. If each evaluation takes 10 milliseconds, the campaign completes in about 17 minutes. If each evaluation takes 1 second (typical for a model behind an API), the campaign would take nearly 29 hours---far too long for CI.
 
-### 18.5.2 Budgeting Strategies
+### {{ch:production-deployment}}.5.2 Budgeting Strategies
 
 The solution is to adjust campaign parameters to fit a time budget:
 
@@ -553,7 +553,7 @@ def budget_campaign_params(
 
 The 60/30/10 split prioritizes subset enumeration (the most informative phase) and MRI (the most operationally relevant). Sensitivity profiling and adversarial search are cheap and run unconditionally.
 
-### 18.5.3 Campaign-Level Timeouts
+### {{ch:production-deployment}}.5.3 Campaign-Level Timeouts
 
 Beyond budgeting, a hard timeout prevents runaway campaigns:
 
@@ -597,9 +597,9 @@ When the timeout fires, the `CampaignTimeoutError` propagates up, the CI step fa
 
 ---
 
-## 18.6 Monitoring Model Robustness Over Time
+## {{ch:production-deployment}}.6 Monitoring Model Robustness Over Time
 
-### 18.6.1 The Robustness Time Series
+### {{ch:production-deployment}}.6.1 The Robustness Time Series
 
 A single MRI value is a snapshot. A *time series* of MRI values, collected weekly or after every model retrain, reveals trends that no individual measurement can capture. Is the model becoming more brittle as the data distribution shifts? Is robustness improving as the training pipeline matures? These questions require longitudinal data.
 
@@ -676,7 +676,7 @@ def compute_trend(
 
 The `slope` field is the key signal. A consistently positive MRI slope means robustness is degrading over time---even if each individual measurement is still below the absolute threshold. Catching a *trend* before it crosses a *threshold* is the difference between proactive maintenance and firefighting.
 
-### 18.6.2 Alerting on Pareto Frontier Degradation
+### {{ch:production-deployment}}.6.2 Alerting on Pareto Frontier Degradation
 
 The Pareto frontier is a more nuanced robustness signal than MRI alone. A frontier with four non-dominated points at model version $v$ that collapses to two points at version $v+1$ indicates that the model has lost diversity in its accuracy-simplicity tradeoffs---even if the best MAE is unchanged.
 
@@ -748,7 +748,7 @@ def check_frontier_degradation(
 
 The 85% threshold means the frontier's dominated area must remain within 15% of the baseline. This is a *relative* check, not absolute, which makes it robust to differences in scale across models.
 
-### 18.6.3 Integration with Monitoring Infrastructure
+### {{ch:production-deployment}}.6.3 Integration with Monitoring Infrastructure
 
 For teams that use Prometheus, Datadog, or similar observability platforms, campaign results can be exported as custom metrics:
 
@@ -783,9 +783,9 @@ The flat metric dictionary integrates with any monitoring backend. A Grafana das
 
 ---
 
-## 18.7 Interpreting Results in Automated Contexts
+## {{ch:production-deployment}}.7 Interpreting Results in Automated Contexts
 
-### 18.7.1 The Interpretation Problem
+### {{ch:production-deployment}}.7.1 The Interpretation Problem
 
 In a notebook, a practitioner reads the campaign report, examines the Pareto frontier, and makes a judgment. In CI, there is no practitioner---only a pass/fail gate. The gap between rich geometric output and binary CI decisions is bridged by *interpretation rules*: codified heuristics that translate multi-dimensional results into actionable signals.
 
@@ -872,7 +872,7 @@ def interpret_campaign(results: dict) -> list[dict]:
 
 Each finding includes a severity level, the metric that triggered it, the raw value, and a human-readable message. The message is written for automated Slack notifications or PR comments, not for geometric experts---it explains the *implication* of the value, not the mathematical definition.
 
-### 18.7.2 PR Comments from CI
+### {{ch:production-deployment}}.7.2 PR Comments from CI
 
 GitHub Actions can post findings directly as PR comments, making geometric validation visible in the developer workflow:
 
@@ -917,9 +917,9 @@ This closes the feedback loop: the developer who changed the model sees the geom
 
 ---
 
-## 18.8 LaTeX Report Generation for Stakeholders
+## {{ch:production-deployment}}.8 LaTeX Report Generation for Stakeholders
 
-### 18.8.1 The Reporting Pipeline
+### {{ch:production-deployment}}.8.1 The Reporting Pipeline
 
 Not every consumer of geometric validation results is a developer reading PR comments. Model governance boards, regulatory reviewers, and academic collaborators expect formatted reports with tables, captions, and proper typesetting. The `format_latex_tables` function in `structural_fuzzing.report` generates publication-ready LaTeX directly from campaign results.
 
@@ -970,7 +970,7 @@ for the theoretical basis of Pareto analysis in this context.
 \end{document}
 ```
 
-### 18.8.2 Automating Report Generation in CI
+### {{ch:production-deployment}}.8.2 Automating Report Generation in CI
 
 The CI pipeline can produce compiled PDFs by adding a LaTeX compilation step:
 
@@ -996,9 +996,9 @@ The compiled PDF is available as a downloadable artifact. For organizations that
 
 ---
 
-## 18.9 Versioning Geometric Baselines
+## {{ch:production-deployment}}.9 Versioning Geometric Baselines
 
-### 18.9.1 The Baseline Problem
+### {{ch:production-deployment}}.9.1 The Baseline Problem
 
 A regression check requires a baseline to regress against. Where does the baseline come from? Who updates it? What happens when the model architecture changes and the old baseline is no longer comparable?
 
@@ -1039,7 +1039,7 @@ def promote_baseline(
     print(f"Promoted {campaign_results_path} to {baseline_path}")
 ```
 
-### 18.9.2 Schema Versioning
+### {{ch:production-deployment}}.9.2 Schema Versioning
 
 As the structural fuzzing framework evolves, the JSON schema of campaign results may change. A `schema_version` field in every results file prevents silent incompatibilities:
 
@@ -1073,7 +1073,7 @@ def load_results(path: str) -> dict:
 
 When the schema changes, the loader raises an explicit error rather than silently misinterpreting fields. This is the geometric analog of the "your saved model is incompatible with this version of the framework" error that every ML practitioner has encountered.
 
-### 18.9.3 Baseline Branching for A/B Tests
+### {{ch:production-deployment}}.9.3 Baseline Branching for A/B Tests
 
 When multiple model variants are under evaluation simultaneously (A/B tests, champion/challenger deployments), each variant needs its own baseline:
 
@@ -1109,7 +1109,7 @@ The fallback to the champion baseline ensures that new variants are compared aga
 
 ---
 
-## 18.10 A Complete Production Integration Example
+## {{ch:production-deployment}}.10 A Complete Production Integration Example
 
 Bringing the pieces together, the following is a complete GitHub Actions workflow for a team that deploys a defect prediction model weekly, runs structural fuzzing on every PR and nightly, and generates PDF reports for the model governance board:
 
@@ -1202,15 +1202,15 @@ This workflow embodies the production deployment principles developed throughout
 
 ---
 
-## 18.11 Operational Considerations
+## {{ch:production-deployment}}.11 Operational Considerations
 
-### 18.11.1 Flaky Evaluations
+### {{ch:production-deployment}}.11.1 Flaky Evaluations
 
 Production `evaluate_fn` implementations are subject to non-determinism: stochastic models produce different outputs on each call, data sampling introduces variance, and network latency adds noise. A campaign that fails on Monday and passes on Tuesday---with no code changes---erodes trust in the validation system.
 
 The mitigation is to run the MRI computation with enough perturbations to produce stable statistics (at least 200; 300 is the default) and to set thresholds with headroom. If the MRI consistently measures 1.4 and the threshold is 1.5, a noisy evaluation will occasionally cross the boundary. Setting the threshold at 2.0 provides operational margin while still catching genuine regressions.
 
-### 18.11.2 Secrets Management
+### {{ch:production-deployment}}.11.2 Secrets Management
 
 The `evaluate_fn` for a production model endpoint requires API keys, database credentials, or service account tokens. These must never appear in CI logs, workflow files, or campaign results.
 
@@ -1226,13 +1226,13 @@ Store secrets in the CI platform's secret store (GitHub Actions secrets, GitLab 
 
 The validation script reads from `os.environ`, never from configuration files that might be committed.
 
-### 18.11.3 Resource Isolation
+### {{ch:production-deployment}}.11.3 Resource Isolation
 
 A structural fuzzing campaign that evaluates 100,000+ parameter configurations exerts sustained load on the model serving infrastructure. In production, this load should be directed at a *staging* or *shadow* replica, not at the production endpoint serving live traffic. The CI workflow should configure `evaluate_fn` to point at the staging environment, which is the same model version but isolated from production traffic.
 
 ---
 
-## 18.12 Summary
+## {{ch:production-deployment}}.12 Summary
 
 Deploying geometric validation in production transforms it from an analytical technique into an engineering system. The key components are:
 
@@ -1252,10 +1252,10 @@ Deploying geometric validation in production transforms it from an analytical te
 
 8. **Baseline versioning.** Schema-versioned JSON baselines, archived on promotion, enable longitudinal comparison and A/B test support.
 
-The system described in this chapter does not require any changes to the model itself. It operates entirely on the `evaluate_fn` interface established in Chapter 16: give the framework a callable that maps parameter vectors to errors, and it will quantify robustness, identify fragilities, and enforce quality gates---automatically, repeatedly, and with full geometric fidelity.
+The system described in this chapter does not require any changes to the model itself. It operates entirely on the `evaluate_fn` interface established in Chapter {{ch:geometric-pipelines}}: give the framework a callable that maps parameter vectors to errors, and it will quantify robustness, identify fragilities, and enforce quality gates---automatically, repeatedly, and with full geometric fidelity.
 
 ---
 
-## 18.13 Connection to Chapter 19
+## {{ch:production-deployment}}.13 Connection to Chapter {{ch:case-study-defect-prediction}}
 
-This chapter treated the `evaluate_fn` as a black box: given a parameter vector, it returns a scalar error and a dictionary of named components. Chapter 19 opens the black box. It examines how geometric validation interacts with specific model architectures---deep neural networks, gradient-boosted trees, Gaussian processes---and how architectural properties (differentiability, ensemble structure, posterior uncertainty) can be exploited to make structural fuzzing more efficient and more informative. Where this chapter asked "how do we deploy geometric validation?", Chapter 19 asks "how do we make the models themselves geometric-validation-aware?"
+This chapter treated the `evaluate_fn` as a black box: given a parameter vector, it returns a scalar error and a dictionary of named components. Chapter {{ch:case-study-defect-prediction}} opens the black box. It examines how geometric validation interacts with specific model architectures---deep neural networks, gradient-boosted trees, Gaussian processes---and how architectural properties (differentiability, ensemble structure, posterior uncertainty) can be exploited to make structural fuzzing more efficient and more informative. Where this chapter asked "how do we deploy geometric validation?", Chapter {{ch:case-study-defect-prediction}} asks "how do we make the models themselves geometric-validation-aware?"

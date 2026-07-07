@@ -1,4 +1,4 @@
-# Chapter 16: Building Geometric Pipelines
+# Chapter {{ch:geometric-pipelines}}: Building Geometric Pipelines
 
 > *"A complex system that works is invariably found to have evolved from a simple system that worked."*
 > --- John Gall, *Systemantics* (1975)
@@ -9,9 +9,9 @@ This chapter is about that composition. We develop the pipeline pattern as a fir
 
 ---
 
-## 16.1 The Pipeline Pattern
+## {{ch:geometric-pipelines}}.1 The Pipeline Pattern
 
-### 16.1.1 Why Composition Matters
+### {{ch:geometric-pipelines}}.1.1 Why Composition Matters
 
 Each geometric tool from Parts II and III answers one question:
 
@@ -33,7 +33,7 @@ This data-flow dependency is what makes a pipeline more than a script that calls
 3. Produce a single structured output that captures all results, rather than scattering them across variables.
 4. Handle partial failures gracefully---if adversarial search times out, the subset and Pareto results should still be available.
 
-### 16.1.2 The Six-Stage Architecture
+### {{ch:geometric-pipelines}}.1.2 The Six-Stage Architecture
 
 The structural fuzzing pipeline proceeds through six stages, each building on the previous:
 
@@ -60,7 +60,7 @@ The first two stages are tightly coupled: Pareto extraction is a filter over sub
 
 An optional seventh phase runs forward selection and backward elimination baselines, providing classical feature-selection comparisons against the geometric methods. These baselines serve as a sanity check: if forward selection discovers a configuration that the exhaustive subset enumeration missed, something is wrong with the enumeration parameters.
 
-### 16.1.3 Data Flow and the Evaluation Function
+### {{ch:geometric-pipelines}}.1.3 Data Flow and the Evaluation Function
 
 A single callable---the evaluation function---is the thread that connects all six stages. Every stage calls this function, sometimes hundreds or thousands of times, with different parameter vectors. The function's signature is the contract that binds the pipeline together:
 
@@ -75,9 +75,9 @@ The evaluation function is the pipeline's most important abstraction boundary. E
 
 ---
 
-## 16.2 The `run_campaign` API
+## {{ch:geometric-pipelines}}.2 The `run_campaign` API
 
-### 16.2.1 Function Signature and Parameters
+### {{ch:geometric-pipelines}}.2.1 Function Signature and Parameters
 
 The `run_campaign` function is the pipeline's public entry point. Its signature exposes every tuning knob while providing sensible defaults:
 
@@ -110,7 +110,7 @@ The parameters fall into four groups:
 
 **Pipeline control.** `start_dim` and `candidate_dims` configure the compositional test (which dimension to start from, and which to consider adding). `run_baselines` toggles the forward/backward selection baselines. `verbose` controls progress printing.
 
-### 16.2.2 Stage Execution
+### {{ch:geometric-pipelines}}.2.2 Stage Execution
 
 The pipeline executes its six stages in a fixed order, with verbose logging at each transition. The implementation in `pipeline.py` makes the data flow explicit:
 
@@ -183,7 +183,7 @@ composition_result = compositional_test(
 
 The adversarial search examines each dimension independently, searching for threshold values above and below the baseline at which the error exceeds the tolerance. The compositional test builds configurations incrementally, starting from a single dimension and greedily adding the dimension that most reduces MAE at each step. Together, these two stages answer complementary questions: adversarial search asks "where does this dimension break?", while compositional testing asks "in what order should dimensions be assembled?"
 
-### 16.2.3 Evaluation Budget
+### {{ch:geometric-pipelines}}.2.3 Evaluation Budget
 
 Understanding the total number of evaluations consumed by a campaign is essential for budgeting computation time. The count depends on configuration:
 
@@ -202,13 +202,13 @@ Here $C(k)$ is the optimization cost for a $k$-dimensional subset: $n_{\text{gri
 
 For a 5-dimensional problem with defaults ($K = 4$, $n_{\text{grid}} = 20$, $n_{\text{random}} = 5000$), the enumeration stage alone requires approximately $5 \times 20 + 10 \times 400 + 10 \times 5000 + 5 \times 5000 = 79{,}100$ evaluations. If each evaluation takes 100ms (reasonable for a small random forest), the enumeration stage takes about 2 hours. The MRI adds 300 evaluations (30 seconds), sensitivity adds 10 evaluations (1 second), and adversarial search adds roughly 100 evaluations (10 seconds). Enumeration dominates.
 
-For a 9-dimensional problem, the evaluation count rises sharply: $\binom{9}{3} = 84$ three-dimensional subsets and $\binom{9}{4} = 126$ four-dimensional subsets, each requiring 5000 random evaluations, push the total past one million. Section 16.6 discusses strategies for managing this cost.
+For a 9-dimensional problem, the evaluation count rises sharply: $\binom{9}{3} = 84$ three-dimensional subsets and $\binom{9}{4} = 126$ four-dimensional subsets, each requiring 5000 random evaluations, push the total past one million. Section {{ch:geometric-pipelines}}.6 discusses strategies for managing this cost.
 
 ---
 
-## 16.3 `StructuralFuzzReport`: Structured Output
+## {{ch:geometric-pipelines}}.3 `StructuralFuzzReport`: Structured Output
 
-### 16.3.1 The Report Dataclass
+### {{ch:geometric-pipelines}}.3.1 The Report Dataclass
 
 The pipeline returns a `StructuralFuzzReport`---a dataclass that bundles the output of all six stages into a single structured object:
 
@@ -232,7 +232,7 @@ Each field holds a typed result object from the corresponding pipeline stage. Th
 
 The optional fields (`mri_result`, `composition_result`) use `None` to indicate that the corresponding stage was skipped or failed. This is the pipeline's mechanism for partial results: if the MRI computation encounters a numerical error, the report still contains valid subset, Pareto, and sensitivity results.
 
-### 16.3.2 Navigating the Results
+### {{ch:geometric-pipelines}}.3.2 Navigating the Results
 
 The `StructuralFuzzReport` is designed for programmatic access. After a campaign completes, the typical analysis workflow extracts specific results:
 
@@ -272,7 +272,7 @@ for adv in report.adversarial_results:
 
 The report object is also serializable. Because all of its fields are dataclasses with primitive or NumPy-array contents, the report can be pickled for later analysis or converted to JSON for integration with external dashboards.
 
-### 16.3.3 The `summary` Method
+### {{ch:geometric-pipelines}}.3.3 The `summary` Method
 
 For quick inspection, `StructuralFuzzReport` provides a `summary` method that delegates to the report formatting system:
 
@@ -294,9 +294,9 @@ The lazy import avoids a circular dependency between the pipeline and report mod
 
 ---
 
-## 16.4 Report Generation
+## {{ch:geometric-pipelines}}.4 Report Generation
 
-### 16.4.1 Text Reports
+### {{ch:geometric-pipelines}}.4.1 Text Reports
 
 The `format_report` function transforms a `StructuralFuzzReport` into a human-readable text summary. The output is organized into sections that mirror the pipeline stages:
 
@@ -328,7 +328,7 @@ The report includes signed errors for each metric (positive means the model exce
 
 The text format is designed for three use cases: terminal inspection during development, inclusion in version-controlled reports (the text diffs cleanly), and automated parsing by downstream tools that can extract specific numbers using simple string matching.
 
-### 16.4.2 LaTeX Tables
+### {{ch:geometric-pipelines}}.4.2 LaTeX Tables
 
 For publication-quality output, `format_latex_tables` generates ready-to-compile LaTeX table environments:
 
@@ -361,9 +361,9 @@ The separation between data (the `StructuralFuzzReport` dataclass) and presentat
 
 ---
 
-## 16.5 Designing Evaluation Functions
+## {{ch:geometric-pipelines}}.5 Designing Evaluation Functions
 
-### 16.5.1 The Contract
+### {{ch:geometric-pipelines}}.5.1 The Contract
 
 The evaluation function is the bridge between the domain-agnostic pipeline and the domain-specific model. Its contract is simple but demands care:
 
@@ -381,7 +381,7 @@ Three properties are essential for correct pipeline behavior:
 2. **Inactive handling.** When `params[i] >= inactive_value`, the evaluation must exclude dimension $i$ entirely---not merely set its weight to zero.
 3. **Graceful degradation.** When all dimensions are inactive (every entry is the sentinel), the function should return large errors rather than raising an exception.
 
-### 16.5.2 The Defect Prediction Pattern
+### {{ch:geometric-pipelines}}.5.2 The Defect Prediction Pattern
 
 The defect prediction example in `examples/defect_prediction/model.py` illustrates the standard pattern. The `make_evaluate_fn` factory generates a closure that captures the training data and returns a function with the correct signature:
 
@@ -420,7 +420,7 @@ def make_evaluate_fn(
 
 Several design choices are worth noting:
 
-**Feature groups, not individual features.** The 16 raw features are organized into 5 groups (Size, Complexity, Halstead, OO, Process). Each dimension in the parameter vector controls an entire group. This is the dimension grouping pattern from Chapter 3: the pipeline operates on a manageable 5-dimensional space rather than a 16-dimensional one, with each dimension carrying semantic meaning.
+**Feature groups, not individual features.** The 16 raw features are organized into 5 groups (Size, Complexity, Halstead, OO, Process). Each dimension in the parameter vector controls an entire group. This is the dimension grouping pattern from Chapter {{ch:hyperbolic-geometry}}: the pipeline operates on a manageable 5-dimensional space rather than a 16-dimensional one, with each dimension carrying semantic meaning.
 
 **Inactive threshold.** The function checks `params[i] < 1000` rather than comparing against the full sentinel value of $10^6$. This is a pragmatic choice: it ensures that any sufficiently large parameter value deactivates the group, avoiding floating-point comparison issues with the exact sentinel.
 
@@ -428,7 +428,7 @@ Several design choices are worth noting:
 
 **Target-relative errors.** Each metric is compared against an explicit target value (e.g., Accuracy target of 75.0). The error dictionary contains signed deviations: positive means the model exceeds the target, negative means it falls short. This convention allows the pipeline to track *which* targets are met and which are not, rather than collapsing everything into a single pass/fail judgment.
 
-### 16.5.3 The Geometric Economics Pattern
+### {{ch:geometric-pipelines}}.5.3 The Geometric Economics Pattern
 
 The geometric economics example in `examples/geometric_economics/model.py` shows a different use of the same contract. Here, the parameters are not feature group selectors but variance weights in a Mahalanobis distance computation:
 
@@ -453,7 +453,7 @@ The parameter vector has nine entries (one per ethical-economic dimension: Conse
 
 This design demonstrates the versatility of the evaluation function contract. The pipeline neither knows nor cares that the defect prediction example trains a classifier while the economics example tunes a distance metric. Both conform to the same signature, and both produce meaningful MAE and error dictionaries that the pipeline can optimize, perturb, and analyze.
 
-### 16.5.4 Guidelines for Custom Evaluation Functions
+### {{ch:geometric-pipelines}}.5.4 Guidelines for Custom Evaluation Functions
 
 When writing a new evaluation function for a domain not covered by the existing examples, follow these guidelines:
 
@@ -469,9 +469,9 @@ When writing a new evaluation function for a domain not covered by the existing 
 
 ---
 
-## 16.6 Pipeline Configuration: Speed vs. Thoroughness
+## {{ch:geometric-pipelines}}.6 Pipeline Configuration: Speed vs. Thoroughness
 
-### 16.6.1 The Cost Knobs
+### {{ch:geometric-pipelines}}.6.1 The Cost Knobs
 
 Three parameters dominate the computation cost of a campaign:
 
@@ -479,7 +479,7 @@ Three parameters dominate the computation cost of a campaign:
 - **`n_random`**: Controls optimization quality for 3D+ subsets. Reducing from 5000 to 1000 makes each subset 5x faster at the cost of potentially missing the optimal parameter values.
 - **`n_mri_perturbations`**: Controls MRI statistical reliability. Reducing from 300 to 100 saves 200 evaluations but increases the variance of the P95 estimate.
 
-### 16.6.2 Configuration Profiles
+### {{ch:geometric-pipelines}}.6.2 Configuration Profiles
 
 For different stages of a project, different tradeoffs are appropriate:
 
@@ -518,7 +518,7 @@ report = sf.run_campaign(
 )
 ```
 
-### 16.6.3 Scaling with Dimensionality
+### {{ch:geometric-pipelines}}.6.3 Scaling with Dimensionality
 
 The pipeline's cost scales differently in each stage:
 
@@ -538,9 +538,9 @@ For problems with $n > 10$, subset enumeration up to $k = 4$ becomes expensive. 
 
 ---
 
-## 16.7 Error Handling and Partial Results
+## {{ch:geometric-pipelines}}.7 Error Handling and Partial Results
 
-### 16.7.1 Failures Within the Evaluation Function
+### {{ch:geometric-pipelines}}.7.1 Failures Within the Evaluation Function
 
 The most common failure mode is an exception inside the evaluation function. A degenerate parameter configuration might cause a singular matrix, a division by zero, or a model that fails to converge. The pipeline does not wrap evaluation calls in blanket try/except blocks---doing so would mask bugs in the evaluation function. Instead, the evaluation function itself should handle degenerate cases:
 
@@ -560,7 +560,7 @@ def evaluate_fn(params: np.ndarray) -> tuple[float, dict[str, float]]:
 
 The key principle is that every possible parameter vector---including all-inactive, all-extreme, and mixed configurations---should produce a valid `(mae, errors)` tuple. This is a stronger requirement than typical function contracts, but it is necessary because the pipeline will exercise the entire parameter space, including corners that normal usage would never reach.
 
-### 16.7.2 Failures Between Pipeline Stages
+### {{ch:geometric-pipelines}}.7.2 Failures Between Pipeline Stages
 
 If a pipeline stage fails (e.g., the adversarial search raises an unhandled exception), the entire `run_campaign` call fails. This is deliberate: the pipeline makes no attempt at partial recovery because the data dependencies between stages make it difficult to reason about which downstream results are still valid.
 
@@ -612,15 +612,15 @@ def safe_evaluate_fn(params: np.ndarray) -> tuple[float, dict[str, float]]:
 
 This keeps the pipeline running but may produce misleading results if exceptions occur frequently. Use with caution and always inspect the error dictionary for sentinel values in the report.
 
-### 16.7.3 Interpreting the MRI Under Partial Information
+### {{ch:geometric-pipelines}}.7.3 Interpreting the MRI Under Partial Information
 
-The MRI is sensitive to the perturbation distribution. If the evaluation function returns unreliable values for certain parameter regions (e.g., near the inactive threshold), the MRI may over-estimate or under-estimate tail risk. Chapter 7 discusses this issue in detail; here the practical advice is: examine the MRI's `worst_case_mae` field. If it is unreasonably large (orders of magnitude above the baseline MAE), one or more perturbation samples likely hit a degenerate configuration, and the MRI should be recomputed with a smaller `mri_scale`.
+The MRI is sensitive to the perturbation distribution. If the evaluation function returns unreliable values for certain parameter regions (e.g., near the inactive threshold), the MRI may over-estimate or under-estimate tail risk. Chapter {{ch:equilibrium-on-manifolds}} discusses this issue in detail; here the practical advice is: examine the MRI's `worst_case_mae` field. If it is unreasonably large (orders of magnitude above the baseline MAE), one or more perturbation samples likely hit a degenerate configuration, and the MRI should be recomputed with a smaller `mri_scale`.
 
 ---
 
-## 16.8 End-to-End Examples
+## {{ch:geometric-pipelines}}.8 End-to-End Examples
 
-### 16.8.1 Defect Prediction Campaign
+### {{ch:geometric-pipelines}}.8.1 Defect Prediction Campaign
 
 The defect prediction example demonstrates a complete pipeline run from data generation through report output:
 
@@ -652,7 +652,7 @@ with open("defect_tables.tex", "w") as f:
 
 The campaign explores all subsets of up to 4 dimensions from the 5 available (31 subsets total), identifies the Pareto frontier, profiles the sensitivity of each dimension, computes the MRI of the best configuration, searches for adversarial thresholds in each dimension, and tests the greedy dimension-addition order. The output captures everything needed for a validation report: which feature groups matter, how robust the model is, and where its tipping points lie.
 
-### 16.8.2 Geometric Economics Campaign
+### {{ch:geometric-pipelines}}.8.2 Geometric Economics Campaign
 
 The economics example operates on a higher-dimensional space (9 dimensions) and uses the evaluation function to tune Mahalanobis distance weights rather than feature-group selections:
 
@@ -688,9 +688,9 @@ for adv in report.adversarial_results:
 
 The reduced `max_subset_dims` is critical here: with 9 dimensions, exhaustive enumeration up to size 4 would require $\binom{9}{4} = 126$ four-dimensional subsets, each optimized with 2000 random samples. Limiting to 3D subsets keeps the campaign tractable while still revealing the most important dimension interactions.
 
-### 16.8.3 Custom Pipeline with Selective Stages
+### {{ch:geometric-pipelines}}.8.3 Custom Pipeline with Selective Stages
 
-For situations where the full pipeline is unnecessary or too slow, the public API (Chapter 3 introduced the module structure; the `__init__.py` exposes all components) supports composing a custom analysis:
+For situations where the full pipeline is unnecessary or too slow, the public API (Chapter {{ch:hyperbolic-geometry}} introduced the module structure; the `__init__.py` exposes all components) supports composing a custom analysis:
 
 ```python
 import numpy as np
@@ -726,17 +726,17 @@ This pattern---enumerate, filter, then probe each survivor---is more informative
 
 ---
 
-## 16.9 The Pipeline as a Geometric Object
+## {{ch:geometric-pipelines}}.9 The Pipeline as a Geometric Object
 
-### 16.9.1 State Space of the Pipeline Itself
+### {{ch:geometric-pipelines}}.9.1 State Space of the Pipeline Itself
 
 The pipeline has its own configuration space: the vector of all its parameters (`max_subset_dims`, `n_random`, `n_mri_perturbations`, `mri_scale`, `mri_weights`, `adversarial_tolerance`, `n_grid`). This meta-configuration lives in a space of its own, and the same geometric reasoning that the pipeline applies to models can be applied to the pipeline itself.
 
 For instance: how sensitive is the pipeline's output to `n_random`? If increasing `n_random` from 3000 to 7000 changes the best configuration found, the pipeline was under-sampling at 3000 and the results at that setting are unreliable. If the results are stable, the extra samples are wasted computation. Running the pipeline twice with different `n_random` values and comparing the Pareto frontiers is a simple convergence check---and it is, itself, a sensitivity analysis.
 
-### 16.9.2 Reproducibility
+### {{ch:geometric-pipelines}}.9.2 Reproducibility
 
-The pipeline does not set global random seeds. The evaluation function is responsible for its own determinism (as discussed in Section 16.5.1), and the pipeline's internal stages use deterministic algorithms where possible. Subset enumeration is exhaustive (no randomness). Pareto extraction is a deterministic filter. Sensitivity profiling evaluates fixed parameter configurations. Only the MRI stage introduces randomness (random perturbation sampling), and its random seed can be controlled through the evaluation function's internal state.
+The pipeline does not set global random seeds. The evaluation function is responsible for its own determinism (as discussed in Section {{ch:geometric-pipelines}}.5.1), and the pipeline's internal stages use deterministic algorithms where possible. Subset enumeration is exhaustive (no randomness). Pareto extraction is a deterministic filter. Sensitivity profiling evaluates fixed parameter configurations. Only the MRI stage introduces randomness (random perturbation sampling), and its random seed can be controlled through the evaluation function's internal state.
 
 For bit-reproducible results across runs, ensure that:
 
@@ -744,7 +744,7 @@ For bit-reproducible results across runs, ensure that:
 2. The underlying model (e.g., `RandomForestClassifier(random_state=42)`) uses a fixed random seed.
 3. The NumPy random generator used for MRI perturbations is seeded consistently.
 
-### 16.9.3 Composition with External Tools
+### {{ch:geometric-pipelines}}.9.3 Composition with External Tools
 
 The pipeline produces structured data; what happens to that data next is outside the pipeline's scope but worth considering as a design question. Common downstream integrations include:
 
@@ -758,15 +758,15 @@ Each of these integrations treats the pipeline's output as a first-class object 
 
 ---
 
-## 16.10 Looking Ahead
+## {{ch:geometric-pipelines}}.10 Looking Ahead
 
 This chapter has treated the pipeline as a sequential, single-machine process. For the problems considered in this book---5 to 15 dimensions, evaluation functions that run in milliseconds to seconds---this is sufficient. But two pressures push toward more sophisticated execution models.
 
-First, **scaling to higher dimensions** (Chapter 17) introduces evaluation budgets that exceed what sequential execution can deliver in reasonable time. Distributing subset evaluations across multiple cores or machines, caching evaluation results to avoid redundant computation, and using surrogate models to approximate expensive evaluations are all extensions that preserve the pipeline's logical structure while changing its execution strategy.
+First, **scaling to higher dimensions** (Chapter {{ch:scaling}}) introduces evaluation budgets that exceed what sequential execution can deliver in reasonable time. Distributing subset evaluations across multiple cores or machines, caching evaluation results to avoid redundant computation, and using surrogate models to approximate expensive evaluations are all extensions that preserve the pipeline's logical structure while changing its execution strategy.
 
-Second, **deploying geometric validation in production** (Chapter 18) requires integrating the pipeline into continuous integration systems, monitoring dashboards, and alerting infrastructure. The pipeline's structured output---the `StructuralFuzzReport`---provides the foundation for these integrations, but the operational concerns (scheduling, retry policies, result storage, alert thresholds) are distinct from the analytical concerns developed in this chapter.
+Second, **deploying geometric validation in production** (Chapter {{ch:production-deployment}}) requires integrating the pipeline into continuous integration systems, monitoring dashboards, and alerting infrastructure. The pipeline's structured output---the `StructuralFuzzReport`---provides the foundation for these integrations, but the operational concerns (scheduling, retry policies, result storage, alert thresholds) are distinct from the analytical concerns developed in this chapter.
 
-Chapter 17 takes up the scaling challenge, developing methods for efficient exploration of high-dimensional spaces where exhaustive enumeration is infeasible and the geometric tools from Parts II and III must be adapted to operate under strict computational budgets.
+Chapter {{ch:scaling}} takes up the scaling challenge, developing methods for efficient exploration of high-dimensional spaces where exhaustive enumeration is infeasible and the geometric tools from Parts II and III must be adapted to operate under strict computational budgets.
 
 ---
 

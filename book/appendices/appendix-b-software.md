@@ -247,7 +247,7 @@ pip install structural-fuzzing
 ```
 
 This installs only `structural-fuzzing` and NumPy, sufficient for
-Chapters 1 through 7.
+Chapters {{ch:why-geometry}} through {{ch:equilibrium-on-manifolds}}.
 
 ## B.10 Verifying the Full Installation
 

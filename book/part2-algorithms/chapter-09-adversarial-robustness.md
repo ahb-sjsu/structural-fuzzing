@@ -1,4 +1,4 @@
-# Chapter 9: Adversarial Robustness and the Model Robustness Index
+# Chapter {{ch:adversarial-robustness}}: Adversarial Robustness and the Model Robustness Index
 
 > *"The question is not whether the bridge will hold under the load it was designed for. The question is how much more it will hold before it fails."*
 > --- Henry Petroski, *Design Paradigms* (1994)
@@ -9,9 +9,9 @@ The central claim is that **robustness is a geometric property of the loss lands
 
 ---
 
-## 9.1 Why Robustness Matters Beyond Accuracy
+## {{ch:adversarial-robustness}}.1 Why Robustness Matters Beyond Accuracy
 
-### 9.1.1 The Sharp Minimum Problem
+### {{ch:adversarial-robustness}}.1.1 The Sharp Minimum Problem
 
 Consider a geometric model with $d$ parameters $\boldsymbol{\theta} = (\theta_1, \ldots, \theta_d)$ fitted by minimizing a loss function $\mathcal{L}(\boldsymbol{\theta})$. The fitted parameters $\boldsymbol{\theta}^*$ sit at (or near) a minimum of $\mathcal{L}$. But not all minima are created equal. The Hessian $\mathbf{H} = \nabla^2 \mathcal{L}(\boldsymbol{\theta}^*)$ characterizes the local curvature: large eigenvalues correspond to directions where the loss increases sharply; small eigenvalues correspond to directions where the loss is nearly flat.
 
@@ -26,7 +26,7 @@ The practical consequences are immediate. In deployment, parameters may be:
 
 In all these scenarios, a model sitting in a sharp minimum will fail unpredictably, while a model in a broad minimum will degrade gracefully. Structural fuzzing gives you the tools to distinguish the two *before* deployment, not after.
 
-### 9.1.2 The Limitations of Standard Deviation
+### {{ch:adversarial-robustness}}.1.2 The Limitations of Standard Deviation
 
 The obvious approach to quantifying sensitivity is to perturb the parameters, measure the resulting errors, and report the standard deviation. This is better than nothing, but it has a fundamental limitation: standard deviation treats all deviations symmetrically. A perturbation that improves the model by 2.0 and one that degrades it by 2.0 contribute equally to the standard deviation. But from a risk perspective, they are not equivalent. The improvement is pleasant; the degradation may be catastrophic.
 
@@ -36,11 +36,11 @@ This is precisely what the Model Robustness Index provides.
 
 ---
 
-## 9.2 The Model Robustness Index (MRI)
+## {{ch:adversarial-robustness}}.2 The Model Robustness Index (MRI)
 
 The MRI is the core scalar summary of a model's robustness under parameter perturbation. Its design reflects two principles: perturbations should be multiplicative (not additive), and the index should weight tail behavior explicitly.
 
-### 9.2.1 The Perturbation Model
+### {{ch:adversarial-robustness}}.2.1 The Perturbation Model
 
 Given a baseline parameter vector $\boldsymbol{\theta} \in \mathbb{R}^d$, we generate perturbed versions by multiplying each parameter by an independent log-normal factor:
 
@@ -82,7 +82,7 @@ for _ in range(n_perturbations):
 
 Each $\omega_i = |\text{MAE}_{\text{perturbed}} - \text{MAE}_{\text{baseline}}|$ measures how much the $i$-th perturbation destabilized the model. The collection $\{\omega_1, \ldots, \omega_N\}$ is the empirical *perturbation sensitivity distribution*.
 
-### 9.2.2 The MRI Formula
+### {{ch:adversarial-robustness}}.2.2 The MRI Formula
 
 The MRI is a weighted combination of three statistics of the $\omega$ distribution:
 
@@ -115,7 +115,7 @@ class ModelRobustnessIndex:
 
 The `worst_case_mae` field tracks the single highest MAE observed across all perturbations---a useful diagnostic that the composite MRI intentionally softens. If `worst_case_mae` is dramatically higher than the baseline MAE, the model has at least one catastrophic failure mode, even if the composite MRI is moderate.
 
-### 9.2.3 Why Weighted Tail Statistics Beat Standard Deviation
+### {{ch:adversarial-robustness}}.2.3 Why Weighted Tail Statistics Beat Standard Deviation
 
 The three-component formula deserves careful justification. Why not simply report $\text{std}(\omega)$?
 
@@ -133,7 +133,7 @@ The standard deviation of the same $\omega$ distribution might be 0.9---a number
 
 The formula can also be understood as an approximation to the Conditional Value at Risk (CVaR), a standard risk measure in financial mathematics. CVaR at level $\alpha$ is the expected loss in the worst $\alpha$-fraction of scenarios. The MRI's weighted combination of mean and tail percentiles roughly approximates a CVaR-weighted average, blending expected loss with conditional expectations in the upper tail. This connection to risk theory is not accidental: robustness testing *is* risk assessment, applied to computational models rather than financial portfolios.
 
-### 9.2.4 Adjusting the Weights
+### {{ch:adversarial-robustness}}.2.4 Adjusting the Weights
 
 The default weights $(0.5, 0.3, 0.2)$ balance average and tail behavior. They are appropriate for general-purpose assessment, but different applications may warrant different emphasis:
 
@@ -148,11 +148,11 @@ Because the `ModelRobustnessIndex` dataclass returns all three components alongs
 
 ---
 
-## 9.3 Sensitivity Profiling: Which Parameters Matter?
+## {{ch:adversarial-robustness}}.3 Sensitivity Profiling: Which Parameters Matter?
 
 The MRI tells you *how robust* the model is globally. Sensitivity profiling tells you *which parameters are responsible*. The method is ablation: for each dimension, set its value to an inactive sentinel and measure the resulting degradation.
 
-### 9.3.1 The Ablation Protocol
+### {{ch:adversarial-robustness}}.3.1 The Ablation Protocol
 
 For each dimension $i$, set $\theta_i$ to the sentinel value (by default, $10^6$---a value large enough to effectively remove the dimension's influence) and evaluate the model. The sensitivity delta is:
 
@@ -198,33 +198,33 @@ for rank, r in enumerate(results, 1):
 
 Results are sorted by $\Delta$ in descending order and assigned importance ranks. Rank 1 is the most important dimension---the one whose ablation causes the largest increase in error.
 
-### 9.3.2 Interpreting the Sensitivity Profile
+### {{ch:adversarial-robustness}}.3.2 Interpreting the Sensitivity Profile
 
-A large positive $\Delta_i$ means that dimension $i$ is carrying significant predictive load: removing it substantially degrades the model. A near-zero $\Delta_i$ means the dimension contributes almost nothing---it is a candidate for removal (simplifying the model without meaningful accuracy loss, as the Pareto analysis of Chapter 8 would confirm).
+A large positive $\Delta_i$ means that dimension $i$ is carrying significant predictive load: removing it substantially degrades the model. A near-zero $\Delta_i$ means the dimension contributes almost nothing---it is a candidate for removal (simplifying the model without meaningful accuracy loss, as the Pareto analysis of Chapter {{ch:pareto-optimization}} would confirm).
 
 A *negative* $\Delta_i$---where removing the dimension actually *improves* the model---is the most informative signal of all. It indicates that the parameter value for dimension $i$ has drifted to a harmful configuration, either through overfitting during optimization or through an interaction effect where the dimension's presence degrades other dimensions' contributions. Negative deltas warrant immediate investigation.
 
-### 9.3.3 Relationship to the MRI
+### {{ch:adversarial-robustness}}.3.3 Relationship to the MRI
 
 Sensitivity profiling and the MRI answer complementary questions. The MRI says: "the model is fragile." The sensitivity profile says: "*these* dimensions are responsible." Together, they provide both the diagnosis and the prescription:
 
 1. Compute the MRI. If it is low, the model is robust and further investigation may not be needed.
 2. If the MRI is high, run the sensitivity profile. The top-ranked dimensions are where fragility concentrates.
-3. For the top-ranked dimensions, run adversarial threshold search (Section 9.4) to find the exact breaking points.
+3. For the top-ranked dimensions, run adversarial threshold search (Section {{ch:adversarial-robustness}}.4) to find the exact breaking points.
 
-This three-stage workflow is exactly how `run_campaign` in the pipeline module orchestrates the analysis, as we will see in Section 9.5.
+This three-stage workflow is exactly how `run_campaign` in the pipeline module orchestrates the analysis, as we will see in Section {{ch:adversarial-robustness}}.5.
 
-### 9.3.4 Limitations of One-at-a-Time Ablation
+### {{ch:adversarial-robustness}}.3.4 Limitations of One-at-a-Time Ablation
 
-One-at-a-time ablation captures *marginal* importance: how much does each dimension contribute when all others are present? It does not capture *interaction effects*: the case where dimensions $i$ and $j$ are individually unimportant but jointly critical (their information is redundant, and either one alone suffices). The subset enumeration of Chapter 4 and the compositional testing of Section 9.5 address this limitation by exploring multi-dimensional combinations. Sensitivity profiling is a fast screening step, not a complete analysis.
+One-at-a-time ablation captures *marginal* importance: how much does each dimension contribute when all others are present? It does not capture *interaction effects*: the case where dimensions $i$ and $j$ are individually unimportant but jointly critical (their information is redundant, and either one alone suffices). The subset enumeration of Chapter {{ch:spd-manifolds}} and the compositional testing of Section {{ch:adversarial-robustness}}.5 address this limitation by exploring multi-dimensional combinations. Sensitivity profiling is a fast screening step, not a complete analysis.
 
 ---
 
-## 9.4 Adversarial Threshold Search: Finding the Tipping Points
+## {{ch:adversarial-robustness}}.4 Adversarial Threshold Search: Finding the Tipping Points
 
 While the MRI provides a global robustness summary and sensitivity profiling identifies the most important dimensions, adversarial threshold search finds the *exact* perturbation magnitudes where the model transitions from "working" to "broken." These are tipping points---the values where qualitative failure begins---and they are precisely the values that neither cross-validation nor global robustness summaries can reveal.
 
-### 9.4.1 The Search Algorithm
+### {{ch:adversarial-robustness}}.4.1 The Search Algorithm
 
 For each dimension $i$ and each direction (increase and decrease), the algorithm performs a log-spaced search from the baseline value outward:
 
@@ -288,7 +288,7 @@ for direction in ("increase", "decrease"):
 
 The `for/else/continue/break` pattern in the full implementation deserves a note: the inner `break` exits the target loop when a threshold is found, and the outer `break` (after the `else: continue`) exits the search-values loop to move to the next direction. This ensures we find the *first* threshold in each direction---the tipping point closest to the baseline.
 
-### 9.4.2 The Threshold Ratio
+### {{ch:adversarial-robustness}}.4.2 The Threshold Ratio
 
 Each `AdversarialResult` records the `threshold_ratio`: the multiplicative factor by which the parameter had to change before a target broke. This is the most immediately interpretable quantity:
 
@@ -298,35 +298,35 @@ Each `AdversarialResult` records the `threshold_ratio`: the multiplicative facto
 
 Parameters with low threshold ratios in either direction are the ones that demand the most careful estimation, the tightest confidence intervals, and the most conservative deployment practices. Parameters with high threshold ratios can tolerate rough approximation.
 
-### 9.4.3 Per-Target Sensitivity
+### {{ch:adversarial-robustness}}.4.3 Per-Target Sensitivity
 
 The `target_flipped` field in the result reveals *which specific prediction target* was the first to exceed tolerance. This often exposes unexpected couplings. A parameter that nominally controls one aspect of the model may turn out to critically affect a seemingly unrelated prediction. These cross-dimension dependencies are exactly the coupling effects that one-output-at-a-time analysis tends to miss, and they are among the most valuable findings adversarial threshold search can produce.
 
-### 9.4.4 Choosing the Tolerance
+### {{ch:adversarial-robustness}}.4.4 Choosing the Tolerance
 
 The `tolerance` parameter defines the boundary between "acceptable" and "broken." This is inherently application-specific:
 
 - For a model predicting physical measurements, tolerance might correspond to the instrument's measurement uncertainty.
 - For a classification system, it might be the minimum confidence margin for a correct decision.
-- For the defect prediction example from Chapter 1, it might be the maximum acceptable change in per-module error before the model's predictions are no longer actionable.
+- For the defect prediction example from Chapter {{ch:why-geometry}}, it might be the maximum acceptable change in per-module error before the model's predictions are no longer actionable.
 
 Setting tolerance too low produces false positives (thresholds that flag inconsequential changes); setting it too high misses genuine failure modes. A disciplined approach is to derive tolerance from the application's error budget or from domain-specific standards.
 
-### 9.4.5 Computational Cost
+### {{ch:adversarial-robustness}}.4.5 Computational Cost
 
 Adversarial threshold search evaluates the model $2 \times n\_steps \times d$ times in the worst case (two directions per dimension, $n\_steps$ search values per direction, $d$ dimensions). With the default $n\_steps = 50$ and a 5-dimensional model, this is 500 evaluations. For expensive models, this can be reduced by:
 
-1. Searching only the top-$k$ dimensions identified by sensitivity profiling (Section 9.3), rather than all $d$ dimensions.
+1. Searching only the top-$k$ dimensions identified by sensitivity profiling (Section {{ch:adversarial-robustness}}.3), rather than all $d$ dimensions.
 2. Reducing $n\_steps$ at the cost of coarser threshold estimates.
 3. Using a two-phase approach: a coarse scan to bracket the threshold, followed by a fine scan to refine it.
 
 ---
 
-## 9.5 The Pipeline: Composing the Three Tools
+## {{ch:adversarial-robustness}}.5 The Pipeline: Composing the Three Tools
 
 The MRI, sensitivity profiling, and adversarial threshold search are designed to compose into a unified campaign. The `run_campaign` function in the pipeline module orchestrates this composition, executing the tools in the correct order and threading the results of earlier stages into later ones.
 
-### 9.5.1 Campaign Architecture
+### {{ch:adversarial-robustness}}.5.1 Campaign Architecture
 
 The campaign proceeds in six stages. Stages 3 through 5 are the robustness tools developed in this chapter:
 
@@ -344,8 +344,8 @@ def run_campaign(
 
 The stages are:
 
-1. **Subset enumeration** (Chapter 4): Test all dimension combinations up to a maximum size.
-2. **Pareto frontier** (Chapter 8): Extract the non-dominated configurations from the enumeration results.
+1. **Subset enumeration** (Chapter {{ch:spd-manifolds}}): Test all dimension combinations up to a maximum size.
+2. **Pareto frontier** (Chapter {{ch:pareto-optimization}}): Extract the non-dominated configurations from the enumeration results.
 3. **Sensitivity profiling** (this chapter): Ablate each dimension from the best configuration to rank importance.
 4. **MRI computation** (this chapter): Perturb the best configuration to quantify global robustness.
 5. **Adversarial threshold search** (this chapter): Find the tipping points for every dimension.
@@ -386,7 +386,7 @@ for i in range(n_dims):
     adversarial_results.extend(adv)
 ```
 
-### 9.5.2 The Campaign Report
+### {{ch:adversarial-robustness}}.5.2 The Campaign Report
 
 All results are collected into a `StructuralFuzzReport` dataclass:
 
@@ -406,19 +406,19 @@ class StructuralFuzzReport:
 
 The report is a complete, machine-readable artifact that captures every aspect of the structural fuzzing campaign. Its `summary()` method generates a human-readable text report. But the real value is in the structured data: downstream analysis can query the report programmatically, computing derived quantities (e.g., the ratio of adversarial threshold to MRI, or the correlation between sensitivity rank and threshold ratio) without re-running the campaign.
 
-### 9.5.3 Robustness Testing the Pareto Frontier
+### {{ch:adversarial-robustness}}.5.3 Robustness Testing the Pareto Frontier
 
-A natural extension---not yet automated in the pipeline but straightforward to implement---is to compute the MRI for every Pareto-optimal configuration, not just the best one. This answers a question that Chapter 8's Pareto analysis alone cannot: among the non-dominated tradeoffs between accuracy and complexity, *which are the most robust?*
+A natural extension---not yet automated in the pipeline but straightforward to implement---is to compute the MRI for every Pareto-optimal configuration, not just the best one. This answers a question that Chapter {{ch:pareto-optimization}}'s Pareto analysis alone cannot: among the non-dominated tradeoffs between accuracy and complexity, *which are the most robust?*
 
 It is entirely possible (and in practice common) that the Pareto-optimal configuration with the lowest MAE is also the most fragile. A 3-dimension configuration at MAE 1.7 might have MRI 0.3, while the 5-dimension configuration at MAE 1.5 has MRI 1.8. The 0.2 improvement in MAE comes at the cost of a 6x increase in fragility. A practitioner who saw only the Pareto frontier would choose the 5-dimension model; a practitioner who also saw the MRI values would think twice.
 
 ---
 
-## 9.6 The Defect Prediction Example, Revisited
+## {{ch:adversarial-robustness}}.6 The Defect Prediction Example, Revisited
 
-Chapter 1 introduced a software defect prediction model with five feature groups (Size, Complexity, Halstead, Object-Orientation, Process) and walked through the geometric analysis at a high level. We now return to this example with the full machinery of this chapter, showing what the MRI, sensitivity profile, and adversarial threshold search reveal in concrete detail.
+Chapter {{ch:why-geometry}} introduced a software defect prediction model with five feature groups (Size, Complexity, Halstead, Object-Orientation, Process) and walked through the geometric analysis at a high level. We now return to this example with the full machinery of this chapter, showing what the MRI, sensitivity profile, and adversarial threshold search reveal in concrete detail.
 
-### 9.6.1 Sensitivity Profile
+### {{ch:adversarial-robustness}}.6.1 Sensitivity Profile
 
 The sensitivity profile, computed by ablating each of the five dimensions from the best configuration, might produce results like:
 
@@ -430,11 +430,11 @@ The sensitivity profile, computed by ablating each of the five dimensions from t
 | 4 | OO | +0.15 | 1.85 |
 | 5 | Halstead | +0.08 | 1.78 |
 
-The model depends overwhelmingly on Complexity and Process. Size contributes modestly. OO and Halstead are nearly redundant---removing either barely changes the model's error. This confirms the intuition from Chapter 1's Pareto analysis, where the {Complexity, Process} two-dimensional subset achieved MAE 2.1, capturing most of the accuracy of the full five-dimensional model at MAE 1.7.
+The model depends overwhelmingly on Complexity and Process. Size contributes modestly. OO and Halstead are nearly redundant---removing either barely changes the model's error. This confirms the intuition from Chapter {{ch:why-geometry}}'s Pareto analysis, where the {Complexity, Process} two-dimensional subset achieved MAE 2.1, capturing most of the accuracy of the full five-dimensional model at MAE 1.7.
 
 But sensitivity profiling adds something the Pareto analysis could not: it tells us that the *specific parameter values* for OO and Halstead in the best configuration contribute almost nothing. This is stronger than saying the dimensions are unnecessary in principle (which is what Pareto analysis shows). It says they are unnecessary *at their current fitted values*, which has direct implications for model simplification and maintenance.
 
-### 9.6.2 MRI Computation
+### {{ch:adversarial-robustness}}.6.2 MRI Computation
 
 Running `compute_mri` with 300 perturbations at scale 0.5 on the best configuration produces a perturbation sensitivity distribution. Consider the following hypothetical results:
 
@@ -450,7 +450,7 @@ The standard deviation of the $\omega$ distribution might be 0.9. A naive report
 
 The worst-case MAE of 5.2 indicates that at least one perturbation tripled the error. This single data point is too volatile to build an index around (it would change dramatically with different random seeds), but it is a useful flag: somewhere in the parameter neighborhood, there exists a configuration that catastrophically degrades the model.
 
-### 9.6.3 Adversarial Threshold Search
+### {{ch:adversarial-robustness}}.6.3 Adversarial Threshold Search
 
 Running adversarial threshold search with tolerance 0.5 on each of the five dimensions produces results like:
 
@@ -471,7 +471,7 @@ Several findings stand out:
 
 4. **The targets that flip are dimension-specific.** Complexity perturbation affects high-complexity modules; Process perturbation affects high-churn and legacy modules. The adversarial search has revealed the *coupling structure* between parameters and prediction targets---information that global metrics like the MRI cannot provide.
 
-### 9.6.4 Synthesis
+### {{ch:adversarial-robustness}}.6.4 Synthesis
 
 Combining all three tools, the defect prediction model's robustness profile is:
 
@@ -484,9 +484,9 @@ None of these findings are available from accuracy, precision, recall, or F1. Th
 
 ---
 
-## 9.7 The Geometry of Robustness
+## {{ch:adversarial-robustness}}.7 The Geometry of Robustness
 
-### 9.7.1 Robustness as a Property of the Loss Landscape
+### {{ch:adversarial-robustness}}.7.1 Robustness as a Property of the Loss Landscape
 
 The MRI can be connected to the local geometry of the loss landscape through the Hessian. For a quadratic loss surface near the minimum:
 
@@ -500,7 +500,7 @@ In this regime, the MRI is approximately proportional to $\sqrt{\text{tr}(\mathb
 
 But the approximation breaks down when the loss surface is non-quadratic---when it has asymmetric curvature, flat plateaus that transition into cliffs, or multiple local minima in the perturbation neighborhood. In these cases, the MRI's empirical sampling approach captures behavior that the Hessian analysis misses. The Hessian is a local linear approximation; the MRI is a global (within the perturbation radius) nonlinear probe. Both are useful, but the MRI is more general.
 
-### 9.7.2 Directional Robustness
+### {{ch:adversarial-robustness}}.7.2 Directional Robustness
 
 The MRI as defined is *isotropic*: perturbations are drawn uniformly in all parameter directions. This is appropriate as a screening tool, but it can be refined. If the sensitivity profile identifies dimension $i$ as critical, one can compute a *directional MRI* by perturbing only dimension $i$ while holding all others fixed. The comparison between the global MRI and the directional MRI for dimension $i$ reveals how much of the model's total fragility is attributable to that single dimension.
 
@@ -510,21 +510,21 @@ $$\boldsymbol{\theta}^{(\text{pert})} = \boldsymbol{\theta}^* + \epsilon \cdot \
 
 The directional MRI profile---MRI as a function of direction---is a scalar field on the unit sphere $S^{d-1}$ in parameter space. Its maxima correspond to the directions of greatest fragility; its minima correspond to the directions of greatest robustness. This is the "robustness sphere" that generalizes the scalar MRI to a full directional characterization.
 
-### 9.7.3 Robustness Under Non-Euclidean Perturbation
+### {{ch:adversarial-robustness}}.7.3 Robustness Under Non-Euclidean Perturbation
 
-The log-space perturbation model (Section 9.2.1) implicitly uses a non-Euclidean metric on parameter space. In the positive orthant $\mathbb{R}_{>0}^d$, the log-space metric is:
+The log-space perturbation model (Section {{ch:adversarial-robustness}}.2.1) implicitly uses a non-Euclidean metric on parameter space. In the positive orthant $\mathbb{R}_{>0}^d$, the log-space metric is:
 
 $$d_{\log}(\boldsymbol{\theta}_1, \boldsymbol{\theta}_2) = \sqrt{\sum_{i=1}^d \left(\log \frac{\theta_{1,i}}{\theta_{2,i}}\right)^2}$$
 
 This is the Euclidean distance in log-coordinates, but it is *not* Euclidean in the original coordinates. Perturbations that are uniformly distributed in log-space are *not* uniformly distributed in the original space---they are biased toward larger perturbations in the upward direction (multiplication) and smaller perturbations in the downward direction (division). This asymmetry reflects the natural geometry of positive parameters: doubling a parameter is as "far" as halving it, in the log-metric sense.
 
-Chapter 10 will develop more sophisticated non-Euclidean perturbation strategies, using the manifold structure of specific parameter spaces to generate perturbations that respect the geometry of the problem. The log-space perturbation used here is a special case---but a broadly applicable one that works well for most geometric models.
+Chapter {{ch:adversarial-probing}} will develop more sophisticated non-Euclidean perturbation strategies, using the manifold structure of specific parameter spaces to generate perturbations that respect the geometry of the problem. The log-space perturbation used here is a special case---but a broadly applicable one that works well for most geometric models.
 
 ---
 
-## 9.8 Practical Considerations
+## {{ch:adversarial-robustness}}.8 Practical Considerations
 
-### 9.8.1 Number of Perturbation Samples
+### {{ch:adversarial-robustness}}.8.1 Number of Perturbation Samples
 
 The default of 300 perturbation samples provides reliable estimates of the mean and 75th percentile. The 95th percentile is estimated from approximately 15 samples in the upper tail ($300 \times 0.05 = 15$), which is adequate for detecting gross fragility but may be noisy for precise quantification. The following table provides guidance:
 
@@ -537,7 +537,7 @@ The default of 300 perturbation samples provides reliable estimates of the mean 
 
 Computational cost scales linearly with $N$, so the choice is a direct tradeoff between statistical precision and runtime.
 
-### 9.8.2 Reproducibility
+### {{ch:adversarial-robustness}}.8.2 Reproducibility
 
 The `compute_mri` function accepts an optional `rng` parameter (a NumPy `Generator` instance) for reproducibility. When reproducibility matters---and it almost always does in scientific and engineering contexts---pass an explicit generator:
 
@@ -548,7 +548,7 @@ mri_result = compute_mri(params, evaluate_fn, rng=rng)
 
 If no generator is provided, the function creates one with seed 42, ensuring that results are reproducible by default. This is a deliberate design choice: robustness analysis should produce the same results when run twice with the same inputs.
 
-### 9.8.3 When to Run Each Tool
+### {{ch:adversarial-robustness}}.8.3 When to Run Each Tool
 
 The three tools have different computational costs and answer different questions. The following decision tree guides their use:
 
@@ -560,27 +560,27 @@ The three tools have different computational costs and answer different question
 
 ---
 
-## 9.9 Connections to Related Work
+## {{ch:adversarial-robustness}}.9 Connections to Related Work
 
-### 9.9.1 Flatness and Generalization
+### {{ch:adversarial-robustness}}.9.1 Flatness and Generalization
 
 The relationship between the sharpness of a loss minimum and generalization performance has been studied extensively in the deep learning literature. Hochreiter and Schmidhuber (1997) observed that flat minima tend to generalize better than sharp ones. Keskar et al. (2017) showed that large-batch training tends to converge to sharp minima with poor generalization. The MRI provides a practical, model-agnostic tool for measuring this property---without requiring access to the training procedure or the loss function's analytical form.
 
-### 9.9.2 Bayesian Model Comparison
+### {{ch:adversarial-robustness}}.9.2 Bayesian Model Comparison
 
 The Bayesian evidence (marginal likelihood) naturally penalizes models with sharp posterior peaks, because it integrates the likelihood over the entire parameter space. A model with a sharp peak must have its probability mass concentrated in a small region, which the prior penalizes. The MRI can be viewed as a frequentist complement to the Bayesian evidence: instead of integrating the likelihood, it samples the neighborhood of the MAP estimate and summarizes the distribution of deviations. The MRI is easier to compute (it requires no prior specification and no integration) and directly measures the quantity of practical interest (sensitivity to parameter perturbation).
 
-### 9.9.3 Adversarial Machine Learning
+### {{ch:adversarial-robustness}}.9.3 Adversarial Machine Learning
 
 The adversarial threshold search shares its philosophy with adversarial example generation in deep learning (Goodfellow et al., 2014; Carlini and Wagner, 2017), but operates in parameter space rather than input space. Input-space adversarial examples find the smallest perturbation to an *input* that changes the *output*. Parameter-space adversarial thresholds find the smallest perturbation to a *parameter* that changes the *output beyond tolerance*. The geometric intuition is the same---finding the nearest decision boundary---but the space being searched and the practical implications are different.
 
 ---
 
-## 9.10 What Comes Next
+## {{ch:adversarial-robustness}}.10 What Comes Next
 
-This chapter has developed tools for characterizing the robustness of a model at a single operating point---the best configuration found by optimization. Chapter 10 extends this analysis in two directions. First, it introduces *adversarial probing*: systematic exploration of the full parameter space to find not just tipping points along individual dimensions but adversarial *regions*---connected subsets of parameter space where the model fails. This requires the topological tools (persistent homology) that Chapter 10 develops, because the shape of an adversarial region---whether it is a thin sliver or a broad basin, whether it is simply connected or has holes---determines the practical risk it poses. Second, Chapter 10 develops methods for *hardening* a model against the vulnerabilities that the MRI and adversarial threshold search reveal, closing the loop from diagnosis to treatment.
+This chapter has developed tools for characterizing the robustness of a model at a single operating point---the best configuration found by optimization. Chapter {{ch:adversarial-probing}} extends this analysis in two directions. First, it introduces *adversarial probing*: systematic exploration of the full parameter space to find not just tipping points along individual dimensions but adversarial *regions*---connected subsets of parameter space where the model fails. This requires the topological tools (persistent homology) that Chapter {{ch:adversarial-probing}} develops, because the shape of an adversarial region---whether it is a thin sliver or a broad basin, whether it is simply connected or has holes---determines the practical risk it poses. Second, Chapter {{ch:adversarial-probing}} develops methods for *hardening* a model against the vulnerabilities that the MRI and adversarial threshold search reveal, closing the loop from diagnosis to treatment.
 
-The progression from Chapter 8 to Chapter 10 mirrors the progression from a static to a dynamic understanding of the model. Chapter 8 asks: "Which configurations are optimal?" This chapter asks: "How fragile are those optima?" Chapter 10 will ask: "What does the failure landscape look like, and can we reshape it?"
+The progression from Chapter {{ch:pareto-optimization}} to Chapter {{ch:adversarial-probing}} mirrors the progression from a static to a dynamic understanding of the model. Chapter {{ch:pareto-optimization}} asks: "Which configurations are optimal?" This chapter asks: "How fragile are those optima?" Chapter {{ch:adversarial-probing}} will ask: "What does the failure landscape look like, and can we reshape it?"
 
 ---
 
@@ -596,4 +596,4 @@ The progression from Chapter 8 to Chapter 10 mirrors the progression from a stat
 
 **9.5.** The MRI weights $(0.5, 0.3, 0.2)$ can be interpreted as an approximation to CVaR. Derive the exact CVaR at level $\alpha = 0.05$ from the empirical $\omega$ distribution and compare it to the MRI. Under what distribution shapes do the two diverge most?
 
-**9.6.** Extend the `run_campaign` function to compute the MRI for every Pareto-optimal configuration (not just the best one). Plot the Pareto frontier in three dimensions: (dimensionality, MAE, MRI). Describe the tradeoff surface. Is there a Pareto frontier in this three-objective space, and if so, how does it differ from the two-objective frontier of Chapter 8?
+**9.6.** Extend the `run_campaign` function to compute the MRI for every Pareto-optimal configuration (not just the best one). Plot the Pareto frontier in three dimensions: (dimensionality, MAE, MRI). Describe the tradeoff surface. Is there a Pareto frontier in this three-objective space, and if so, how does it differ from the two-objective frontier of Chapter {{ch:pareto-optimization}}?

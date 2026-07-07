@@ -1,29 +1,29 @@
-# Chapter 7: Equilibrium on Manifolds
+# Chapter {{ch:equilibrium-on-manifolds}}: Equilibrium on Manifolds
 
 > *"The shortest path between two truths in the real domain passes through the complex domain."*
 > --- Jacques Hadamard
 
-Game theory begins with a bold simplification: agents maximize scalar utility. This simplification made the subject tractable and produced powerful results---Nash equilibrium, mechanism design, auction theory. But it comes at a cost that Chapter 1 made precise: projecting a multi-dimensional evaluation onto a scalar destroys information that is mathematically irrecoverable. When the agents in a game are human beings making economic decisions, the destroyed information includes fairness perceptions, identity costs, social impact, autonomy constraints, and epistemic uncertainty---exactly the dimensions that behavioral economics has spent five decades documenting as crucial to real decision-making.
+Game theory begins with a bold simplification: agents maximize scalar utility. This simplification made the subject tractable and produced powerful results---Nash equilibrium, mechanism design, auction theory. But it comes at a cost that Chapter {{ch:why-geometry}} made precise: projecting a multi-dimensional evaluation onto a scalar destroys information that is mathematically irrecoverable. When the agents in a game are human beings making economic decisions, the destroyed information includes fairness perceptions, identity costs, social impact, autonomy constraints, and epistemic uncertainty---exactly the dimensions that behavioral economics has spent five decades documenting as crucial to real decision-making.
 
 This chapter develops a generalization of Nash equilibrium to the multi-dimensional decision manifolds introduced in earlier chapters. The central object is the **Bond Geodesic Equilibrium** (BGE): a strategy profile in which each agent's chosen action is an optimal path through their own decision complex, given the paths chosen by all other agents. No player can improve their position via geodesic movement on the manifold without another player's cooperation or acquiescence. We present the iterated best response algorithm that computes BGE, prove that it reduces to classical Nash equilibrium as a special case, analyze its convergence properties, and then demonstrate how behavioral phenomena---loss aversion, the endowment effect, reference dependence, framing effects---emerge as geometric consequences of the multi-dimensional metric rather than requiring ad-hoc parametric assumptions.
 
 ---
 
-## 7.1 The Limitations of Nash Equilibrium
+## {{ch:equilibrium-on-manifolds}}.1 The Limitations of Nash Equilibrium
 
-### 7.1.1 Scalar Payoffs and the Information They Destroy
+### {{ch:equilibrium-on-manifolds}}.1.1 Scalar Payoffs and the Information They Destroy
 
 A Nash equilibrium is a strategy profile $(\sigma_1^*, \sigma_2^*, \ldots, \sigma_n^*)$ such that no agent can increase their scalar payoff by unilaterally changing their strategy:
 
 $$u_i(\sigma_i^*, \sigma_{-i}^*) \geq u_i(\sigma_i, \sigma_{-i}^*) \quad \forall \sigma_i, \forall i$$
 
-This is a fixed-point condition: each agent is best-responding to the others. The concept is powerful, but it rests on the assumption that each agent's preferences can be captured by a single scalar utility function $u_i : S \to \mathbb{R}$. As we established in Chapter 1 (Section 1.1.1), any such scalar projection discards $n - 1$ dimensions of information from an $n$-dimensional evaluation space. The Scalar Irrecoverability Theorem applies with full force: the null space of the projection grows linearly with the dimensionality of the original space, and the lost information cannot be recovered from the scalar alone.
+This is a fixed-point condition: each agent is best-responding to the others. The concept is powerful, but it rests on the assumption that each agent's preferences can be captured by a single scalar utility function $u_i : S \to \mathbb{R}$. As we established in Chapter {{ch:why-geometry}} (Section {{ch:why-geometry}}.1.1), any such scalar projection discards $n - 1$ dimensions of information from an $n$-dimensional evaluation space. The Scalar Irrecoverability Theorem applies with full force: the null space of the projection grows linearly with the dimensionality of the original space, and the lost information cannot be recovered from the scalar alone.
 
 For the 9-dimensional economic decision space defined in the `eris-econ` framework---with dimensions for consequences, rights, fairness, autonomy, privacy/trust, social impact, virtue/identity, legitimacy, and epistemic status---a scalar utility function discards eight dimensions. The resulting equilibrium concept can describe what agents choose, but it cannot explain *why*, and it systematically fails to predict choices where the discarded dimensions dominate.
 
-### 7.1.2 The Ultimatum Game Revisited
+### {{ch:equilibrium-on-manifolds}}.1.2 The Ultimatum Game Revisited
 
-Chapter 1 introduced the ultimatum game as a concrete illustration of scalar metric failure (Section 1.1.2). The puzzle is worth revisiting now that we have the geometric machinery to resolve it.
+Chapter {{ch:why-geometry}} introduced the ultimatum game as a concrete illustration of scalar metric failure (Section {{ch:why-geometry}}.1.2). The puzzle is worth revisiting now that we have the geometric machinery to resolve it.
 
 Player A proposes a split of \$10 with Player B. If B accepts, both receive their shares; if B rejects, both receive nothing. Nash equilibrium, operating on scalar monetary payoffs, predicts that A should offer the minimum possible amount (\$0.01) and B should accept, because any positive amount is better than zero. The prediction is spectacularly wrong: experimental data consistently show that proposers offer 40--50% of the stake, and responders reject offers below 20--30%.
 
@@ -82,23 +82,23 @@ The resolution is structural. Each possible offer is not a scalar payoff but a p
 
 The Bond Geodesic---the minimum-cost path through this decision complex---leads to offers in the 40--50% range. This is not because the model has been calibrated to reproduce the experimental data. It is because the geometry of a 9-dimensional decision space, with a Mahalanobis metric that weights fairness, identity, and social impact alongside monetary consequences, naturally produces this outcome. The equal-split offer is *closer* to the starting state on the manifold than the greedy offer, despite being farther away on the scalar monetary axis.
 
-This is the pattern that Section 1.1.2 identified and that this chapter now formalizes: a scalar metric declares one configuration optimal; the geometry reveals a different optimum because it accounts for dimensions the scalar projection discarded.
+This is the pattern that Section {{ch:why-geometry}}.1.2 identified and that this chapter now formalizes: a scalar metric declares one configuration optimal; the geometry reveals a different optimum because it accounts for dimensions the scalar projection discarded.
 
 ---
 
-## 7.2 The Bond Geodesic Equilibrium
+## {{ch:equilibrium-on-manifolds}}.2 The Bond Geodesic Equilibrium
 
-### 7.2.1 Definition
+### {{ch:equilibrium-on-manifolds}}.2.1 Definition
 
 The Bond Geodesic Equilibrium generalizes Nash by replacing scalar utility maximization with multi-dimensional path optimization on a manifold. Each agent $i$ has:
 
-- A **decision complex** $\mathcal{E}_i = (V_i, E_i, w_i)$: a weighted directed graph whose vertices are economic states in $\mathbb{R}^9$ and whose edges represent available actions, with weights given by the Mahalanobis distance plus boundary penalties (Chapter 6).
+- A **decision complex** $\mathcal{E}_i = (V_i, E_i, w_i)$: a weighted directed graph whose vertices are economic states in $\mathbb{R}^9$ and whose edges represent available actions, with weights given by the Mahalanobis distance plus boundary penalties (Chapter {{ch:pathfinding-on-manifolds}}).
 - A **starting state** $s_i \in V_i$: the agent's current position in the decision space.
 - A **goal set** $G_i \subseteq V_i$: the set of states the agent considers desirable endpoints.
 
-An agent's **strategy** is a path through their decision complex from $s_i$ to some vertex in $G_i$. The cost of a strategy is the total path weight---the sum of all edge weights along the path. Each edge weight is the Mahalanobis distance $\sqrt{\Delta \mathbf{a}^\top \Sigma^{-1} \Delta \mathbf{a}}$ plus any boundary penalties incurred by that transition, as developed in Chapter 6. The optimal strategy, given a fixed decision complex, is the minimum-cost path: the **Bond Geodesic**, computed by A* search.
+An agent's **strategy** is a path through their decision complex from $s_i$ to some vertex in $G_i$. The cost of a strategy is the total path weight---the sum of all edge weights along the path. Each edge weight is the Mahalanobis distance $\sqrt{\Delta \mathbf{a}^\top \Sigma^{-1} \Delta \mathbf{a}}$ plus any boundary penalties incurred by that transition, as developed in Chapter {{ch:pathfinding-on-manifolds}}. The optimal strategy, given a fixed decision complex, is the minimum-cost path: the **Bond Geodesic**, computed by A* search.
 
-**Definition 7.1 (Bond Geodesic Equilibrium).** A strategy profile $(p_1^*, p_2^*, \ldots, p_n^*)$ is a Bond Geodesic Equilibrium if no agent can reduce their path cost by unilaterally changing their path:
+**Definition {{ch:equilibrium-on-manifolds}}.1 (Bond Geodesic Equilibrium).** A strategy profile $(p_1^*, p_2^*, \ldots, p_n^*)$ is a Bond Geodesic Equilibrium if no agent can reduce their path cost by unilaterally changing their path:
 
 $$\text{cost}(p_i^*) \leq \text{cost}(p_i) \quad \forall p_i \in \text{Paths}(\mathcal{E}_i'), \forall i$$
 
@@ -106,13 +106,13 @@ where $\mathcal{E}_i'$ is agent $i$'s decision complex as modified by the strate
 
 The critical difference from Nash is that the "payoff" is not a scalar externally imposed on the agent, but a path cost that emerges from the geometry of the agent's own decision manifold. The manifold encodes *all* nine dimensions simultaneously. Two strategies might have identical monetary consequences (dimension $d_1$) but differ vastly in their rights implications ($d_2$), fairness costs ($d_3$), or identity impact ($d_7$). The BGE respects these differences; the Nash equilibrium, operating on scalar projections, cannot.
 
-### 7.2.2 The Nine Dimensions
+### {{ch:equilibrium-on-manifolds}}.2.2 The Nine Dimensions
 
 The dimension structure underlying the BGE is defined in the `eris-econ` framework as an enumeration: consequences ($d_1$), rights ($d_2$), fairness ($d_3$), autonomy ($d_4$), privacy/trust ($d_5$), social impact ($d_6$), virtue/identity ($d_7$), legitimacy ($d_8$), and epistemic status ($d_9$). Dimensions $d_1$ through $d_4$ are *transferable* in bilateral exchange---they obey a conservation law where $\Delta d_k(A) + \Delta d_k(B) = 0$. Dimensions $d_5$ through $d_9$ are *evaluative*---not conserved, allowing mutual gains from trade. Fairness ($d_3$) is partially transferable, its conservation properties depending on context. This classification determines the structure of the feasible set in multi-agent games: transferable dimensions create zero-sum constraints while evaluative dimensions permit positive-sum outcomes.
 
-Every economic state is represented as an immutable `EconomicState`---a frozen dataclass wrapping a length-9 tuple, following the same immutable state vector pattern introduced in Chapter 1 (Section 1.2.2). The `Dim` enumeration enables named dimension access (`state[Dim.FAIRNESS]`) rather than numeric indexing, preventing off-by-one errors and making code self-documenting.
+Every economic state is represented as an immutable `EconomicState`---a frozen dataclass wrapping a length-9 tuple, following the same immutable state vector pattern introduced in Chapter {{ch:why-geometry}} (Section {{ch:why-geometry}}.2.2). The `Dim` enumeration enables named dimension access (`state[Dim.FAIRNESS]`) rather than numeric indexing, preventing off-by-one errors and making code self-documenting.
 
-### 7.2.3 The Decision Complex in Code
+### {{ch:equilibrium-on-manifolds}}.2.3 The Decision Complex in Code
 
 The `eris-econ` framework implements the decision complex as a class that encapsulates the weighted graph, the covariance structure, and the boundary penalty system:
 
@@ -149,13 +149,13 @@ def compute_weights(self) -> None:
         )
 ```
 
-The `edge_weight` function from the metrics module combines Mahalanobis distance with boundary penalties: `w(a, b) = d_M(a, b) + \sum_k \beta_k \cdot \mathbf{1}[\text{boundary } k \text{ crossed}]`. This means that every edge cost simultaneously accounts for monetary changes, rights implications, fairness shifts, identity costs, and all other dimensions---weighted by the precision matrix $\Sigma^{-1}$ and subject to the discontinuous penalties imposed by moral-economic boundaries. The edge weight function is the bridge between the continuous geometry of the Mahalanobis metric (Chapter 6) and the discrete moral constraints that make economic decisions qualitatively different from pure optimization.
+The `edge_weight` function from the metrics module combines Mahalanobis distance with boundary penalties: `w(a, b) = d_M(a, b) + \sum_k \beta_k \cdot \mathbf{1}[\text{boundary } k \text{ crossed}]`. This means that every edge cost simultaneously accounts for monetary changes, rights implications, fairness shifts, identity costs, and all other dimensions---weighted by the precision matrix $\Sigma^{-1}$ and subject to the discontinuous penalties imposed by moral-economic boundaries. The edge weight function is the bridge between the continuous geometry of the Mahalanobis metric (Chapter {{ch:pathfinding-on-manifolds}}) and the discrete moral constraints that make economic decisions qualitatively different from pure optimization.
 
 ---
 
-## 7.3 Computing BGE: Iterated Best Response
+## {{ch:equilibrium-on-manifolds}}.3 Computing BGE: Iterated Best Response
 
-### 7.3.1 The Algorithm
+### {{ch:equilibrium-on-manifolds}}.3.1 The Algorithm
 
 Computing a BGE requires finding a fixed point: a state where every agent's path is optimal given every other agent's path. The natural algorithm is **iterated best response**, where agents take turns re-optimizing. The implementation in `equilibrium.py` follows a clean three-phase structure:
 
@@ -216,7 +216,7 @@ def compute_bge(
     )
 ```
 
-**Phase 1: Independent initialization.** Each agent computes their optimal path in isolation, ignoring all other agents. This is equivalent to each agent solving a single-player A* search on their own decision complex---the same pathfinding algorithm developed in Chapter 6. The result is a set of initial strategies that will generally *not* be an equilibrium, because each agent's complex does not yet reflect the impact of others' choices.
+**Phase 1: Independent initialization.** Each agent computes their optimal path in isolation, ignoring all other agents. This is equivalent to each agent solving a single-player A* search on their own decision complex---the same pathfinding algorithm developed in Chapter {{ch:pathfinding-on-manifolds}}. The result is a set of initial strategies that will generally *not* be an equilibrium, because each agent's complex does not yet reflect the impact of others' choices.
 
 **Phase 2: Sequential re-optimization.** In each iteration, every agent is given the opportunity to revise their strategy. The `strategy_callback` is the mechanism by which inter-agent coupling enters the computation: it takes the current agent and the dictionary of all other agents' current paths, and modifies the agent's decision complex accordingly. This might mean updating edge weights (if another agent's strategy changes market prices), adding or removing edges (if another agent's path opens or closes options), or adjusting boundary penalties (if another agent's behavior shifts social norms). After the callback modifies the complex, `compute_weights()` recalculates all edge weights, and A* finds the new optimal path.
 
@@ -241,7 +241,7 @@ class BGEResult:
 
 The `converged` flag distinguishes genuine equilibria from timeout states, which is essential for downstream analysis---a non-converged result may indicate cycling (no equilibrium exists in pure strategies) or insufficient iterations.
 
-### 7.3.2 The Agent Abstraction
+### {{ch:equilibrium-on-manifolds}}.3.2 The Agent Abstraction
 
 Each agent in the BGE computation carries their own decision complex, starting position, and goal set:
 
@@ -257,13 +257,13 @@ class Agent:
     heuristic: Optional[Callable] = None
 ```
 
-The optional heuristic enables the dual-process cognitive model discussed in Chapter 6: the heuristic $h(n)$ corresponds to System 1 (fast, automatic moral intuition), while the accumulated cost $g(n)$ corresponds to System 2 (deliberate calculation). An agent with no heuristic falls back to Dijkstra's algorithm---pure deliberative reasoning with no intuitive shortcuts.
+The optional heuristic enables the dual-process cognitive model discussed in Chapter {{ch:pathfinding-on-manifolds}}: the heuristic $h(n)$ corresponds to System 1 (fast, automatic moral intuition), while the accumulated cost $g(n)$ corresponds to System 2 (deliberate calculation). An agent with no heuristic falls back to Dijkstra's algorithm---pure deliberative reasoning with no intuitive shortcuts.
 
 ---
 
-## 7.4 Convergence Analysis
+## {{ch:equilibrium-on-manifolds}}.4 Convergence Analysis
 
-### 7.4.1 General Convergence Conditions
+### {{ch:equilibrium-on-manifolds}}.4.1 General Convergence Conditions
 
 Iterated best response is not guaranteed to converge for arbitrary games. In classical game theory, best response dynamics can cycle in games like matching pennies. The same is true for BGE computation: if the strategy callback creates strong enough coupling between agents' decision complexes, the system can oscillate indefinitely.
 
@@ -275,11 +275,11 @@ $$|\mathcal{C}_i(\mathbf{p}_{-i}) - \mathcal{C}_i(\mathbf{p}_{-i}')| \leq L \cdo
 
 with $L < 1$, then the iterated best response is a contraction mapping on the space of strategy profiles, and convergence to a unique fixed point is guaranteed by the Banach fixed-point theorem. The number of iterations required is $O(\log(1/\epsilon) / \log(1/L))$ for convergence tolerance $\epsilon$.
 
-**Boundary penalty discreteness.** The boundary penalty system (Chapter 6) introduces discrete jumps in edge weights when moral-economic boundaries are crossed. These jumps create "attractor" regions in the strategy space where all agents' paths avoid boundary violations. The `boundary_penalty` function checks for named violations---theft (rights going negative), coercion (large autonomy drops), deception (epistemic drops), exploitation (fairness declining while consequences improve)---and adds the corresponding penalty $\beta_k$ for each crossing. Sacred-value boundaries ($\beta = \infty$) create hard partitions: paths crossing a sacred boundary have infinite cost and are never selected, permanently eliminating entire regions of the strategy space.
+**Boundary penalty discreteness.** The boundary penalty system (Chapter {{ch:pathfinding-on-manifolds}}) introduces discrete jumps in edge weights when moral-economic boundaries are crossed. These jumps create "attractor" regions in the strategy space where all agents' paths avoid boundary violations. The `boundary_penalty` function checks for named violations---theft (rights going negative), coercion (large autonomy drops), deception (epistemic drops), exploitation (fairness declining while consequences improve)---and adds the corresponding penalty $\beta_k$ for each crossing. Sacred-value boundaries ($\beta = \infty$) create hard partitions: paths crossing a sacred boundary have infinite cost and are never selected, permanently eliminating entire regions of the strategy space.
 
 Once every agent's path lies within a boundary-respecting region, the continuous Mahalanobis component dominates, and the contraction property takes over.
 
-### 7.4.2 Empirical Convergence Behavior
+### {{ch:equilibrium-on-manifolds}}.4.2 Empirical Convergence Behavior
 
 In the `eris-econ` implementation, the maximum iteration limit of 100 serves as a practical safeguard. For the economic games tested---ultimatum games, dictator games, public goods games, market entry games---convergence typically occurs within 5--15 iterations. The convergence profile follows a characteristic pattern:
 
@@ -289,21 +289,21 @@ In the `eris-econ` implementation, the maximum iteration limit of 100 serves as 
 
 Non-convergence (hitting the 100-iteration limit) is diagnostic: it typically indicates either that the game has no pure-strategy BGE (the manifold analogue of a game with no pure-strategy Nash equilibrium) or that the strategy callback introduces oscillatory coupling that prevents contraction. In either case, the `converged=False` flag in the `BGEResult` alerts the analyst that the returned paths should be interpreted with caution.
 
-### 7.4.3 Mixed BGE and Existence
+### {{ch:equilibrium-on-manifolds}}.4.3 Mixed BGE and Existence
 
 The existence of mixed BGE follows from a reduction argument to finite Nash equilibrium. Given a finite graph with finitely many paths, the set of mixed strategies (probability distributions over paths) forms a compact convex set. The best-response correspondence inherits the upper hemicontinuity and convex-valuedness properties required by Kakutani's fixed-point theorem. Therefore:
 
-**Theorem 7.2 (Existence of Mixed BGE).** Every finite game on Economic Decision Complexes admits at least one mixed Bond Geodesic Equilibrium.
+**Theorem {{ch:equilibrium-on-manifolds}}.2 (Existence of Mixed BGE).** Every finite game on Economic Decision Complexes admits at least one mixed Bond Geodesic Equilibrium.
 
 The proof is constructive: enumerate all paths for each agent, construct the augmented finite game where each path is a pure strategy, and apply Nash's existence theorem to the augmented game. The BGE of the original game corresponds to the Nash equilibrium of the augmented game. This reduction preserves the full multi-dimensional cost structure---the payoff of a path in the augmented game is its total Mahalanobis-plus-boundary cost, not a scalar projection.
 
 ---
 
-## 7.5 The Reduction Theorem
+## {{ch:equilibrium-on-manifolds}}.5 The Reduction Theorem
 
 The most important theoretical property of BGE is that it generalizes Nash equilibrium rather than replacing it. This is not merely an aesthetic desideratum---it means that the entire apparatus of classical game theory remains available as a special case.
 
-**Theorem 7.1 (Reduction to Nash).** Let $(p_1^*, p_2^*, \ldots, p_n^*)$ be a Bond Geodesic Equilibrium on decision complexes $\{\mathcal{E}_i\}$. If the precision matrix $\Sigma^{-1}$ assigns zero weight to all dimensions except $d_1$ (consequences), i.e.,
+**Theorem {{ch:equilibrium-on-manifolds}}.1 (Reduction to Nash).** Let $(p_1^*, p_2^*, \ldots, p_n^*)$ be a Bond Geodesic Equilibrium on decision complexes $\{\mathcal{E}_i\}$. If the precision matrix $\Sigma^{-1}$ assigns zero weight to all dimensions except $d_1$ (consequences), i.e.,
 
 $$(\Sigma^{-1})_{jj} = 0 \quad \forall j \neq 0$$
 
@@ -321,7 +321,7 @@ The implementation provides a `nash_projection` function that performs this redu
 def nash_projection(bge_result: BGEResult) -> Dict[str, float]:
     """Project BGE to Nash-like monetary costs (d_1 only).
 
-    Demonstrates Theorem 7.1: BGE reduces to Nash when only
+    Demonstrates Theorem {{ch:equilibrium-on-manifolds}}.1: BGE reduces to Nash when only
     the consequences dimension is active.
     """
     return {aid: path.total_cost for aid, path in bge_result.agent_paths.items()}
@@ -329,13 +329,13 @@ def nash_projection(bge_result: BGEResult) -> Dict[str, float]:
 
 This function extracts the scalar path costs from a BGE result. When the BGE was computed with a full 9-dimensional precision matrix, these costs reflect the multi-dimensional path weight. When computed with a $d_1$-only precision matrix, they reflect only monetary costs---and the BGE *is* the Nash equilibrium.
 
-**Why the reduction matters.** The reduction theorem validates BGE as a *proper* generalization. Any result that holds for Nash equilibrium also holds for BGE restricted to one dimension. Any empirical finding that matches Nash predictions is automatically consistent with BGE (since Nash is a special case). But BGE can also explain phenomena that Nash cannot---the ultimatum game offers from Section 7.1.2, loss aversion, the endowment effect, framing sensitivity---because it has access to the eight dimensions that the Nash projection discards. This is the multi-dimensional analogue of the observation that special relativity reduces to Newtonian mechanics at low velocities: the generalization is validated by the fact that it recovers the known theory in the appropriate limit.
+**Why the reduction matters.** The reduction theorem validates BGE as a *proper* generalization. Any result that holds for Nash equilibrium also holds for BGE restricted to one dimension. Any empirical finding that matches Nash predictions is automatically consistent with BGE (since Nash is a special case). But BGE can also explain phenomena that Nash cannot---the ultimatum game offers from Section {{ch:equilibrium-on-manifolds}}.1.2, loss aversion, the endowment effect, framing sensitivity---because it has access to the eight dimensions that the Nash projection discards. This is the multi-dimensional analogue of the observation that special relativity reduces to Newtonian mechanics at low velocities: the generalization is validated by the fact that it recovers the known theory in the appropriate limit.
 
 ---
 
-## 7.6 Behavioral Friction
+## {{ch:equilibrium-on-manifolds}}.6 Behavioral Friction
 
-### 7.6.1 Definition
+### {{ch:equilibrium-on-manifolds}}.6.1 Definition
 
 The total cost of an agent's optimal path through their decision complex is a quantity with a natural behavioral interpretation. We call it **behavioral friction**:
 
@@ -355,7 +355,7 @@ def behavioral_friction(path: PathResult) -> float:
 
 Behavioral friction is the manifold-native measure of decision difficulty. It captures not just the monetary cost of an action but the full cognitive and emotional cost of executing it---the rights implications, the fairness considerations, the identity impact, the social consequences, and the epistemic uncertainty, all integrated through the Mahalanobis metric.
 
-### 7.6.2 Interpretation
+### {{ch:equilibrium-on-manifolds}}.6.2 Interpretation
 
 Higher behavioral friction means the decision is harder to execute. A decision with low friction along the Bond Geodesic---one that primarily traverses the consequences dimension, with minimal perturbation to other dimensions---is easy. A decision with high friction---one that activates multiple dimensions, crosses boundary penalties, or requires large displacements in identity or fairness space---is difficult, regardless of its monetary attractiveness.
 
@@ -369,11 +369,11 @@ At the system level, the `BGEResult` reports `total_behavioral_friction`---the s
 
 ---
 
-## 7.7 Emergent Behavioral Properties
+## {{ch:equilibrium-on-manifolds}}.7 Emergent Behavioral Properties
 
 The most striking consequence of the multi-dimensional geometric framework is that behavioral "biases"---phenomena that behavioral economics has catalogued as departures from rational choice theory---emerge as natural geometric properties of the decision manifold. They are not hard-coded parameters, ad-hoc utility function modifications, or psychological primitives. They are consequences of the fact that the decision space has more than one dimension.
 
-### 7.7.1 Loss Aversion
+### {{ch:equilibrium-on-manifolds}}.7.1 Loss Aversion
 
 Loss aversion is the empirical finding that losses loom larger than gains of equal magnitude. Kahneman and Tversky estimated the loss aversion coefficient $\lambda \approx 2.0$--$2.5$: a loss of \$X feels roughly 2--2.5 times as bad as a gain of \$X feels good.
 
@@ -441,7 +441,7 @@ def loss_aversion_ratio(gain_state, loss_state, reference, sigma_inv) -> float:
 
 There is nothing in this computation that imposes loss aversion. It is a *consequence* of the geometry: losses are farther from the reference point than gains in a multi-dimensional space because they activate more dimensions.
 
-### 7.7.2 The Endowment Effect
+### {{ch:equilibrium-on-manifolds}}.7.2 The Endowment Effect
 
 The endowment effect is the finding that people demand more to give up an object they own (willingness-to-accept, WTA) than they would pay to acquire the same object (willingness-to-pay, WTP). The ratio WTA/WTP typically ranges from 1.5 to 3.0 in experimental settings.
 
@@ -451,7 +451,7 @@ The `endowment_effect` function in `behavioral.py` computes the WTA and WTP mani
 
 The WTA/WTP ratio exceeds 1.0 because the seller traverses more dimensions with larger displacements than the buyer. The ratio *increases* with the number of activated dimensions---an object with purely monetary significance (only $d_1$ active) has WTA/WTP close to 1.0, while a family heirloom (activating $d_1$, $d_2$, $d_4$, $d_6$, $d_7$, and possibly $d_8$) has WTA/WTP much greater than 1.0. This matches experimental evidence: the endowment effect is stronger for goods with emotional, identity, or social significance.
 
-### 7.7.3 Reference Dependence
+### {{ch:equilibrium-on-manifolds}}.7.3 Reference Dependence
 
 Classical utility theory evaluates options in absolute terms: option A has utility $u(A)$, option B has utility $u(B)$, and the agent chooses the larger. Behavioral economics has established that agents instead evaluate options *relative to a reference point*---typically their current state.
 
@@ -472,7 +472,7 @@ def reference_dependence(current, option_a, option_b, sigma_inv):
 
 Two agents with identical option sets but different current states will compute different distances to the same options, and may therefore make different choices. This is exactly Kahneman and Tversky's reference dependence: preferences are defined over changes from a reference point, not over final states. In the manifold framework, this is simply the fact that distance depends on the starting point---a tautology in metric spaces, but one with profound behavioral implications.
 
-### 7.7.4 Framing Effects
+### {{ch:equilibrium-on-manifolds}}.7.4 Framing Effects
 
 A framing effect occurs when two logically equivalent descriptions of the same decision lead to different choices. In the geometric framework, a frame is a **gauge transformation**: a rotation of the description basis that changes how the same objective state is represented as an attribute vector:
 
@@ -491,11 +491,11 @@ The key distinction is between gauge-invariant and gauge-sensitive agents. A per
 
 ---
 
-## 7.8 Dimensional Loss Aversion
+## {{ch:equilibrium-on-manifolds}}.8 Dimensional Loss Aversion
 
-Section 7.7.1 showed that loss aversion emerges from the asymmetry between the dimensional profiles of gains and losses. We now push this analysis further to show that the *magnitude* of loss aversion depends on the number and type of non-monetary dimensions activated by the loss.
+Section {{ch:equilibrium-on-manifolds}}.7.1 showed that loss aversion emerges from the asymmetry between the dimensional profiles of gains and losses. We now push this analysis further to show that the *magnitude* of loss aversion depends on the number and type of non-monetary dimensions activated by the loss.
 
-### 7.8.1 The Dimensional Multiplier
+### {{ch:equilibrium-on-manifolds}}.8.1 The Dimensional Multiplier
 
 Consider three scenarios involving a loss of equal monetary magnitude ($M$):
 
@@ -515,7 +515,7 @@ This matches the canonical Kahneman-Tversky estimate.
 
 $$\lambda_{\text{heirloom}} \approx 3.0 \text{ or higher}$$
 
-### 7.8.2 The Geometric Mechanism
+### {{ch:equilibrium-on-manifolds}}.8.2 The Geometric Mechanism
 
 The pattern is systematic: the loss aversion coefficient $\lambda$ increases with the number of dimensions activated by the loss. This is a direct consequence of the Mahalanobis distance formula. If a gain produces a displacement vector $\Delta_g$ with $k$ nonzero components and a loss produces a displacement vector $\Delta_l$ with $m > k$ nonzero components, then the ratio of distances scales approximately as:
 
@@ -525,7 +525,7 @@ For the diagonal case (no cross-dimensional coupling), this simplifies to a weig
 
 This analysis makes a testable prediction: loss aversion should be *context-dependent*, varying with the type of good and the nature of the loss. Pure monetary losses should produce low $\lambda$; losses involving identity, social bonds, or moral violations should produce high $\lambda$. This prediction is consistent with the experimental literature. List (2003) found that experienced traders show minimal endowment effects for commodity goods (low dimensional activation). Ariely, Huber, and Wertenbroch (2005) found stronger effects for hedonic goods than utilitarian goods (hedonic goods activate more identity and social dimensions). The geometric framework explains *why* these findings hold: the relevant variable is not "type of good" as a categorical label but the number and weight of non-monetary dimensions activated by the transaction.
 
-### 7.8.3 Implications for Mechanism Design
+### {{ch:equilibrium-on-manifolds}}.8.3 Implications for Mechanism Design
 
 Dimensional loss aversion has direct implications for the design of markets, auctions, and policies. If the goal is to reduce the friction of a transaction---to lower the behavioral friction of the equilibrium---the designer should minimize the number of non-monetary dimensions displaced by the transaction.
 
@@ -539,25 +539,25 @@ Concretely:
 
 ---
 
-## 7.9 The Covariance Structure of Real Decisions
+## {{ch:equilibrium-on-manifolds}}.9 The Covariance Structure of Real Decisions
 
 The BGE computation depends critically on the covariance matrix $\Sigma$, which determines the Mahalanobis metric and therefore the relative importance of each dimension and the coupling between dimensions. The `eris-econ` framework provides a default covariance matrix (`_default_sigma()` in `games.py`) with an empirically motivated structure. The key design choice is the asymmetry between monetary and moral dimensions: the consequences dimension has variance 25.0, meaning that a unit change in monetary value is relatively low-cost in Mahalanobis terms---money varies on a large scale, so each dollar matters less. The moral dimensions ($d_2$ through $d_9$) each have variance 0.25, meaning that small changes in fairness, identity, or rights are high-cost---these dimensions vary on a small scale, so each increment matters more.
 
 The off-diagonal entries encode dimensional couplings well-documented in the behavioral economics literature: consequences-fairness ($\rho = 0.5$, because fair outcomes tend to be mutually beneficial), rights-legitimacy ($\rho = 0.15$, because rights violations undermine institutional trust), identity-social impact ($\rho = 0.1$, because self-image and social reputation covary), and trust-epistemic ($\rho = 0.1$, because low-trust environments produce poor information).
 
-These couplings mean that the Mahalanobis distance is not a simple weighted Euclidean distance. Cross-dimensional terms contribute to the metric, capturing the fact that a simultaneous change in rights *and* legitimacy is not the same as the sum of independent changes in each. The joint displacement may be more or less costly than the sum of marginal displacements, depending on the sign of the correlation. This is not a parametric assumption imposed to generate behavioral phenomena; it is an empirical observation about the *scales* at which economic dimensions naturally vary. The precision matrix $\Sigma^{-1}$ inverts these scales, and the behavioral properties documented in Sections 7.7--7.8 emerge as consequences of that inversion.
+These couplings mean that the Mahalanobis distance is not a simple weighted Euclidean distance. Cross-dimensional terms contribute to the metric, capturing the fact that a simultaneous change in rights *and* legitimacy is not the same as the sum of independent changes in each. The joint displacement may be more or less costly than the sum of marginal displacements, depending on the sign of the correlation. This is not a parametric assumption imposed to generate behavioral phenomena; it is an empirical observation about the *scales* at which economic dimensions naturally vary. The precision matrix $\Sigma^{-1}$ inverts these scales, and the behavioral properties documented in Sections {{ch:equilibrium-on-manifolds}}.7--7.8 emerge as consequences of that inversion.
 
 ---
 
-## 7.10 Summary and Looking Ahead
+## {{ch:equilibrium-on-manifolds}}.10 Summary and Looking Ahead
 
 This chapter developed the Bond Geodesic Equilibrium as a multi-dimensional generalization of Nash equilibrium on decision manifolds. The key results are:
 
-1. **BGE is a fixed-point condition on paths**, not payoffs. Each agent minimizes total path cost through their decision complex, where cost integrates all nine dimensions via the Mahalanobis metric plus boundary penalties. The iterated best response algorithm in `compute_bge()` finds this fixed point by cycling through agents, updating each agent's complex based on others' strategies, and re-running A* (Chapter 6) until convergence.
+1. **BGE is a fixed-point condition on paths**, not payoffs. Each agent minimizes total path cost through their decision complex, where cost integrates all nine dimensions via the Mahalanobis metric plus boundary penalties. The iterated best response algorithm in `compute_bge()` finds this fixed point by cycling through agents, updating each agent's complex based on others' strategies, and re-running A* (Chapter {{ch:pathfinding-on-manifolds}}) until convergence.
 
-2. **BGE reduces to Nash** when all non-monetary dimensions are deactivated (Theorem 7.1). This validates BGE as a proper generalization: classical results are a special case, not a competing framework.
+2. **BGE reduces to Nash** when all non-monetary dimensions are deactivated (Theorem {{ch:equilibrium-on-manifolds}}.1). This validates BGE as a proper generalization: classical results are a special case, not a competing framework.
 
-3. **Convergence** is promoted by metric smoothness (Lipschitz contraction of the best-response mapping) and boundary penalty discreteness (attractor regions that partition the strategy space). Mixed BGE existence follows from reduction to finite Nash equilibrium on the augmented game (Theorem 7.2).
+3. **Convergence** is promoted by metric smoothness (Lipschitz contraction of the best-response mapping) and boundary penalty discreteness (attractor regions that partition the strategy space). Mixed BGE existence follows from reduction to finite Nash equilibrium on the augmented game (Theorem {{ch:equilibrium-on-manifolds}}.2).
 
 4. **Behavioral friction** is the total path cost of the Bond Geodesic---a measure of decision difficulty that integrates cognitive, emotional, moral, and economic costs into a single geometric quantity.
 
@@ -565,6 +565,6 @@ This chapter developed the Bond Geodesic Equilibrium as a multi-dimensional gene
 
 6. **Dimensional loss aversion** provides a unified explanation for why loss aversion varies by context: $\lambda$ is determined by the number and weight of dimensions activated by the loss. Pure cash losses produce $\lambda \approx 1.2$; sentimental goods produce $\lambda \approx 3.0$; the variation is continuous, predictable, and measurable.
 
-7. **The ultimatum game** (Chapter 1) is resolved naturally: the BGE predicts 40--50% offers because the manifold distance to a fair split is shorter than the distance to a greedy offer, once fairness, identity, and social dimensions are accounted for.
+7. **The ultimatum game** (Chapter {{ch:why-geometry}}) is resolved naturally: the BGE predicts 40--50% offers because the manifold distance to a fair split is shorter than the distance to a greedy offer, once fairness, identity, and social dimensions are accounted for.
 
-Chapter 8 turns from equilibrium to optimization: given a model with multiple dimensions, how do we find the Pareto frontier of configurations that optimally trade off accuracy against complexity? Where this chapter used the manifold structure of the decision space to generalize equilibrium, Chapter 8 applies multi-objective optimization across varying numbers of active dimensions---a different algorithmic problem, but one that shares the same foundational commitment to treating multi-dimensional structure as the primary object of analysis rather than collapsing it to a scalar.
+Chapter {{ch:pareto-optimization}} turns from equilibrium to optimization: given a model with multiple dimensions, how do we find the Pareto frontier of configurations that optimally trade off accuracy against complexity? Where this chapter used the manifold structure of the decision space to generalize equilibrium, Chapter {{ch:pareto-optimization}} applies multi-objective optimization across varying numbers of active dimensions---a different algorithmic problem, but one that shares the same foundational commitment to treating multi-dimensional structure as the primary object of analysis rather than collapsing it to a scalar.

@@ -5,14 +5,13 @@ Usage:
 """
 
 import argparse
+import re
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 from docx import Document
-from docx.shared import Pt, Inches, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.shared import Inches, Pt, RGBColor
 
 BOOK_DIR = Path(__file__).parent
 IMAGES_DIR = BOOK_DIR / "images"
@@ -27,6 +26,7 @@ CHAPTERS = [
     "part1-foundations/chapter-03-hyperbolic-geometry.md",
     "part1-foundations/chapter-04-spd-manifolds.md",
     "part1-foundations/chapter-05-topological-data-analysis.md",
+    "part1-foundations/chapter-5b-spectral-geometry-and-the-angular-basis.md",
     # Part II: Algorithms
     ("part2-algorithms/chapter-06-pathfinding-on-manifolds.md", "Part II: Algorithms"),
     "part2-algorithms/chapter-07-equilibrium-on-manifolds.md",
@@ -45,6 +45,8 @@ CHAPTERS = [
     "part4-systems/chapter-18-production-deployment.md",
     "part4-systems/chapter-19-case-study-defect-prediction.md",
     "part4-systems/chapter-20-case-study-bioacoustics.md",
+    "part4-systems/chapter-21-case-study-aesthetic-judgment.md",
+    "part4-systems/chapter-22-case-study-legal-embeddings.md",
     # Appendices
     ("appendices/appendix-a-notation.md", "Appendices"),
     "appendices/appendix-b-software.md",
@@ -53,35 +55,114 @@ CHAPTERS = [
 
 # Map chapter number to illustration filename
 ILLUSTRATIONS = {
-    1:  ("ch01-geometric-toolchain.png",
-         "The Structural Fuzzing pipeline: six stages built on geometric foundations."),
-    2:  ("ch02-euclidean-vs-mahalanobis.png",
-         "Isodistance contours: Euclidean circles vs Mahalanobis ellipses."),
-    3:  ("ch03-poincare-ball.png",
-         "A hierarchical tree embedded in the Poincar\u00e9 ball, with depth increasing toward the boundary."),
-    4:  ("ch04-spd-manifold.png",
-         "SPD matrices visualized as ellipses (left) unfold into flat log-Euclidean space (right)."),
-    5:  ("ch05-tda-persistence.png",
-         "Vietoris\u2013Rips filtration at increasing radii, with the resulting persistence diagram."),
-    6:  ("ch06-pathfinding.png",
-         "A* pathfinding on a decision manifold: the manifold-aware path respects the moral boundary."),
-    7:  ("ch07-nash-vs-bge.png",
-         "Ultimatum game: Nash equilibrium maximizes scalar payoff; the Bond Geodesic Equilibrium balances multiple dimensions."),
-    8:  ("ch08-pareto-frontier.png",
-         "Pareto frontier in dimension-count vs prediction-error space. Gold points are non-dominated."),
-    9:  ("ch09-robustness.png",
-         "Left: broad vs sharp loss-landscape minima. Right: MRI perturbation distribution with percentile markers."),
-    11: ("ch11-hasse-diagram.png",
-         "Hasse diagram of the subset lattice for four feature dimensions, colored by prediction error."),
-    12: ("ch12-interaction-heatmap.png",
-         "Pairwise dimension interaction matrix: red indicates synergy, blue indicates redundancy."),
-    13: ("ch13-dihedral-grid.png",
-         "All eight symmetries of the dihedral group D\u2084 applied to an L-shaped pattern."),
-    16: ("ch16-pipeline-architecture.png",
-         "Six-stage structural fuzzing pipeline with data flow to the domain-specific evaluation function."),
-    20: ("ch20-bioacoustics.png",
-         "Sperm whale coda spectrogram (left) and cetacean taxonomy on the Poincar\u00e9 disk (right)."),
+    1: (
+        "ch01-geometric-toolchain.png",
+        "The Structural Fuzzing pipeline: six stages built on geometric foundations.",
+    ),
+    2: (
+        "ch02-euclidean-vs-mahalanobis.png",
+        "Isodistance contours: Euclidean circles vs Mahalanobis ellipses.",
+    ),
+    3: (
+        "ch03-poincare-ball.png",
+        "A hierarchical tree embedded in the Poincar\u00e9 ball, with depth increasing toward the boundary.",
+    ),
+    4: (
+        "ch04-spd-manifold.png",
+        "SPD matrices visualized as ellipses (left) unfold into flat log-Euclidean space (right).",
+    ),
+    5: (
+        "ch05-tda-persistence.png",
+        "Vietoris\u2013Rips filtration at increasing radii, with the resulting persistence diagram.",
+    ),
+    6: (
+        "ch06-pathfinding.png",
+        "A* pathfinding on a decision manifold: the manifold-aware path respects the moral boundary.",
+    ),
+    7: (
+        "ch07-nash-vs-bge.png",
+        "Ultimatum game: Nash equilibrium maximizes scalar payoff; the Bond Geodesic Equilibrium balances multiple dimensions.",
+    ),
+    8: (
+        "ch08-pareto-frontier.png",
+        "Pareto frontier in dimension-count vs prediction-error space. Gold points are non-dominated.",
+    ),
+    9: (
+        "ch09-robustness.png",
+        "Left: broad vs sharp loss-landscape minima. Right: MRI perturbation distribution with percentile markers.",
+    ),
+    11: (
+        "ch11-hasse-diagram.png",
+        "Hasse diagram of the subset lattice for four feature dimensions, colored by prediction error.",
+    ),
+    12: (
+        "ch12-interaction-heatmap.png",
+        "Pairwise dimension interaction matrix: red indicates synergy, blue indicates redundancy.",
+    ),
+    13: (
+        "ch13-dihedral-grid.png",
+        "All eight symmetries of the dihedral group D\u2084 applied to an L-shaped pattern.",
+    ),
+    16: (
+        "ch16-pipeline-architecture.png",
+        "Six-stage structural fuzzing pipeline with data flow to the domain-specific evaluation function.",
+    ),
+    20: (
+        "ch20-bioacoustics.png",
+        "Sperm whale coda spectrogram (left) and cetacean taxonomy on the Poincar\u00e9 disk (right).",
+    ),
 }
+
+
+# --- chapter numbers are references, resolved by manifest position -------------
+_ORIG_NUM_TO_KEY = {
+    1: "why-geometry",
+    2: "mahalanobis-distance",
+    3: "hyperbolic-geometry",
+    4: "spd-manifolds",
+    5: "topological-data-analysis",
+    6: "pathfinding-on-manifolds",
+    7: "equilibrium-on-manifolds",
+    8: "pareto-optimization",
+    9: "adversarial-robustness",
+    11: "subset-enumeration",
+    12: "compositional-testing",
+    13: "group-theoretic-augmentation",
+    16: "geometric-pipelines",
+    20: "case-study-bioacoustics",
+}
+# illustrations keyed by chapter slug (decoupled from the now-positional number)
+ILLUSTRATIONS_BY_KEY = {_ORIG_NUM_TO_KEY[n]: v for n, v in ILLUSTRATIONS.items()}
+
+_TOKEN = re.compile(r"\{\{ch:([a-z0-9-]+)\}\}")
+
+
+def _chapter_key(filename):
+    """Filename slug -> stable chapter key (chapter-03-hyperbolic-geometry -> that)."""
+    m = re.match(r"chapter-\d+[a-z]?-(.+)\.md$", Path(filename).name)
+    return m.group(1) if m else None
+
+
+def _number_by_key():
+    """Assign chapter numbers by manifest position (appendices excluded)."""
+    num, i = {}, 0
+    for entry in CHAPTERS:
+        fn = entry[0] if isinstance(entry, tuple) else entry
+        k = _chapter_key(fn)
+        if k:
+            i += 1
+            num[k] = i
+    return num
+
+
+NUMBER_BY_KEY = _number_by_key()
+
+
+def _resolve_tokens(text):
+    """Replace {{ch:key}} with the chapter number from its manifest position."""
+    return _TOKEN.sub(
+        lambda m: str(NUMBER_BY_KEY.get(m.group(1), f"?{m.group(1)}?")), text
+    )
 
 
 def _extract_chapter_num(filename):
@@ -207,11 +288,12 @@ def concatenate_chapters():
             continue
 
         content = chapter_path.read_text(encoding="utf-8")
+        content = _resolve_tokens(content)  # {{ch:key}} -> manifest-position number
 
         # Insert illustration after first section heading (## x.x)
-        ch_num = _extract_chapter_num(filename)
-        if ch_num and ch_num in ILLUSTRATIONS:
-            img_file, caption = ILLUSTRATIONS[ch_num]
+        ch_key = _chapter_key(filename)
+        if ch_key and ch_key in ILLUSTRATIONS_BY_KEY:
+            img_file, caption = ILLUSTRATIONS_BY_KEY[ch_key]
             img_path = IMAGES_DIR / img_file
             if img_path.exists():
                 # Find the first ## heading and insert illustration before it
@@ -251,15 +333,21 @@ def run_pandoc(combined_md):
     cmd = [
         "pandoc",
         str(combined_md),
-        "--from", "markdown+tex_math_dollars+pipe_tables+fenced_code_blocks+fenced_code_attributes+raw_tex",
-        "--to", "docx",
-        "--reference-doc", str(ref_docx),
-        "--toc", "--toc-depth=3",
-        "--resource-path", str(BOOK_DIR),
-        "--output", str(raw_output),
+        "--from",
+        "markdown+tex_math_dollars+pipe_tables+fenced_code_blocks+fenced_code_attributes+raw_tex",
+        "--to",
+        "docx",
+        "--reference-doc",
+        str(ref_docx),
+        "--toc",
+        "--toc-depth=3",
+        "--resource-path",
+        str(BOOK_DIR),
+        "--output",
+        str(raw_output),
     ]
 
-    print(f"Running pandoc...")
+    print("Running pandoc...")
     print(f"  cmd: {' '.join(cmd[:6])}...")
     result = subprocess.run(cmd, capture_output=True, text=True, cwd=str(BOOK_DIR))
 
@@ -270,8 +358,11 @@ def run_pandoc(combined_md):
 
     if result.stderr:
         # Filter out common warnings
-        warnings = [l for l in result.stderr.strip().split("\n")
-                     if l and "Could not convert" not in l.lower()]
+        warnings = [
+            l
+            for l in result.stderr.strip().split("\n")
+            if l and "Could not convert" not in l.lower()
+        ]
         if warnings:
             print(f"  pandoc warnings: {len(warnings)}")
             for w in warnings[:10]:
@@ -284,6 +375,7 @@ def run_pandoc(combined_md):
 def run_postprocess(raw_docx):
     """Apply python-docx post-processing."""
     from postprocess_docx import postprocess
+
     final_output = OUTPUT_DIR / "structural-fuzzing-book.docx"
     postprocess(raw_docx, final_output)
     return final_output
@@ -291,12 +383,17 @@ def run_postprocess(raw_docx):
 
 def main():
     parser = argparse.ArgumentParser(description="Build Structural Fuzzing book")
-    parser.add_argument("--skip-illustrations", action="store_true",
-                        help="Skip illustration generation")
-    parser.add_argument("--skip-pandoc", action="store_true",
-                        help="Skip pandoc conversion")
-    parser.add_argument("--skip-postprocess", action="store_true",
-                        help="Skip python-docx post-processing")
+    parser.add_argument(
+        "--skip-illustrations", action="store_true", help="Skip illustration generation"
+    )
+    parser.add_argument(
+        "--skip-pandoc", action="store_true", help="Skip pandoc conversion"
+    )
+    parser.add_argument(
+        "--skip-postprocess",
+        action="store_true",
+        help="Skip python-docx post-processing",
+    )
     args = parser.parse_args()
 
     IMAGES_DIR.mkdir(exist_ok=True)
@@ -308,6 +405,7 @@ def main():
         print("PHASE A: Generating illustrations")
         print("=" * 60)
         from generate_illustrations import generate_all
+
         generate_all()
     else:
         print("Skipping illustrations (--skip-illustrations)")

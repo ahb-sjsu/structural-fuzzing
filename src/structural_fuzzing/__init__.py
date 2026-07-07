@@ -6,7 +6,11 @@ parameters to find prediction failures.
 """
 
 from structural_fuzzing.adversarial import AdversarialResult, find_adversarial_threshold
-from structural_fuzzing.baselines import backward_elimination, forward_selection, lasso_selection
+from structural_fuzzing.baselines import (
+    backward_elimination,
+    forward_selection,
+    lasso_selection,
+)
 from structural_fuzzing.compositional import CompositionResult, compositional_test
 from structural_fuzzing.core import (
     SubsetResult,
@@ -25,6 +29,13 @@ from structural_fuzzing.mri import ModelRobustnessIndex, compute_mri
 from structural_fuzzing.pareto import pareto_frontier
 from structural_fuzzing.pipeline import StructuralFuzzReport, run_campaign
 from structural_fuzzing.sensitivity import SensitivityResult, sensitivity_profile
+from structural_fuzzing.spectral_probe import (
+    IntegrityReport,
+    angular_fidelity,
+    integrity_report,
+    intrinsic_dimension,
+    response_graph,
+)
 
 __version__ = "0.3.0"
 
@@ -52,4 +63,9 @@ __all__ = [
     "probe_calibration",
     "GeneralizationGap",
     "cross_relation_gap",
+    "IntegrityReport",
+    "response_graph",
+    "intrinsic_dimension",
+    "angular_fidelity",
+    "integrity_report",
 ]

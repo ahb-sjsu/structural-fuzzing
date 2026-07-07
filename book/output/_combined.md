@@ -1,63 +1,11 @@
 ---
-title: "Geometric Methods in Computational Modeling"
-subtitle: "From Manifolds to Production Systems"
+title: "Structural Fuzzing"
+subtitle: "Geometric Methods for Adversarial Model Validation"
 author: "Andrew H. Bond"
 date: "2026"
 ---
 
 \newpage
-
-# Preface
-
-Every computational model produces predictions. The standard practice for evaluating those predictions is to compute a single number --- accuracy, F1, RMSE --- and compare it to a threshold. This book argues that the standard practice is not merely incomplete but *structurally incapable* of answering the questions that matter most: Which inputs break the model? Which combinations of features carry the signal? Is the model robust, or does it sit on a knife edge? Where, exactly, are the tipping points?
-
-The remedy is geometry. Instead of collapsing a model's behavior to a scalar, we represent it as a point in a multi-dimensional space and bring the full power of geometric reasoning to bear --- distance, curvature, topology, symmetry, pathfinding. The result is a family of validation methods that see what scalar metrics cannot.
-
-## Who This Book Is For
-
-This book is written for two audiences that rarely share a bookshelf:
-
-**Machine learning engineers and applied scientists** who build models, ship them to production, and need validation methods that go beyond "the number went up." If you have built a model, computed a metric, and suspected the metric was hiding something important, this book gives you the tools to find out what.
-
-**Researchers in computational modeling** --- in machine learning, signal processing, behavioral science, ecology, or any field where models take parameters and produce multi-dimensional outputs --- who want a rigorous geometric framework for model analysis. The theorems are stated precisely and the proofs are in Appendix C, but the emphasis throughout is on *computational* geometry: every concept is implemented, every algorithm has code, every theorem has a worked example.
-
-If you are comfortable with linear algebra and basic probability, you have the prerequisites for Parts I and II. Familiarity with differential geometry and topology will deepen your reading of the foundational chapters but is not required --- Chapter 1 builds intuition before formalism, and the mathematical preliminaries are developed as needed. If you have never trained a model or written Python, Parts III and IV will be harder going, but the conceptual chapters stand on their own.
-
-## What This Book Is Not
-
-This is not a textbook on differential geometry, though it uses differential geometry. It is not a textbook on machine learning, though every example involves a learned model. It is not documentation for a software package, though it develops and uses the `structural-fuzzing` library throughout. It is a book about a *way of thinking* --- the idea that model validation is a geometric problem, and that treating it as one unlocks methods that are otherwise invisible.
-
-## How This Book Is Organized
-
-The book has four parts, each with a distinct character:
-
-**Part I: Foundations (Chapters 1--5)** builds the geometric toolkit. Chapter 1 motivates the entire programme with the Scalar Irrecoverability Theorem and a concrete example. Chapters 2--5 develop the four geometric settings you will need: Euclidean spaces with the Mahalanobis metric, hyperbolic spaces for hierarchical data, the manifold of symmetric positive definite matrices for covariance and spectral data, and topological data analysis for shape features that distance metrics miss.
-
-**Part II: Algorithms (Chapters 6--10)** puts the toolkit to work. Pathfinding on manifolds, equilibrium computation, Pareto optimization, adversarial robustness quantification (the Model Robustness Index), and adversarial probing. Each chapter follows the same cadence: motivate the problem, state the algorithm, prove its properties, implement it, and apply it to a concrete example.
-
-**Part III: Design Patterns (Chapters 11--15)** develops reusable patterns for combining the algorithms into complete analyses. Subset enumeration for systematic dimension exploration, compositional testing for greedy model building, group-theoretic data augmentation, gradient reversal for invariance training, and Cholesky parameterization for guaranteed positive-definiteness. These are the chapters that bridge theory and engineering.
-
-**Part IV: Systems (Chapters 16--20)** addresses the real world. Building geometric pipelines, scaling to high-dimensional spaces, deploying geometric validation in production, and two complete case studies: software defect prediction and cetacean bioacoustics. These chapters assume you have read (or can reference) the earlier material, and they focus on the engineering decisions that arise when geometric methods meet production constraints.
-
-## How to Read This Book
-
-**If you are an engineer** who wants to use these methods immediately: read Chapter 1 for motivation, skim Part I for the geometric intuitions, then jump to Part III (design patterns) and Part IV (systems). Return to Part I when you need the theory behind a specific method.
-
-**If you are a researcher** interested in the mathematical foundations: read Parts I and II carefully. The technical appendices (Appendix C) contain the proofs. Part III shows how the theory translates to practice.
-
-**If you are evaluating the framework** for a specific domain: read Chapter 1 and then the case study closest to your field --- Chapter 19 for software engineering, Chapter 20 for biological signal analysis. The case studies are designed to be self-contained with forward references to the relevant theory.
-
-Every chapter that introduces a geometric concept also shows its implementation. Code examples use Python and the `structural-fuzzing` library (Appendix B), but the ideas are not language-specific. If you prefer Julia, R, or C++, the algorithms translate directly.
-
-## The Origin of This Book
-
-This book grew from a practical frustration. Working on model validation across several domains --- defect prediction, behavioral economics, abstract reasoning, bioacoustics --- I kept encountering the same problem: scalar metrics that declared two configurations equivalent when they were fundamentally different, and validation pipelines that could not detect fragility until it was too late. The solution, in each case, turned out to be geometric: replace the scalar with a vector, replace the Euclidean distance with the right metric, and suddenly the structure that was always there became visible.
-
-The `structural-fuzzing` library on PyPI implements the computational core. This book provides the *why* behind the *what* --- the mathematical foundations, the design rationale, the worked examples, and the engineering patterns that make geometric validation practical at scale.
-
-## Acknowledgments
-
-The `structural-fuzzing` framework is open source (MIT license) and available at [pypi.org/project/structural-fuzzing](https://pypi.org/project/structural-fuzzing/). The geometric foundations draw on the broader programme of Geometric Ethics (Bond, 2026), which develops the mathematical structure of multi-dimensional evaluation in the moral domain. The extension to computational modeling is the subject of this book.
 
 \newpage
 
@@ -120,7 +68,7 @@ The irrecoverability problem is not academic. It produces three concrete failure
 
 2. **Fragile optima.** Two configurations achieve the same loss. One is robust to perturbation; the other sits on a knife edge. Scalar loss cannot distinguish between a broad valley and a narrow ridge in parameter space.
 
-3. **Misleading comparisons.** Model A outperforms Model B on a scalar benchmark. But Model B is superior on three of five dimensions and inferior only on the two that the scalar over-weights. A Pareto analysis (Chapter 8) reveals that neither dominates the other---the comparison is fundamentally multi-dimensional.
+3. **Misleading comparisons.** Model A outperforms Model B on a scalar benchmark. But Model B is superior on three of five dimensions and inferior only on the two that the scalar over-weights. A Pareto analysis (Chapter 9) reveals that neither dominates the other---the comparison is fundamentally multi-dimensional.
 
 These failure modes are not edge cases. They are the *default* outcome whenever a multi-dimensional evaluation is collapsed to a scalar and the null space happens to contain the information that matters.
 
@@ -142,7 +90,7 @@ A *state* is a vector $\mathbf{s} = (s_1, s_2, \ldots, s_n) \in \mathbb{R}^n$ wh
 | $s_4$ | Object-orientation | Coupling, cohesion, inheritance depth |
 | $s_5$ | Process | Revisions, distinct authors, code churn |
 
-Each dimension is not a single feature but a *group* of related features that collectively describe one aspect of the system. The grouping itself is a modeling decision, and it matters: the geometry of the resulting space depends on which features share a dimension and which are separated. Chapter 11 develops systematic methods for constructing dimension subsets.
+Each dimension is not a single feature but a *group* of related features that collectively describe one aspect of the system. The grouping itself is a modeling decision, and it matters: the geometry of the resulting space depends on which features share a dimension and which are separated. Chapter 2 develops systematic methods for constructing these dimension groupings.
 
 ### 1.2.2 Design Patterns for State Vectors
 
@@ -150,9 +98,9 @@ Working with multi-dimensional state vectors requires disciplined engineering. T
 
 **Immutable state vectors.** A state vector, once constructed, should not be modified in place. Operations that transform states---perturbation, projection, interpolation---produce new vectors. Immutability prevents an entire class of bugs where shared references to a state vector produce unexpected aliasing, and it makes state trajectories trivially reproducible.
 
-**Dimension enumerations.** Each dimension of the state space is named, not numbered. Rather than referring to "dimension 3," the framework refers to "Halstead" or "vocabulary complexity." Named dimensions make code self-documenting, prevent off-by-one errors in dimension indexing, and enable operations like "activate all dimensions except OO" to be expressed declaratively. Chapter 11 introduces the subset enumeration pattern used throughout the structural fuzzing framework.
+**Dimension enumerations.** Each dimension of the state space is named, not numbered. Rather than referring to "dimension 3," the framework refers to "Halstead" or "vocabulary complexity." Named dimensions make code self-documenting, prevent off-by-one errors in dimension indexing, and enable operations like "activate all dimensions except OO" to be expressed declaratively. Chapter 2 introduces the dimension enumeration pattern used throughout the structural fuzzing framework.
 
-**Attribute encoding conventions.** Each component $s_i$ requires a consistent encoding. For real-valued attributes, the convention is log-space encoding: parameter values are drawn from $[\epsilon, M]$ on a logarithmic scale, with a sentinel value (typically $10^6$) indicating that a dimension is *inactive*. This encoding provides uniform resolution across orders of magnitude and naturally handles the "off/on" semantics needed for subset enumeration (Chapter 11). For categorical or ordinal attributes, one-hot or thermometer encoding maps discrete values into the continuous space while preserving ordering relationships.
+**Attribute encoding conventions.** Each component $s_i$ requires a consistent encoding. For real-valued attributes, the convention is log-space encoding: parameter values are drawn from $[\epsilon, M]$ on a logarithmic scale, with a sentinel value (typically $10^6$) indicating that a dimension is *inactive*. This encoding provides uniform resolution across orders of magnitude and naturally handles the "off/on" semantics needed for subset enumeration (Chapter 12). For categorical or ordinal attributes, one-hot or thermometer encoding maps discrete values into the continuous space while preserving ordering relationships.
 
 ### 1.2.3 What Geometry Buys You
 
@@ -161,7 +109,7 @@ With states as points in $\mathbb{R}^n$, standard geometric operations become im
 - **Distance** between configurations quantifies how different they are, across all dimensions simultaneously, rather than reducing to a scalar difference.
 - **Direction** from one configuration to another reveals *which* dimensions change and by how much---information that scalar comparison discards entirely.
 - **Neighborhoods** around a configuration define the set of "nearby" states, enabling robustness analysis: how far can you move from the current state before behavior changes qualitatively?
-- **Subspaces** correspond to subsets of dimensions, enabling systematic exploration of which combinations of attributes matter (Chapter 11) and which are redundant.
+- **Subspaces** correspond to subsets of dimensions, enabling systematic exploration of which combinations of attributes matter (Chapter 12) and which are redundant.
 - **Curvature** of the loss surface at a point reveals whether the configuration is stable (broad valley) or fragile (narrow ridge), directly addressing the fragile-optima failure mode of scalar metrics.
 
 These are not metaphors. They are literal geometric computations, implemented in the structural fuzzing framework and exercised throughout the examples in this book.
@@ -186,7 +134,7 @@ Two concrete applications motivate the development in later chapters:
 
 **ARC-AGI rule hierarchies.** The ARC-AGI benchmark requires discovering transformation rules that map input grids to output grids. These rules form hierarchies: a high-level rule like "reflect and recolor" decomposes into sub-rules ("reflect horizontally," "map color A to color B"), which further decompose into pixel-level operations. Embedding these hierarchies into hyperbolic space allows geometric operations---nearest-neighbor search, interpolation, centroid computation---to respect the hierarchical structure. A rule and its parent are "close" in hyperbolic distance even though they may differ substantially in Euclidean terms. Chapter 3 develops this application in detail.
 
-**Cetacean coda taxonomies.** Sperm whale communication is organized into coda types---rhythmic patterns of clicks---that form a taxonomy: broad categories subdivide into regional variants, which further subdivide into individual-level signatures. The branching structure of this taxonomy maps naturally onto hyperbolic space, enabling similarity computations that respect the taxonomic hierarchy rather than treating all codas as points in a flat space. This application appears in Chapter 20 as a case study in biological signal analysis.
+**Cetacean coda taxonomies.** Sperm whale communication is organized into coda types---rhythmic patterns of clicks---that form a taxonomy: broad categories subdivide into regional variants, which further subdivide into individual-level signatures. The branching structure of this taxonomy maps naturally onto hyperbolic space, enabling similarity computations that respect the taxonomic hierarchy rather than treating all codas as points in a flat space. This application appears in Chapter 21 as a case study in biological signal analysis.
 
 ### 1.3.2 Covariance and Spectral Data on SPD Manifolds
 
@@ -218,7 +166,7 @@ For computational modeling, persistent homology reveals structural properties th
 - A parameter space may contain voids---regions where no valid configuration exists---that exhaustive search must navigate around.
 - The loss landscape may have topological complexity (multiple basins, saddle connections) that curvature analysis alone cannot detect.
 
-Chapter 5 introduces persistent homology for practitioners and applies it to structural fuzzing, using topological features of the perturbation response surface to detect fragility patterns that the Model Robustness Index (Chapter 9) would miss.
+Chapter 5 introduces persistent homology for practitioners and applies it to structural fuzzing, using topological features of the perturbation response surface to detect fragility patterns that the Model Robustness Index (Chapter 10) would miss.
 
 ---
 
@@ -228,23 +176,20 @@ This book develops a coherent toolchain in which each geometric method addresses
 
 | Tool | Chapter | Problem Addressed |
 |------|---------|-------------------|
-| Multi-dimensional state vectors | 1 | Representing model configurations without information loss |
 | Mahalanobis distance | 2 | Scale- and correlation-aware distance in feature space |
-| Poincaré embeddings | 3 | Faithful representation of hierarchical structures |
+| Hyperbolic embeddings | 3 | Faithful representation of hierarchical structures |
 | SPD manifold operations | 4 | Correct arithmetic on covariance and spectral data |
-| Persistent homology | 5 | Shape features (loops, voids) invisible to distance metrics |
-| A* on manifolds | 6 | Optimal pathfinding in non-Euclidean configuration spaces |
-| Equilibrium computation | 7 | Multi-agent equilibria on manifolds |
+| Topological data analysis | 5 | Shape features (loops, voids) invisible to distance metrics |
+| Pathfinding on manifolds | 6 | Optimal pathfinding in non-Euclidean configuration spaces |
+| Equilibrium on manifolds | 7 | Stability analysis via geometric equilibrium |
 | Pareto optimization | 8 | Multi-objective search without scalarization |
-| Adversarial robustness testing (MRI) | 9 | Finding tipping points and quantifying robustness |
-| Adversarial probing | 10 | Structure probing in non-Euclidean spaces |
+| Model Robustness Index (MRI) | 9 | How stable is a configuration under perturbation? |
+| Adversarial probing | 10 | Finding tipping points and worst-case perturbations |
 | Subset enumeration | 11 | Which dimension combinations matter? |
-| Compositional testing | 12 | Greedy dimension-building and order effects |
+| Compositional testing | 12 | How do dimensions interact? |
 | Group-theoretic augmentation | 13 | Exploiting symmetries for efficient exploration |
-| Gradient reversal | 14 | Invariance training and domain adaptation |
-| Cholesky parameterization | 15 | Guaranteed positive-definiteness in metric learning |
 
-The tools are designed to compose. A typical analysis pipeline might: construct a state space (Chapter 1), enumerate subsets to identify important dimensions (Chapter 11), compute the Pareto frontier to find non-dominated configurations (Chapter 8), apply the MRI to quantify robustness of each Pareto-optimal point (Chapter 9), and then run adversarial search to locate exact tipping points for the most promising configurations (Chapter 9). Each step uses geometry to extract information that the previous step's scalar summary would discard.
+The tools are designed to compose. A typical analysis pipeline might: construct a state space (Chapter 2), enumerate subsets to identify important dimensions (Chapter 12), compute the Pareto frontier to find non-dominated configurations (Chapter 9), apply the MRI to quantify robustness of each Pareto-optimal point (Chapter 10), and then run adversarial search to locate exact tipping points for the most promising configurations (Chapter 11). Each step uses geometry to extract information that the previous step's scalar summary would discard.
 
 The toolchain is not tied to any particular domain. It applies wherever a model takes parameters and produces multi-dimensional outputs---which is to say, it applies almost everywhere. The examples in this book span software defect prediction, behavioral economics, abstract reasoning (ARC-AGI), biological signal analysis, and simulation validation, but the methods are domain-agnostic.
 
@@ -276,9 +221,9 @@ The geometric approach begins by organizing the 16 features into five groups, ea
 
 The model's configuration is now a point in $\mathbb{R}^5$. Each dimension corresponds to a feature group, and the parameter value for that dimension controls the group's influence on predictions. Setting a dimension to the sentinel value ($10^6$) deactivates the corresponding feature group entirely, allowing the framework to test *structural* questions: what happens when the model has no access to complexity features? To OO metrics? To process information?
 
-**Step 1: Subset enumeration (Chapter 11).** The framework tests all $\binom{5}{1} + \binom{5}{2} + \binom{5}{3} = 25$ subsets of dimensions up to size 3. Each subset is optimized independently. The results reveal that {Complexity, Process} achieves MAE 2.1, while {Size, Halstead} achieves MAE 2.3. These two configurations are close in scalar terms but occupy entirely different regions of the feature space.
+**Step 1: Subset enumeration (Chapter 12).** The framework tests all $\binom{5}{1} + \binom{5}{2} + \binom{5}{3} = 25$ subsets of dimensions up to size 3. Each subset is optimized independently. The results reveal that {Complexity, Process} achieves MAE 2.1, while {Size, Halstead} achieves MAE 2.3. These two configurations are close in scalar terms but occupy entirely different regions of the feature space.
 
-**Step 2: Pareto frontier (Chapter 8).** Plotting all 25 configurations in the (number-of-dimensions, MAE) plane, the Pareto frontier identifies four non-dominated points:
+**Step 2: Pareto frontier (Chapter 9).** Plotting all 25 configurations in the (number-of-dimensions, MAE) plane, the Pareto frontier identifies four non-dominated points:
 
 | Dimensions $k$ | Best MAE | Configuration |
 |:-:|:-:|---|
@@ -289,20 +234,20 @@ The model's configuration is now a point in $\mathbb{R}^5$. Each dimension corre
 
 Adding OO and Halstead to the three-group configuration reduces MAE from 1.7 to 1.5---a marginal improvement that comes at the cost of doubling the feature count. The Pareto analysis makes this tradeoff explicit without requiring the practitioner to choose a weighting between accuracy and simplicity.
 
-**Step 3: Sensitivity profiling (Chapter 9).** Ablation reveals that removing Complexity increases MAE by 1.9 (the most important dimension), removing Process increases it by 1.2, removing Size increases it by 0.6, while removing OO or Halstead increases it by less than 0.2 each. The scalar metric "84% accuracy" hid the fact that the model is overwhelmingly dependent on two of its five feature groups.
+**Step 3: Sensitivity profiling (Chapter 10).** Ablation reveals that removing Complexity increases MAE by 1.9 (the most important dimension), removing Process increases it by 1.2, removing Size increases it by 0.6, while removing OO or Halstead increases it by less than 0.2 each. The scalar metric "84% accuracy" hid the fact that the model is overwhelmingly dependent on two of its five feature groups.
 
-**Step 4: Model Robustness Index (Chapter 9).** The MRI perturbs the baseline configuration 300 times, measuring the distribution of MAE deviations:
+**Step 4: Model Robustness Index (Chapter 10).** The MRI perturbs the baseline configuration 300 times, measuring the distribution of MAE deviations:
 
 | Statistic | Value |
 |:-:|:-:|
 | Mean deviation | 0.8 |
 | 75th percentile | 1.4 |
 | 95th percentile | 3.1 |
-| MRI (composite) | 1.43 |
+| MRI (composite) | 1.44 |
 
 The 95th percentile deviation of 3.1 means that in the worst 5% of perturbations, the model's error nearly doubles. This tail behavior is invisible to mean-based metrics. The MRI's weighted combination of mean, P75, and P95 provides a single robustness score *that explicitly accounts for tail risk*, unlike standard deviation which treats all deviations symmetrically.
 
-**Step 5: Adversarial threshold search (Chapter 9).** Binary search along each dimension reveals that the Complexity parameter has a tipping point at 0.3x its baseline value: reducing it below this threshold causes recall on high-complexity modules to collapse from 0.71 to 0.29. The model is not just dependent on Complexity---it is *brittle* with respect to it. A small shift in the complexity distribution of incoming code (as might occur during a refactoring initiative) could silently degrade the model's real-world performance.
+**Step 5: Adversarial threshold search (Chapter 11).** Binary search along each dimension reveals that the Complexity parameter has a tipping point at 0.3x its baseline value: reducing it below this threshold causes recall on high-complexity modules to collapse from 0.71 to 0.29. The model is not just dependent on Complexity---it is *brittle* with respect to it. A small shift in the complexity distribution of incoming code (as might occur during a refactoring initiative) could silently degrade the model's real-world performance.
 
 ### 1.5.3 What Geometry Revealed
 
@@ -319,13 +264,13 @@ None of these findings were available from accuracy, precision, recall, or F1. T
 
 ## 1.6 What Comes Next
 
-The remainder of Part I (Chapters 2--3) builds the mathematical and software foundations: Chapter 2 develops the core concepts of metric spaces, manifolds, and curvature that underpin the geometric methods, while Chapter 3 introduces hyperbolic geometry for hierarchical data.
+The remainder of Part I (Chapters 1--5) builds the mathematical and software foundations: from Mahalanobis distance and hyperbolic geometry through SPD manifolds and topological data analysis.
 
-Part II (Chapters 6--10) develops the geometric algorithms themselves, from pathfinding on manifolds through adversarial probing. Each chapter introduces a mathematical tool, motivates it with a concrete problem, and provides a complete implementation.
+Part II (Chapters 7--10) develops the geometric algorithms themselves, from pathfinding on manifolds through adversarial probing. Each chapter introduces a mathematical tool, motivates it with a concrete problem, and provides a complete implementation.
 
-Part III (Chapters 11--15) develops reusable design patterns: subset enumeration, compositional testing, group-theoretic augmentation, gradient reversal, and Cholesky parameterization.
+Part III (Chapters 12--15) applies the toolchain to systems-level problems: subset enumeration, compositional testing, group-theoretic augmentation, and beyond.
 
-Part IV (Chapters 16--20) addresses integration concerns: building geometric pipelines, scaling to high-dimensional spaces, deploying geometric validation in production systems, and two complete case studies.
+Part IV (Chapters 17--20) addresses integration concerns: geometric pipelines, scaling to high-dimensional spaces, production deployment, and complete case studies in defect prediction and bioacoustics.
 
 The thread that connects all of this is the conviction that *geometry is not a metaphor*. When we say that two model configurations are "far apart" or that a configuration is "near a boundary," we mean this literally, with precise distances computed in well-defined spaces. The power of the geometric approach comes from this precision: it transforms vague intuitions about model behavior into exact, computable quantities that can be tested, compared, optimized, and monitored.
 
@@ -465,7 +410,7 @@ weights = np.where(params < 1e5, 1.0 / np.maximum(params, 1e-6), 0.0)
 sigma_inv = np.diag(weights)
 ```
 
-When `params[i]` is set to $10^6$ (the `inactive_value`), the corresponding weight drops to zero, effectively removing that dimension from the metric entirely. This is how the subset enumeration in Chapter 11 works: for each subset of "active" dimensions, the inactive dimensions receive zero attention. The structural fuzzing framework then asks: which *attention pattern* -- which assignment of precision across dimensions -- best explains the empirical data?
+When `params[i]` is set to $10^6$ (the `inactive_value`), the corresponding weight drops to zero, effectively removing that dimension from the metric entirely. This is how the subset enumeration in Chapter 1 works: for each subset of "active" dimensions, the inactive dimensions receive zero attention. The structural fuzzing framework then asks: which *attention pattern* -- which assignment of precision across dimensions -- best explains the empirical data?
 
 There is a deeper connection worth noting. In Gaussian graphical models, the sparsity pattern of $\Sigma^{-1}$ encodes *conditional independence*: if $(\Sigma^{-1})_{ij} = 0$, then dimensions $i$ and $j$ are conditionally independent given all other dimensions. A sparse precision matrix is one where most dimensions interact only indirectly, through chains of conditionally dependent neighbors. When the structural fuzzing framework sets most diagonal entries to zero (by assigning `inactive_value` to those dimensions), it is effectively imposing an extreme form of sparsity on $\Sigma^{-1}$ -- asserting that only a small subset of dimensions participates in the conditional dependency structure at all.
 
@@ -693,14 +638,14 @@ This chapter developed the Mahalanobis distance as the natural generalization of
 
 5. **Diagonal simplification** reduces the parameter count to $n$ when the full covariance is overparameterized, with cross-validation and bootstrap analysis for regularization and uncertainty quantification.
 
-In Chapter 3, we turn to hyperbolic geometry for hierarchical data, extending the metric foundations of this chapter to spaces where tree-like structures arise naturally. The search problem---given a space equipped with a Mahalanobis metric, how do we systematically explore the subsets of dimensions that contribute to it?---is developed in Chapter 11 as the subset enumeration pattern.
+In Chapter 3, we turn to the *search* problem: given a space equipped with a Mahalanobis metric, how do we systematically explore the subsets of dimensions that contribute to it? This is the core algorithmic problem of structural fuzzing, and it connects the geometric foundations of this chapter to the combinatorial enumeration machinery that makes the framework practical.
 
 
 \newpage
 
 # Chapter 3: Hyperbolic Geometry for Hierarchical Data
 
-*Structural Fuzzing: Geometric Methods for Adversarial Model Validation — Andrew H. Bond*
+*Geometric Methods in Computational Modeling — Andrew H. Bond*
 
 ---
 
@@ -756,6 +701,8 @@ $$g_x^{\mathbb{B}} \;=\; \bigl(\lambda_x^c\bigr)^2 \, g^E, \qquad \lambda_x^c \;
 where $g^E$ is the Euclidean metric and $\lambda_x^c$ is the *conformal factor*. The sectional curvature is $-c$ everywhere.
 
 The conformal factor $\lambda_x^c$ diverges as $\|x\| \to 1/\sqrt{c}$, meaning that distances near the boundary of the ball are enormously magnified — a small Euclidean step near the boundary corresponds to a large geodesic distance. This is precisely why exponentially many tree leaves can be packed near the boundary while maintaining their pairwise distances.
+
+> **Caution — exponential *count* is not exponential *metric*.** Hyperbolic space is the right home for data whose *metric* balls grow exponentially with radius. A structure whose element *count* grows exponentially under some generative rule is not automatically hyperbolic: repeated subdivision or rewriting can inflate the number of nodes while the graph stays Euclidean-leaning, or simply high-dimensional and non-manifold. Before embedding a graph in the Poincaré ball, test the hypothesis with controls — a tree (positive) and a torus (negative) — using a growth-law or Gromov-$\delta$ discriminator (Chapter 6). In the author's experiments, "tangled" model-response graphs that *looked* hyperbolic were, under controls, Euclidean-leaning high-dimensional non-manifolds, and the reframe was rejected. Reach for hyperbolic geometry when a control-validated test says the metric is negatively curved — not merely because something grows fast.
 
 ---
 
@@ -1371,7 +1318,7 @@ The use of hyperbolic geometry for tree embedding traces to Gromov's theory of $
 
 # Chapter 4: SPD Manifolds and Spectral Geometry
 
-*Structural Fuzzing: Geometric Methods for Adversarial Model Validation* --- Andrew H. Bond
+*Geometric Methods in Computational Modeling* --- Andrew H. Bond
 
 ---
 
@@ -1504,21 +1451,21 @@ The Frobenius distance $d_F(S_2, S_3) = 9900$, which is $99\times$ larger than $
 
 The log-Euclidean distances tell a different story. We have $\log(\lambda)$ values of $\log(0.01) \approx -4.6$, $\log(100) \approx 4.6$, and $\log(10000) \approx 9.2$. So $d_{LE}(S_1, S_2) \approx |{-4.6} - 4.6| = 9.2$ and $d_{LE}(S_2, S_3) \approx |4.6 - 9.2| = 4.6$. The log-Euclidean metric correctly reports that the multiplicative change from $S_2$ to $S_3$ (a factor of 100) is smaller than the change from $S_1$ to $S_2$ (a factor of 10,000). This scale-sensitivity is essential when eigenvalues span many orders of magnitude, as they do in covariance matrices from real-world signals.
 
-## 4.3 The Frechet Mean on SPD(n)
+## 4.3 The Fréchet Mean on SPD(n)
 
 Given a collection of SPD matrices $S_1, \ldots, S_k$, we often need their "average." The ordinary arithmetic mean $(S_1 + \cdots + S_k)/k$ is SPD (since SPD matrices are closed under addition and positive scalar multiplication), but it is not the correct notion of center on the Riemannian manifold. The arithmetic mean minimizes $\sum_i \|S_i - M\|_F^2$, which uses the flat Euclidean distance, not the manifold distance.
 
-**Definition 4.3.** The *Frechet mean* (or *Karcher mean*) of SPD matrices $S_1, \ldots, S_k$ with weights $w_1, \ldots, w_k$ is
+**Definition 4.3.** The *Fréchet mean* (or *Karcher mean*) of SPD matrices $S_1, \ldots, S_k$ with weights $w_1, \ldots, w_k$ is
 
 $$\bar{S} = \arg\min_{M \in \text{SPD}(n)} \sum_{i=1}^{k} w_i \, d(S_i, M)^2$$
 
 where $d$ is the chosen Riemannian distance.
 
-For the affine-invariant metric, computing the Frechet mean requires an iterative algorithm. A major advantage of the log-Euclidean metric is that the Frechet mean has a *closed-form solution*:
+For the affine-invariant metric, computing the Fréchet mean requires an iterative algorithm. A major advantage of the log-Euclidean metric is that the Fréchet mean has a *closed-form solution*:
 
 $$\bar{S}_{LE} = \exp\!\left(\sum_{i=1}^{k} w_i \log(S_i)\right).$$
 
-This is simply the exponential of the weighted average in the tangent space. The proof is immediate: $\log$ is an isometry from $(SPD(n), d_{LE})$ to $(\text{Sym}(n), \|\cdot\|_F)$, and the Frechet mean under the Frobenius norm is the arithmetic mean.
+This is simply the exponential of the weighted average in the tangent space. The proof is immediate: $\log$ is an isometry from $(SPD(n), d_{LE})$ to $(\text{Sym}(n), \|\cdot\|_F)$, and the Fréchet mean under the Frobenius norm is the arithmetic mean.
 
 ```python
     @staticmethod
@@ -1526,7 +1473,7 @@ This is simply the exponential of the weighted average in the tangent space. The
         matrices: torch.Tensor,
         weights: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        """Log-Euclidean Frechet mean of SPD matrices.
+        """Log-Euclidean Fréchet mean of SPD matrices.
 
         mean = exp(weighted_mean(log(S_i)))
 
@@ -1549,7 +1496,7 @@ The implementation normalizes the weights to sum to one, broadcasts them across 
 
 $$S_1 = \begin{pmatrix} 1 & 0.5 \\ 0.5 & 1 \end{pmatrix}, \quad S_2 = \begin{pmatrix} 4 & 0 \\ 0 & 4 \end{pmatrix}.$$
 
-*The arithmetic mean is $\frac{1}{2}(S_1 + S_2) = \begin{pmatrix} 2.5 & 0.25 \\ 0.25 & 2.5 \end{pmatrix}$, which has eigenvalues $2.75$ and $2.25$. The log-Euclidean Frechet mean $\exp(\frac{1}{2}(\log(S_1) + \log(S_2)))$ yields a different matrix --- one that better interpolates the geometric structure of the two covariances. The difference is most pronounced when the constituent matrices have eigenvalues spanning several orders of magnitude.*
+*The arithmetic mean is $\frac{1}{2}(S_1 + S_2) = \begin{pmatrix} 2.5 & 0.25 \\ 0.25 & 2.5 \end{pmatrix}$, which has eigenvalues $2.75$ and $2.25$. The log-Euclidean Fréchet mean $\exp(\frac{1}{2}(\log(S_1) + \log(S_2)))$ yields a different matrix --- one that better interpolates the geometric structure of the two covariances. The difference is most pronounced when the constituent matrices have eigenvalues spanning several orders of magnitude.*
 
 ## 4.4 Frequency-Band Covariance Extraction
 
@@ -1782,17 +1729,17 @@ The main parameters governing the covariance extraction are:
 
 The log-Euclidean metric is one of several Riemannian metrics on SPD(n). The most commonly discussed alternatives are:
 
-- **Affine-invariant metric**: $d_{AI}(S_1, S_2) = \|\log(S_1^{-1/2} S_2 S_1^{-1/2})\|_F$. This is invariant under congruence transformations $S \mapsto A S A^\top$ and is the "natural" Riemannian metric on SPD(n). However, computing the Frechet mean requires iterative optimization, making it more expensive.
+- **Affine-invariant metric**: $d_{AI}(S_1, S_2) = \|\log(S_1^{-1/2} S_2 S_1^{-1/2})\|_F$. This is invariant under congruence transformations $S \mapsto A S A^\top$ and is the "natural" Riemannian metric on SPD(n). However, computing the Fréchet mean requires iterative optimization, making it more expensive.
 
-- **Bures-Wasserstein metric**: Related to optimal transport between Gaussian distributions. The distance $d_{BW}(S_1, S_2) = \text{tr}(S_1) + \text{tr}(S_2) - 2\text{tr}(S_1^{1/2} S_2 S_1^{1/2})^{1/2}$ arises in quantum information theory and has connections to the Wasserstein-2 distance.
+- **Bures-Wasserstein metric**: Related to optimal transport between Gaussian distributions. The distance $d_{BW}(S_1, S_2) = \bigl[\text{tr}(S_1) + \text{tr}(S_2) - 2\text{tr}(S_1^{1/2} S_2 S_1^{1/2})^{1/2}\bigr]^{1/2}$ arises in quantum information theory and has connections to the Wasserstein-2 distance.
 
 - **Power-Euclidean metrics**: $d_\alpha(S_1, S_2) = \frac{1}{\alpha}\|S_1^\alpha - S_2^\alpha\|_F$ for $\alpha \in (0, 1]$. The log-Euclidean metric is the limit as $\alpha \to 0$.
 
-The log-Euclidean metric is preferred in computational settings for three reasons: (1) the Frechet mean is closed-form, (2) the log map provides a global diffeomorphism to a vector space where standard algorithms apply, and (3) it is computationally no more expensive than Frobenius distance (one eigendecomposition per matrix).
+The log-Euclidean metric is preferred in computational settings for three reasons: (1) the Fréchet mean is closed-form, (2) the log map provides a global diffeomorphism to a vector space where standard algorithms apply, and (3) it is computationally no more expensive than Frobenius distance (one eigendecomposition per matrix).
 
 ### Diffusion Tensor Imaging
 
-The SPD manifold framework was originally developed for diffusion tensor imaging (DTI) in neuroimaging, where each voxel in a brain scan is represented by a $3 \times 3$ SPD matrix describing the local diffusion of water molecules. The same mathematical machinery described in this chapter --- log-Euclidean distances, Frechet means, trajectory analysis --- applies directly to DTI data, with "frequency bands" replaced by "diffusion directions."
+The SPD manifold framework was originally developed for diffusion tensor imaging (DTI) in neuroimaging, where each voxel in a brain scan is represented by a $3 \times 3$ SPD matrix describing the local diffusion of water molecules. The same mathematical machinery described in this chapter --- log-Euclidean distances, Fréchet means, trajectory analysis --- applies directly to DTI data, with "frequency bands" replaced by "diffusion directions."
 
 ### Covariance Descriptors in Computer Vision
 
@@ -1833,7 +1780,7 @@ The connection between SPD geometry and information geometry is developed in Ama
 
 # Chapter 5: Topological Data Analysis
 
-*Structural Fuzzing: Geometric Methods for Adversarial Model Validation* — Andrew H. Bond
+*Geometric Methods in Computational Modeling* — Andrew H. Bond
 
 ---
 
@@ -1923,7 +1870,7 @@ def subsample_cloud(
     """
     if len(cloud) <= max_points:
         return cloud
-    rng = np.random.RandomState(seed)
+    rng = np.random.default_rng(seed)
     idx = rng.choice(len(cloud), max_points, replace=False)
     return cloud[idx]
 ```
@@ -2308,7 +2255,7 @@ Topological data analysis provides a principled framework for extracting shape-b
 
 6. **Application to cetacean bioacoustics** demonstrates that topological features capture the dynamical shape of vocal patterns — cyclic structure, interval clustering, rhythmic regularity — in ways that are invariant to tempo and complementary to spectral analysis.
 
-The topological perspective will recur in later chapters. In Part II, we will see how persistent homology can detect phase transitions in adversarial parameter spaces (Chapter 9) and how topological features serve as robust invariants for structural fuzzing campaigns (Chapter 20). The key takeaway is that topology captures qualitative structure — the presence or absence of holes, loops, and clusters — that persists under the continuous deformations induced by noise, measurement error, and parameter perturbation, making it a natural complement to the metric and manifold methods developed in Chapters 2 through 4.
+The topological perspective will recur in later chapters. In Part II, we will see how persistent homology can detect phase transitions in adversarial parameter spaces (Chapter 10) and how topological features serve as robust invariants for structural fuzzing campaigns (Chapter 13). The key takeaway is that topology captures qualitative structure — the presence or absence of holes, loops, and clusters — that persists under the continuous deformations induced by noise, measurement error, and parameter perturbation, making it a natural complement to the metric and manifold methods developed in Chapters 2 through 4.
 
 ---
 
@@ -2339,29 +2286,317 @@ The cetacean vocalization data and combinatorial phonetic analysis are from P. S
 
 \newpage
 
+# Chapter 6: Spectral Geometry and the Angular Basis
+
+*Structural Fuzzing: Geometric Methods for Adversarial Model Validation — Andrew H. Bond*
+
+---
+
+The preceding foundational chapters equipped us with metrics on data
+(Chapter 2), spaces for hierarchy
+(Chapter 3), manifolds of covariance
+(Chapter 4), and the topology of point clouds
+(Chapter 5). Each treats geometry as something we
+*impose* on the data. This chapter takes the opposite stance: we let a graph tell
+us its *own* geometry, and we ask a validation question of it — **does the model's
+response landscape have coherent geometric structure at all, and if so, can we
+read it robustly?**
+
+The setting is native to structural fuzzing. A campaign samples many parameter
+configurations and scores each one; the result is a cloud of configurations
+carrying error signals. Connect nearby configurations and you have a graph whose
+large-scale shape *is* the failure landscape. A well-behaved model produces a
+landscape with clean low-dimensional structure — small parameter moves cause
+small, predictable error changes. A fragile or mis-specified model produces a
+*tangle* — a high-dimensional, shortcut-riddled graph where nearby configurations
+behave nothing alike. Telling these apart, reliably and at scale, is the job of
+this chapter.
+
+We will develop three tools. First, a **dimension detector** that flags whether
+the response landscape is a manifold or a tangle. Second, the **angular basis** —
+a scale-invariant reading of the graph's geometry that, we will prove, survives a
+degeneracy which destroys the naive spectral reading. Third, a
+**geodesic-preservation score** that behaves as a structural-integrity metric: it
+is high when the landscape has genuine geometry and collapses when that geometry
+is destroyed. Throughout we practice *controls-first* validation — no detector is
+trusted until it has passed a positive and a negative control.
+
+## 6.1 The response landscape as a graph
+
+Let a campaign produce configurations $x_1,\dots,x_n \in \mathbb{R}^p$ (each a
+parameter vector) with scalar errors $e_1,\dots,e_n$. Build the *response graph*
+$G$ by connecting each configuration to its $k$ nearest neighbours in a metric
+that blends parameter distance and error similarity (the Mahalanobis metric of
+Chapter 2 is a natural choice for the parameter part).
+The adjacency $A$ is symmetric and binary; the degree matrix is
+$D=\mathrm{diag}(\deg(1),\dots,\deg(n))$.
+
+The object we analyse is the **symmetric-normalized Laplacian**
+
+$$
+L \;=\; I - D^{-1/2} A D^{-1/2},
+$$
+
+with eigenpairs $(\lambda_k, v_k)$, $0=\lambda_0<\lambda_1\le\cdots$. The low
+eigenvectors are the smooth coordinates of the landscape; the commute-style
+embedding using the lowest $m$ nontrivial modes places configuration $i$ at
+
+$$
+\Psi_i \;=\; \Bigl(\tfrac{v_1(i)}{\sqrt{\lambda_1}},\dots,
+\tfrac{v_m(i)}{\sqrt{\lambda_m}}\Bigr) \in \mathbb{R}^m .
+$$
+
+Everything that follows is a statement about how much of the landscape's geometry
+$\Psi$ actually preserves — and which part of it to trust.
+
+## 6.2 The commute-time trap
+
+It is tempting to read distances directly from $\Psi$: configurations that are
+far apart in $\lVert\Psi_i-\Psi_j\rVert$ are "geometrically distant" in the
+landscape. This is the commute (resistance) distance, and for large graphs it is
+a trap.
+
+**The degeneracy.** von Luxburg, Radl and Hein proved that on large geometric
+graphs the resistance distance degenerates to a function of *local degrees alone*:
+
+$$
+R(i,j) \;\longrightarrow\; \frac{1}{\deg(i)} + \frac{1}{\deg(j)} ,
+$$
+
+losing every trace of global geometry. Written in polar form
+$\Psi_i = r_i\,\hat u_i$ with radius $r_i=\lVert\Psi_i\rVert$ and angle
+$\hat u_i=\Psi_i/\lVert\Psi_i\rVert$, the degeneracy lands entirely on the
+**radius**: asymptotically $r_i \to 1/\sqrt{\deg(i)}$, a pure local-density
+coordinate that carries *no* information about where configuration $i$ sits in the
+landscape. A fuzzing pipeline that ranks configurations by commute distance is, at
+scale, ranking them by inverse square-root degree — a sampling artefact, not a
+geometric signal. This is the single most common way a spectral structural-probe
+silently fails.
+
+## 6.3 Keep the angle: the angular basis
+
+If the radius is noise, the geometry must be in the **angle**. Row-normalizing the
+embedding to the unit sphere — replacing $\Psi_i$ by $\hat u_i$ — deletes exactly
+the degenerate density factor and keeps the direction of the low-mode eigenmap.
+This is the same normalization that spectral clustering applies before $k$-means,
+but here it earns a *geometric* reading rather than a clustering one: the angular
+coordinates preserve the graph's geodesic (shortest-path) structure.
+
+Empirically the effect is stark. On a reference landscape with clean 2-dimensional
+geometry, the rank correlation between embedded distance and true graph geodesic
+distance is $\approx 0.9$ for the **angle**, $\approx 0$ for the **magnitude**,
+and $\approx 0$ for a *random-mode* basis of the same size — and, crucially, the
+angular figure is **flat** in both the number of modes $m$ and the graph size $n$,
+exactly the regime where the full commute reading decays. The practical rule for
+structural fuzzing is therefore blunt:
+
+> **Read the landscape from the angle, not the magnitude.** The angular basis is
+> scale-invariant and stable under resolution and sample size; the raw embedding
+> is neither.
+
+We record the structural claim as a principle with a proven half and a
+conjectural half, so the reader knows exactly what is load-bearing.
+
+**Radial Degeneracy (proven).** For a response graph of intrinsic dimension
+$d\ge2$ meeting the von Luxburg conditions, the radius of the full commute
+embedding is asymptotically geometry-free, $r_i\to 1/\sqrt{\deg(i)}$.
+
+**Angular Preservation (conjecture, strong empirical support).** The
+row-normalized direction remains *rank-faithful* to geodesic distance — Spearman
+correlation bounded away from zero — uniformly in $m$ and $n$. A metric
+(bi-Lipschitz) form is consistent with the evidence but untested; our measurements
+are rank-based and cannot by themselves bound metric distortion.
+
+The honest gap is worth stating plainly: the degeneracy result explains why the
+radius *dies*, not by itself why the angle *lives*. We use the angle because it
+works, controlled and measured, not because it is proven optimal.
+
+## 6.4 Manifold-integrity detection
+
+Before reading a landscape's geometry we must know whether it *has* any. Estimate
+its intrinsic dimension three independent ways and demand that they agree:
+
+1. **Ball growth** — the number of configurations within graph-distance $r$ grows
+   as $N(r)\sim r^{d}$ (the Hausdorff-style estimate of
+   Chapter 5's persistence cousin).
+2. **Spectral dimension** — the heat-kernel return probability
+   $P(t)=\langle e^{-Lt}\rangle \sim t^{-d_s/2}$.
+3. **Effective rank** — the participation ratio of a local PCA of the Laplacian
+   eigenmap.
+
+Low spread among the three is the signature of a genuine manifold; wide
+disagreement is the signature of a tangle. This is a direct validation criterion:
+a model whose response landscape is a clean $\approx2$-dimensional manifold is
+one whose failures are locally predictable, while a model whose landscape scores
+$d=1.6$ by one estimator and $d=8$ by another has a pathological sensitivity
+structure that no scalar metric will reveal. *Estimator agreement is the
+manifold-grade certificate; the agreed value is the reported dimension.*
+
+## 6.5 The geodesic-preservation score
+
+Combine the previous two ideas into one number. Sample anchor configurations,
+compute their true pairwise graph geodesics, and measure the Spearman correlation
+$\rho$ between those geodesics and the distances in the **angular** embedding. Call
+$\rho$ the *geodesic-preservation score*. It behaves as a structural-integrity
+metric:
+
+- On a landscape with genuine low-$d$ geometry, $\rho \approx 0.9$.
+- Destroy the geometry — inject a few percent of long-range shortcuts (a
+  small-world perturbation, the analogue of a model developing erratic long-range
+  parameter sensitivities) — and $\rho$ **collapses** toward $0.4$ while the
+  measured dimension inflates. The score detects the damage that the dimension
+  estimate alone can miss.
+- Feed it a landscape whose geometry is not Riemannian at all (a causal, ordered
+  structure) and $\rho$ correctly refuses to certify it.
+
+For adversarial validation this is the payoff: $\rho$ is a single, scale-robust
+scalar that *falls when the landscape's geometry breaks*, giving a fuzzing campaign
+a geometry-integrity alarm alongside its error metrics.
+
+One caveat keeps the metric honest. Fidelity is not uniform across dimension: on a
+suite of independent emergent manifolds spanning $d\approx1$–$3.6$, $\rho$ falls
+roughly linearly with intrinsic dimension (slope $\approx-0.15$ per dimension).
+The angular score is sharpest on low-dimensional landscapes and softens as the
+landscape grows higher-dimensional and rougher — so thresholds must be set
+per-dimension, not globally.
+
+## 6.6 Controls first
+
+No geometric detector earns trust until it has passed a **positive** and a
+**negative** control — a discipline this book returns to whenever a probe's output
+would otherwise be unfalsifiable. The pattern, applied here:
+
+- **Positive control.** Run the detector on a graph of *known* geometry — a
+  random geometric graph on a flat torus (intrinsic dimension 2). The estimators
+  must recover $d\approx2$ and $\rho$ must be high. If they do not, the detector is
+  miscalibrated and no result on real data is meaningful.
+- **Negative control.** Run it on a graph of *known non-geometry* — a tree, or a
+  heavily rewired lattice. The detector must *refuse* to certify it.
+
+A cautionary example closes the loop with Chapter 3.
+Response tangles grow their configurations quickly, which tempts one to declare
+them "hyperbolic" and reach for the Poincaré ball. We tested that hypothesis with
+controls — a binary tree as the positive hyperbolic control, a torus as the
+negative — using a growth-law discriminator (does ball volume grow like $r^d$ or
+$e^{(d-1)r}$?) validated against both. The discriminator correctly labels the tree
+hyperbolic and the torus Euclidean; run on the response tangles it labels them
+**Euclidean-leaning high-dimensional non-manifolds, not hyperbolic**. The elegant
+reframe was wrong, and only the controls revealed it. Exponential growth in the
+*count* of configurations is not exponential growth in the *metric*; do not confuse
+the two.
+
+## 6.7 Implementation
+
+The `spectral_probe` module packages these tools against the structural-fuzzing
+evaluate-function interface. Given a matrix of sampled configurations, it builds
+the response graph, estimates dimension three ways, computes the angular
+geodesic-preservation score with its controls, and returns a manifold-integrity
+report.
+
+```python
+from structural_fuzzing.spectral_probe import (
+    response_graph, intrinsic_dimension, angular_fidelity, integrity_report,
+)
+
+# configs: (n, p) sampled parameter vectors; errors: (n,) scalar errors
+A = response_graph(configs, errors, k=10)          # kNN response graph
+dim, spread = intrinsic_dimension(A)               # ball / spectral / eff-rank
+rho, controls = angular_fidelity(A)                # angle score + random control
+
+report = integrity_report(A)
+print(report)   # dimension, spread, angle-rho, and a manifold/tangle verdict
+```
+
+`angular_fidelity` returns the low-mode **angular** score together with a
+random-mode control; a result is only reported as geometric when the angle score
+clears its dimension-adjusted threshold *and* the random control is near zero.
+`integrity_report` refuses to certify a landscape whose estimators disagree
+(spread above tolerance) — the manifold-grade gate of Section
+6.4 — so a tangled response landscape
+is flagged rather than silently mis-measured.
+
+## 6.8 Limitations
+
+The angular-preservation claim is conjectural in its metric form (Section
+6.3); we have rank evidence, not a
+distortion bound. On landscapes that embed near-isometrically in low-dimensional
+Euclidean space — flat, unobstructed parameter regions — classical
+multidimensional scaling can match or beat the angular basis; the angle's
+advantage is on landscapes whose topology obstructs a flat embedding, and its
+*uniformity in resolution and size*, which MDS lacks. Finally, fidelity degrades
+with intrinsic dimension, so the geodesic-preservation score is a sharper alarm
+for low-dimensional response landscapes than for high-dimensional ones. Used with
+its controls and per-dimension thresholds, it is nonetheless a robust addition to
+the structural-fuzzing toolkit: a scale-invariant read of *whether the failure
+landscape has coherent geometry, and where it breaks*.
+
+---
+
+### Exercises
+
+**6.1.** Build a response graph from
+a campaign of your own. Compute the commute embedding and, separately, the angular
+embedding. Correlate each with the true graph geodesics as you increase $n$; verify
+that the angular score is flat while the commute score decays.
+
+**6.2.** Implement the three
+dimension estimators and reproduce the manifold-grade certificate on a torus
+(positive control) and a random tree (negative control).
+
+**6.3.** Inject long-range shortcuts
+into a clean 2D response graph at rewiring fractions $0, 0.01, 0.03, 0.1$. Plot the
+geodesic-preservation score against the rewiring fraction and identify the
+integrity threshold.
+
+**6.4.** Take a response tangle and
+test the hyperbolic hypothesis with the growth-law discriminator of Section
+6.6, using a tree and a torus as
+controls. Report the verdict.
+
+---
+
+### Bibliographic Notes
+
+The commute-time degeneracy is due to von Luxburg, Radl and Hein, *Hitting and
+commute times in large random neighborhood graphs* (JMLR, 2014). Row-normalized
+spectral embeddings were introduced for clustering by Ng, Jordan and Weiss (2002);
+the sharpest analysis of *why* row normalization concentrates cluster directions is
+Schiebinger, Wainwright and Yu, *The geometry of kernelized spectral clustering*
+(Annals of Statistics, 2015) — an analysis of cluster separation, complementary to
+the geodesic-preservation question studied here. Laplacian eigenmaps are Belkin and
+Niyogi (2003); diffusion maps Coifman and Lafon (2006). The polar
+magnitude/direction decomposition also appears in KV-cache quantization (Han et
+al., *PolarQuant*, 2025). The angular-basis results, the manifold-integrity
+certificate, and the controlled hyperbolic rejection are developed in the author's
+*Keep the Angle* (2026); the observer-theoretic reading of angular coarse-graining
+connects to the Wolfram-model literature but is not required for any result here.
+
+
+\newpage
+
 \newpage
 
 # Part II: Algorithms
 
 \newpage
 
-# Chapter 6: Pathfinding on Manifolds
+# Chapter 7: Pathfinding on Manifolds
 
 > *"The shortest distance between two points is not a straight line, but a geodesic --- and the geodesic knows things about the terrain that the straight line does not."*
 > --- Adapted from Bernhard Riemann, *On the Hypotheses Which Lie at the Foundations of Geometry* (1854)
 
 In Chapter 2, we introduced the Mahalanobis distance as the correct way to measure separation between two points in a space where dimensions have different scales and are correlated. In Chapter 3, we saw how hyperbolic geometry captures hierarchical structure that Euclidean space distorts. In Chapter 4, we developed the SPD manifold as the natural home for covariance data. Each of these chapters addressed a *static* problem: measuring the distance between two fixed points. But real decisions are not static. They are *sequential*: an agent at state $A$ must navigate through a series of intermediate states to reach a desired goal $B$, and the cost of the journey depends not just on the endpoints but on every step along the way. This chapter develops the algorithmic machinery for finding optimal paths on decision manifolds --- the **Bond Geodesic algorithm** --- which adapts A* search to non-Euclidean configuration spaces where standard pathfinding fails.
 
-We begin by establishing why classical A* with Euclidean heuristics produces suboptimal or inadmissible results on curved spaces (Section 6.1), develop the relationship between geodesic distance and Euclidean distance that makes this failure precise (Section 6.2), construct the Economic Decision Complex as the graph on which pathfinding operates (Section 6.3), formulate the Bond Geodesic as the minimum-friction path on this complex (Section 6.4), adapt A* with manifold-aware heuristics including a novel moral heuristic derived from dual-process cognitive theory (Section 6.5), work through concrete examples from the `eris-econ` game theory codebase (Section 6.6), establish formal properties of the resulting paths (Section 6.7), and connect forward to multi-agent equilibria in Chapter 7 (Section 6.8).
+We begin by establishing why classical A* with Euclidean heuristics produces suboptimal or inadmissible results on curved spaces (Section 7.1), develop the relationship between geodesic distance and Euclidean distance that makes this failure precise (Section 7.2), construct the Economic Decision Complex as the graph on which pathfinding operates (Section 7.3), formulate the Bond Geodesic as the minimum-friction path on this complex (Section 7.4), adapt A* with manifold-aware heuristics including a novel moral heuristic derived from dual-process cognitive theory (Section 7.5), work through concrete examples from the `eris-econ` game theory codebase (Section 7.6), establish formal properties of the resulting paths (Section 7.7), and connect forward to multi-agent equilibria in Chapter 8 (Section 7.8).
 
 ---
 
 
 ![A* pathfinding on a decision manifold: the manifold-aware path respects the moral boundary.](images/ch06-pathfinding.png)
 
-## 6.1 Why Standard A* Fails on Curved Spaces
+## 7.1 Why Standard A* Fails on Curved Spaces
 
-### 6.1.1 The Admissibility Problem
+### 7.1.1 The Admissibility Problem
 
 A* search guarantees optimal paths under one condition: the heuristic function $h(n)$ must be *admissible* --- it must never overestimate the true cost from $n$ to the goal. In Euclidean space, the straight-line distance $\|n - g\|_2$ is always a lower bound on any path from $n$ to $g$, because the straight line is the shortest path. The Euclidean heuristic is therefore admissible by construction, and A* with this heuristic finds provably optimal paths.
 
@@ -2375,13 +2610,13 @@ On a curved space, the straight-line distance is no longer the shortest path. Th
 
 The last case is the one that matters for this book. The 9-dimensional economic decision space of the `eris-econ` model has a covariance matrix $\Sigma$ with eigenvalues ranging from 0.25 (the Fairness dimension, tightly constrained) to 25.0 (the Consequences dimension, loosely constrained). A 1-unit Euclidean displacement along the Fairness axis corresponds to a Mahalanobis distance of $1/\sqrt{0.25} = 2.0$, while the same displacement along the Consequences axis corresponds to $1/\sqrt{25.0} = 0.2$. The Euclidean distance treats both displacements identically --- a 10x error in relative weighting.
 
-### 6.1.2 The Boundary Discontinuity Problem
+### 7.1.2 The Boundary Discontinuity Problem
 
-Even if the curvature problem could be resolved by rescaling the heuristic, a deeper issue remains: the decision spaces we consider have *discontinuous* cost functions. Moral boundaries (Section 6.4) impose step-function penalties on certain transitions. A path that crosses a moral boundary incurs a finite or infinite additional cost that no smooth distance function can predict. The Euclidean heuristic, being smooth, has no mechanism to account for boundaries that may lie between the current state and the goal.
+Even if the curvature problem could be resolved by rescaling the heuristic, a deeper issue remains: the decision spaces we consider have *discontinuous* cost functions. Moral boundaries (Section 7.4) impose step-function penalties on certain transitions. A path that crosses a moral boundary incurs a finite or infinite additional cost that no smooth distance function can predict. The Euclidean heuristic, being smooth, has no mechanism to account for boundaries that may lie between the current state and the goal.
 
-This means that even a perfectly calibrated Euclidean heuristic --- one that exactly matches the Mahalanobis distance --- would still be inadmissible in the presence of boundary penalties, because it would underestimate the true cost by ignoring the penalties. The fix requires a fundamentally different kind of heuristic: one that estimates not geometric distance but *behavioral friction*, including both the smooth metric component and the discontinuous moral component. This is the moral heuristic developed in Section 6.5.
+This means that even a perfectly calibrated Euclidean heuristic --- one that exactly matches the Mahalanobis distance --- would still be inadmissible in the presence of boundary penalties, because it would underestimate the true cost by ignoring the penalties. The fix requires a fundamentally different kind of heuristic: one that estimates not geometric distance but *behavioral friction*, including both the smooth metric component and the discontinuous moral component. This is the moral heuristic developed in Section 7.5.
 
-### 6.1.3 Consequences for Pathfinding
+### 7.1.3 Consequences for Pathfinding
 
 When A* operates with an inadmissible or uninformative heuristic on a decision manifold, three failure modes arise:
 
@@ -2391,15 +2626,15 @@ When A* operates with an inadmissible or uninformative heuristic on a decision m
 
 3. **Missed disconnections.** When sacred boundaries ($\beta = \infty$) disconnect the graph, a poor heuristic may lead the search to spend enormous effort exploring a disconnected component before concluding that no path exists. A boundary-aware heuristic can detect disconnection early.
 
-These failures motivate the development of manifold-specific heuristics in Section 6.5. But first, we need to make the relationship between geodesic and Euclidean distance precise.
+These failures motivate the development of manifold-specific heuristics in Section 7.5. But first, we need to make the relationship between geodesic and Euclidean distance precise.
 
 ---
 
-## 6.2 Geodesic Distance vs. Euclidean Distance
+## 7.2 Geodesic Distance vs. Euclidean Distance
 
 The core mathematical issue is the *distortion* between the Euclidean metric and the Riemannian metric induced by the precision matrix $\Sigma^{-1}$.
 
-### 6.2.1 The Mahalanobis Metric as a Riemannian Metric
+### 7.2.1 The Mahalanobis Metric as a Riemannian Metric
 
 Recall from Chapter 2 that the Mahalanobis distance between two points $\mathbf{a}, \mathbf{b} \in \mathbb{R}^n$ is:
 
@@ -2411,13 +2646,13 @@ The relationship between Mahalanobis and Euclidean distance is governed by the e
 
 $$\sqrt{\lambda_{\min}} \cdot \|\mathbf{b} - \mathbf{a}\|_2 \leq d_M(\mathbf{a}, \mathbf{b}) \leq \sqrt{\lambda_{\max}} \cdot \|\mathbf{b} - \mathbf{a}\|_2$$
 
-**Proposition 6.1.** The Euclidean distance $\|\mathbf{b} - \mathbf{a}\|_2$ is an admissible heuristic for A* with Mahalanobis edge weights if and only if $\lambda_{\min} \geq 1$ --- that is, if and only if every eigenvalue of $\Sigma^{-1}$ is at least 1.
+**Proposition 7.1.** The Euclidean distance $\|\mathbf{b} - \mathbf{a}\|_2$ is an admissible heuristic for A* with Mahalanobis edge weights if and only if $\lambda_{\min} \geq 1$ --- that is, if and only if every eigenvalue of $\Sigma^{-1}$ is at least 1.
 
 *Proof.* The heuristic $h(n) = \|n - g\|_2$ is admissible when $h(n) \leq d_M(n, g)$ for all $n, g$. By the lower bound above, $d_M(n, g) \geq \sqrt{\lambda_{\min}} \cdot \|n - g\|_2$. Thus $\|n - g\|_2 \leq d_M(n, g)$ iff $\sqrt{\lambda_{\min}} \geq 1$, i.e., $\lambda_{\min} \geq 1$. $\square$
 
 For the `eris-econ` covariance matrix, $\Sigma$ has diagonal entries ranging from 0.25 to 25.0, so $\Sigma^{-1}$ has diagonal entries ranging from $1/25 = 0.04$ to $1/0.25 = 4.0$ (before accounting for off-diagonal corrections). Since $\lambda_{\min} < 1$, the Euclidean heuristic is *not* guaranteed admissible. In practice, it is admissible along most directions but can overestimate along the Consequences axis, where $\Sigma^{-1}$ assigns very low weight.
 
-### 6.2.2 Corrected Euclidean Heuristic
+### 7.2.2 Corrected Euclidean Heuristic
 
 A simple fix is to scale the Euclidean heuristic by $\sqrt{\lambda_{\min}}$:
 
@@ -2429,7 +2664,7 @@ $$h_M(n) = d_M(n, g) = \sqrt{(g - n)^\top \Sigma^{-1} (g - n)}$$
 
 This is *exact* for the single-step case (when the goal is reachable in one edge) and provides a tight lower bound in the multi-step case, because the straight-line Mahalanobis distance is always less than or equal to the sum of edge weights along any path. However, it ignores boundary penalties, so it remains inadmissible in the presence of moral boundaries.
 
-### 6.2.3 The Hyperbolic and SPD Cases
+### 7.2.3 The Hyperbolic and SPD Cases
 
 For completeness, we note the distortion bounds in the other geometric settings developed in this book.
 
@@ -2443,15 +2678,15 @@ On the SPD manifold (Chapter 4), the log-Euclidean distance $d_{LE}(S_1, S_2) = 
 
 ---
 
-## 6.3 The Economic Decision Complex
+## 7.3 The Economic Decision Complex
 
 The fundamental data structure underlying the Bond Geodesic is a weighted directed graph that we call the *Economic Decision Complex*. It connects the abstract geometric notions of the preceding sections to the concrete implementation in the `eris-econ` codebase.
 
-### 6.3.1 Definition
+### 7.3.1 Definition
 
-**Definition 6.1** (Economic Decision Complex). An *Economic Decision Complex* is a triple $\mathcal{E} = (V, E, w)$ where:
+**Definition 7.1** (Economic Decision Complex). An *Economic Decision Complex* is a triple $\mathcal{E} = (V, E, w)$ where:
 
-- $V$ is a finite set of *vertices*, each labeled with a point $\mathbf{v} \in \mathbb{R}^9$ representing an economic state (the nine dimensions from Section 6.3.2).
+- $V$ is a finite set of *vertices*, each labeled with a point $\mathbf{v} \in \mathbb{R}^9$ representing an economic state (the nine dimensions from Section 7.3.2).
 - $E \subseteq V \times V$ is a set of *directed edges*, each representing an available action or transaction.
 - $w : E \to \mathbb{R}_{\geq 0} \cup \{\infty\}$ is a *weight function* assigning a non-negative cost (possibly infinite) to each edge.
 
@@ -2461,7 +2696,7 @@ $$w(\mathbf{a} \to \mathbf{b}) = \underbrace{\sqrt{(\mathbf{b} - \mathbf{a})^\to
 
 The terminology "complex" is deliberate: this is a 1-dimensional simplicial complex (a graph) embedded in $\mathbb{R}^9$, where the embedding determines edge weights through the Mahalanobis metric. The non-Euclidean structure enters through the precision matrix $\Sigma^{-1}$ and the boundary penalties $\beta_k$.
 
-### 6.3.2 The Nine Dimensions
+### 7.3.2 The Nine Dimensions
 
 Every vertex in the complex carries an `EconomicState` --- a frozen dataclass wrapping a 9-tuple of floats, one per dimension. The dimensions are defined in the `eris-econ` dimensions module:
 
@@ -2479,9 +2714,9 @@ class Dim(IntEnum):
     EPISTEMIC = 8      # d_9: information quality, confidence
 ```
 
-Dimensions $d_1$ through $d_4$ are *transferable* in bilateral exchange: when one agent gains, the other loses an equal amount ($\Delta d_k(A) + \Delta d_k(B) = 0$). Dimensions $d_5$ through $d_9$ are *evaluative* --- they are not conserved, allowing mutual gains from trade. This conservation structure has deep implications for equilibrium analysis (Chapter 7) but does not affect the pathfinding algorithm itself.
+Dimensions $d_1$ through $d_4$ are *transferable* in bilateral exchange: when one agent gains, the other loses an equal amount ($\Delta d_k(A) + \Delta d_k(B) = 0$). Dimensions $d_5$ through $d_9$ are *evaluative* --- they are not conserved, allowing mutual gains from trade. This conservation structure has deep implications for equilibrium analysis (Chapter 8) but does not affect the pathfinding algorithm itself.
 
-### 6.3.3 Implementation
+### 7.3.3 Implementation
 
 The `EconomicDecisionComplex` class in the `eris-econ` codebase provides the graph data structure. Its constructor takes a covariance matrix $\Sigma$ and optional boundary penalties:
 
@@ -2540,13 +2775,13 @@ The `add_bidirectional` method is a convenience for symmetric actions (e.g., "bu
 
 ---
 
-## 6.4 The Bond Geodesic Formulation
+## 7.4 The Bond Geodesic Formulation
 
-### 6.4.1 Definition
+### 7.4.1 Definition
 
 We now have all the ingredients to state the central definition.
 
-**Definition 6.2** (Bond Geodesic). Given an Economic Decision Complex $\mathcal{E} = (V, E, w)$, a starting vertex $s \in V$, and a goal set $G \subset V$, the *Bond Geodesic* is the path $\gamma^* = (v_0, v_1, \ldots, v_T)$ with $v_0 = s$ and $v_T \in G$ that minimizes the total edge weight:
+**Definition 7.2** (Bond Geodesic). Given an Economic Decision Complex $\mathcal{E} = (V, E, w)$, a starting vertex $s \in V$, and a goal set $G \subset V$, the *Bond Geodesic* is the path $\gamma^* = (v_0, v_1, \ldots, v_T)$ with $v_0 = s$ and $v_T \in G$ that minimizes the total edge weight:
 
 $$\gamma^* = \arg\min_{\gamma : s \rightsquigarrow G} \sum_{t=0}^{T-1} w(v_t \to v_{t+1})$$
 
@@ -2556,13 +2791,13 @@ $$F(\gamma^*) = \sum_{t=0}^{T-1} w(v_t \to v_{t+1})$$
 
 The term "geodesic" is imported from differential geometry, where it denotes the shortest path on a curved surface. The Bond Geodesic is the discrete analogue: the shortest path on a weighted graph embedded in $\mathbb{R}^9$, where the embedding determines edge weights through a non-Euclidean metric. The qualifier "Bond" distinguishes it from standard geodesics, which are defined by the Riemannian metric alone, without boundary penalties. The Bond Geodesic incorporates both the smooth metric structure (via Mahalanobis distance) and the discontinuous moral structure (via boundary penalties).
 
-### 6.4.2 Behavioral Friction as a Cost Functional
+### 7.4.2 Behavioral Friction as a Cost Functional
 
 Behavioral friction $F(\gamma^*)$ is a *cost functional* on paths --- it assigns a scalar cost to each route through the decision complex. Unlike scalar utility, which collapses a multi-dimensional evaluation into a single number *at each state*, behavioral friction preserves the full dimensionality of the evaluation *along the entire path* and collapses to a scalar only at the end, after integrating over all steps.
 
 This distinction matters. Scalar utility at a single state discards $n - 1$ dimensions of information (the Scalar Irrecoverability Theorem from Chapter 1). Behavioral friction along a path preserves all $n$ dimensions in the edge weights and discards information only in the final summation. The information loss is therefore *deferred*: the full geometric structure participates in every step of the path computation, and the scalar collapse happens only after the optimal path has been identified.
 
-### 6.4.3 Boundary Penalties: Encoding Sacred Values
+### 7.4.3 Boundary Penalties: Encoding Sacred Values
 
 The discontinuous component of the edge weight encodes moral rules, social norms, and legal constraints. The `boundary_penalty` function in the `eris-econ` metrics module checks six types of crossings:
 
@@ -2618,9 +2853,9 @@ When $\beta_k = \infty$ (a sacred boundary), the edge weight becomes infinite an
 
 ---
 
-## 6.5 A* Adaptation for Manifold Heuristics
+## 7.5 A* Adaptation for Manifold Heuristics
 
-### 6.5.1 The Core Algorithm
+### 7.5.1 The Core Algorithm
 
 The Bond Geodesic is computed by A* search on the decision complex. The implementation in `eris-econ` follows the classical A* structure with three adaptations: Mahalanobis edge weights, sacred-boundary pruning, and a pluggable heuristic interface.
 
@@ -2710,7 +2945,7 @@ def _reconstruct_path(came_from: Dict[str, str], current: str) -> List[str]:
 
 **Complexity.** With a binary heap, the worst-case time complexity is $O(|E| \log |V|)$. For the decision complexes in `eris-econ`, $|V|$ ranges from a handful (the ultimatum game with 7 vertices) to low thousands (multi-step negotiations), and A* terminates in milliseconds. The `max_explored` limit of 100,000 is a safety net for pathological graphs with dense connectivity and uninformative heuristics.
 
-### 6.5.2 The Dual-Process Interpretation
+### 7.5.2 The Dual-Process Interpretation
 
 The A* decomposition $f(n) = g(n) + h(n)$ maps naturally onto dual-process theory from cognitive psychology (Kahneman, 2011). This is not a metaphor --- it is a structural correspondence between the algorithm and the cognitive model:
 
@@ -2720,7 +2955,7 @@ The A* decomposition $f(n) = g(n) + h(n)$ maps naturally onto dual-process theor
 
 The admissibility condition --- $h(n)$ must never overestimate --- has a direct cognitive interpretation: System 1 intuitions must not be *too optimistic*, or the agent will pursue paths that seem promising but lead to dead ends. When the heuristic is admissible, A* guarantees optimality: the first path found is the true Bond Geodesic. When the heuristic is inadmissible, A* becomes a greedy search that may find suboptimal paths --- the cognitive analogue of an agent whose intuitions lead them astray.
 
-### 6.5.3 Three Heuristic Functions
+### 7.5.3 Three Heuristic Functions
 
 The `eris-econ` implementation provides three heuristics, each encoding a different System 1 model.
 
@@ -2753,7 +2988,7 @@ def euclidean_heuristic(goal_ids: Set[str]) -> Callable:
     return h
 ```
 
-This is a closure: it captures the goal set at construction time and returns a function. As established in Section 6.2, admissibility depends on $\lambda_{\min}(\Sigma^{-1}) \geq 1$. For the default `eris-econ` covariance matrix, this condition fails, and the Euclidean heuristic is not guaranteed admissible. In practice, it often works because the low-weight dimensions (Consequences) are also the dimensions with the largest state-space extent, and the overestimate along those dimensions is partially offset by the underestimate along high-weight dimensions.
+This is a closure: it captures the goal set at construction time and returns a function. As established in Section 7.2, admissibility depends on $\lambda_{\min}(\Sigma^{-1}) \geq 1$. For the default `eris-econ` covariance matrix, this condition fails, and the Euclidean heuristic is not guaranteed admissible. In practice, it often works because the low-weight dimensions (Consequences) are also the dimensions with the largest state-space extent, and the overestimate along those dimensions is partially offset by the underestimate along high-weight dimensions.
 
 **The moral heuristic.** This is the distinctive contribution of the geometric framework:
 
@@ -2781,7 +3016,7 @@ def moral_heuristic(
 
 The moral heuristic computes $h_M(n) = \sum_k \beta_k \cdot P(\text{cross boundary } k \text{ from } n)$, where $\beta_k$ is the penalty for crossing moral boundary $k$ and $P(\cdot)$ is the estimated probability that any path from $n$ to the goal will cross that boundary. This is System 1 in its purest form: a fast, emotion-based estimate of the moral cost of proceeding.
 
-**Theorem 6.1** (Moral heuristic admissibility). *The moral heuristic $h_M$ is admissible when $\beta_k \leq \beta_k^*$ for all $k$, where $\beta_k^*$ is the true minimum boundary penalty along any optimal path from $n$ to the goal.*
+**Theorem 7.1** (Moral heuristic admissibility). *The moral heuristic $h_M$ is admissible when $\beta_k \leq \beta_k^*$ for all $k$, where $\beta_k^*$ is the true minimum boundary penalty along any optimal path from $n$ to the goal.*
 
 The cognitive interpretation is that moral intuitions must not *exaggerate* the moral cost of continuing. Well-calibrated intuitions ($\beta_k \leq \beta_k^*$) produce optimal decisions. Overestimated moral costs --- moral hypervigilance --- produce cautious but suboptimal behavior: the agent avoids some acceptable paths, ending up on a more expensive route.
 
@@ -2789,9 +3024,9 @@ Note the asymmetry: infinite penalties (sacred values) are excluded from the heu
 
 ---
 
-## 6.6 Concrete Examples from the eris-econ Codebase
+## 7.6 Concrete Examples from the eris-econ Codebase
 
-### 6.6.1 The Ultimatum Game
+### 7.6.1 The Ultimatum Game
 
 The ultimatum game is the canonical test case for behavioral economics and the most illuminating example of the Bond Geodesic in action. Player 1 (proposer) receives \$10 and offers a split to Player 2 (responder), who can accept or reject. The Nash equilibrium: offer the minimum, accept anything. The empirical result: proposers offer 40--50%, and responders reject offers below about 20%.
 
@@ -2863,7 +3098,7 @@ For "offer 40%": fairness *improves* ($0.5 \to 0.74$), identity *improves* ($0.5
 
 The result: the 40% offer path has lower total behavioral friction than the 0% offer path. The Bond Geodesic terminates near the 40% vertex.
 
-### 6.6.2 The Prisoner's Dilemma
+### 7.6.2 The Prisoner's Dilemma
 
 The prisoner's dilemma provides a complementary example where boundary penalties drive the qualitative prediction.
 
@@ -2893,7 +3128,7 @@ def prisoners_dilemma(sigma=None):
 
 The Nash equilibrium (projecting onto $d_1$ alone) predicts mutual defection: defecting yields \$5 vs. cooperating for \$3. But on the full 9D manifold, defection causes massive drops in fairness ($0.5 \to 0.1$), identity ($0.5 \to 0.2$), social impact ($0.0 \to -0.3$), and legitimacy ($0.5 \to 0.2$). The promise-breaking boundary ($\Delta d_8 = -0.3 < -0.5$? No --- $\Delta d_8 = 0.2 - 0.5 = -0.3$, which does not trigger at the $-0.5$ threshold) does not fire here, but the accumulated Mahalanobis cost across four moral dimensions makes defection more expensive than cooperation on the full manifold. The Bond Geodesic predicts cooperation --- consistent with empirical results showing significant cooperation rates in one-shot prisoner's dilemmas.
 
-### 6.6.3 The Public Goods Game
+### 7.6.3 The Public Goods Game
 
 The public goods game illustrates multi-step reasoning. In a group of $n$ players, each decides how much of their endowment to contribute to a common pool, which is multiplied by a factor $m$ and divided equally. The Nash prediction: contribute nothing (free-ride). The empirical result: initial contributions are around 40--60%, declining over rounds but never reaching zero.
 
@@ -2915,21 +3150,21 @@ The Bond Geodesic on this complex predicts moderate contributions (approximately
 
 ---
 
-## 6.7 Formal Properties
+## 7.7 Formal Properties
 
 Several formal properties of the Bond Geodesic follow from the A* optimality guarantee and the structure of the edge weight function.
 
-**Theorem 6.2** (Existence). *If the decision complex $\mathcal{E}$ is finite and there exists at least one path from $s$ to some $g \in G$ with finite total weight, then the Bond Geodesic exists and is found by A* with any admissible heuristic.*
+**Theorem 7.2** (Existence). *If the decision complex $\mathcal{E}$ is finite and there exists at least one path from $s$ to some $g \in G$ with finite total weight, then the Bond Geodesic exists and is found by A* with any admissible heuristic.*
 
 *Proof sketch.* A* on a finite graph with non-negative edge weights and an admissible heuristic is complete and optimal (Hart, Nilsson, and Raphael, 1968). Edge weights are non-negative by construction. The graph is finite because $V$ is finite. $\square$
 
-**Theorem 6.3** (Uniqueness of cost). *The total behavioral friction $F(\gamma^*)$ is unique. The path itself may not be unique when multiple paths achieve the same minimum cost.*
+**Theorem 7.3** (Uniqueness of cost). *The total behavioral friction $F(\gamma^*)$ is unique. The path itself may not be unique when multiple paths achieve the same minimum cost.*
 
-**Theorem 6.4** (Sacred boundary avoidance). *If boundary $k$ has penalty $\beta_k = \infty$ and the only paths from $s$ to $G$ cross boundary $k$, then the Bond Geodesic does not exist ($\texttt{found=False}$). The agent cannot reach the goal without violating the sacred value.*
+**Theorem 7.4** (Sacred boundary avoidance). *If boundary $k$ has penalty $\beta_k = \infty$ and the only paths from $s$ to $G$ cross boundary $k$, then the Bond Geodesic does not exist ($\texttt{found=False}$). The agent cannot reach the goal without violating the sacred value.*
 
 This last theorem captures an important psychological reality: some goals are unreachable not because of physical impossibility but because of moral impossibility. The geometric framework represents this as a *topological* property of the decision complex --- sacred boundaries disconnect the graph, creating unreachable components. This connects directly to the topological analysis of Chapter 5: persistent homology could, in principle, detect the connected components created by sacred boundaries and quantify how "close" the agent is to a disconnected goal.
 
-**Theorem 6.5** (Reduction to Dijkstra). *When $h(n) = 0$ for all $n$, A* reduces to Dijkstra's algorithm. The Bond Geodesic is still found optimally, but the search explores vertices uniformly in all directions from the start.*
+**Theorem 7.5** (Reduction to Dijkstra). *When $h(n) = 0$ for all $n$, A* reduces to Dijkstra's algorithm. The Bond Geodesic is still found optimally, but the search explores vertices uniformly in all directions from the start.*
 
 **Behavioral friction as a decision metric.** The total cost $F(\gamma^*)$ serves as a *difficulty metric* for decisions. High friction means the decision is cognitively and emotionally costly, even when the optimal path is clear. This predicts:
 
@@ -2941,23 +3176,23 @@ These predictions are testable and have partial empirical support in the behavio
 
 ---
 
-## 6.8 From Pathfinding to Equilibrium
+## 7.8 From Pathfinding to Equilibrium
 
 This chapter developed the complete pathfinding pipeline for decision manifolds:
 
-1. **Standard A* fails on curved spaces** because Euclidean heuristics are inadmissible when the metric tensor has eigenvalues below 1, and they are oblivious to boundary penalties that create discontinuous costs. Section 6.1 made these failure modes precise.
+1. **Standard A* fails on curved spaces** because Euclidean heuristics are inadmissible when the metric tensor has eigenvalues below 1, and they are oblivious to boundary penalties that create discontinuous costs. Section 7.1 made these failure modes precise.
 
-2. **Geodesic distance vs. Euclidean distance** is governed by the eigenstructure of $\Sigma^{-1}$. The distortion bounds $\sqrt{\lambda_{\min}} \leq d_M / d_E \leq \sqrt{\lambda_{\max}}$ determine when the Euclidean heuristic is admissible. For the `eris-econ` covariance matrix, it is not. Section 6.2 developed corrected heuristics.
+2. **Geodesic distance vs. Euclidean distance** is governed by the eigenstructure of $\Sigma^{-1}$. The distortion bounds $\sqrt{\lambda_{\min}} \leq d_M / d_E \leq \sqrt{\lambda_{\max}}$ determine when the Euclidean heuristic is admissible. For the `eris-econ` covariance matrix, it is not. Section 7.2 developed corrected heuristics.
 
-3. **The Economic Decision Complex** is a weighted directed graph whose edge weights combine smooth Mahalanobis distance with discontinuous boundary penalties. The nine dimensions span consequences, rights, fairness, autonomy, privacy/trust, social impact, virtue/identity, legitimacy, and epistemic status. Section 6.3 presented the data structures and implementation.
+3. **The Economic Decision Complex** is a weighted directed graph whose edge weights combine smooth Mahalanobis distance with discontinuous boundary penalties. The nine dimensions span consequences, rights, fairness, autonomy, privacy/trust, social impact, virtue/identity, legitimacy, and epistemic status. Section 7.3 presented the data structures and implementation.
 
-4. **The Bond Geodesic** is the minimum-friction path from a current state to a goal set. Behavioral friction --- the total path cost --- measures the cognitive-emotional difficulty of the decision. Section 6.4 defined the formulation and established its relationship to scalar utility.
+4. **The Bond Geodesic** is the minimum-friction path from a current state to a goal set. Behavioral friction --- the total path cost --- measures the cognitive-emotional difficulty of the decision. Section 7.4 defined the formulation and established its relationship to scalar utility.
 
-5. **A* with manifold heuristics** adapts the classical algorithm to non-Euclidean edge weights. Three heuristics --- zero (Dijkstra), Euclidean, and moral --- encode different System 1 models within the dual-process cognitive framework. The moral heuristic $h_M(n) = \sum_k \beta_k \cdot P(\text{cross boundary } k)$ is the distinctive contribution, encoding fast emotional judgment as an A* heuristic with a precise admissibility condition. Section 6.5 developed this machinery.
+5. **A* with manifold heuristics** adapts the classical algorithm to non-Euclidean edge weights. Three heuristics --- zero (Dijkstra), Euclidean, and moral --- encode different System 1 models within the dual-process cognitive framework. The moral heuristic $h_M(n) = \sum_k \beta_k \cdot P(\text{cross boundary } k)$ is the distinctive contribution, encoding fast emotional judgment as an A* heuristic with a precise admissibility condition. Section 7.5 developed this machinery.
 
-6. **Concrete examples** from `eris-econ` demonstrated the framework's explanatory power. The ultimatum game prediction of ~40% offers, the prisoner's dilemma prediction of cooperation, and the public goods game prediction of moderate contributions all match empirical data and diverge from Nash equilibrium predictions. Section 6.6 traced the computations step by step.
+6. **Concrete examples** from `eris-econ` demonstrated the framework's explanatory power. The ultimatum game prediction of ~40% offers, the prisoner's dilemma prediction of cooperation, and the public goods game prediction of moderate contributions all match empirical data and diverge from Nash equilibrium predictions. Section 7.6 traced the computations step by step.
 
-In Chapter 7, we extend from single-agent pathfinding to multi-agent interaction. When two or more decision complexes are coupled --- when each agent's edge weights depend on the other agents' chosen paths --- the Bond Geodesic becomes a fixed point of a coupled optimization. The result is the *Bond Geodesic Equilibrium* (BGE): a strategy profile in which each agent's path is optimal given the paths of all others. We will prove that Nash equilibrium emerges as a special case --- the projection of the BGE onto the $d_1$ (Consequences) axis alone. The geometric framework does not replace game theory; it *generalizes* it to the full decision manifold, recovering classical results as a degenerate case while explaining the behavioral anomalies that classical theory cannot.
+In Chapter 8, we extend from single-agent pathfinding to multi-agent interaction. When two or more decision complexes are coupled --- when each agent's edge weights depend on the other agents' chosen paths --- the Bond Geodesic becomes a fixed point of a coupled optimization. The result is the *Bond Geodesic Equilibrium* (BGE): a strategy profile in which each agent's path is optimal given the paths of all others. We will prove that Nash equilibrium emerges as a special case --- the projection of the BGE onto the $d_1$ (Consequences) axis alone. The geometric framework does not replace game theory; it *generalizes* it to the full decision manifold, recovering classical results as a degenerate case while explaining the behavioral anomalies that classical theory cannot.
 
 ---
 
@@ -2979,12 +3214,12 @@ In Chapter 7, we extend from single-agent pathfinding to multi-agent interaction
 
 ### Bibliographic Notes
 
-The A* algorithm was introduced by Hart, Nilsson, and Raphael (1968). The dual-process model of cognition (System 1 / System 2) is developed in Kahneman, *Thinking, Fast and Slow* (2011). The use of Mahalanobis distance in behavioral modeling connects to the broader metric learning literature surveyed by Kulis (2013). The ultimatum game data referenced throughout this chapter comes from the cross-cultural studies of Henrich et al. (2001, 2005) and the meta-analysis of Oosterbeek et al. (2004). Stake-size effects are documented in Slonim and Roth (1998). The framing effects referenced in Section 6.6 are from Liberman, Samuels, and Ross (2004). The connection between sacred values and deontological constraints is developed by Tetlock et al. (2000). The Bond Geodesic formulation and its application to behavioral economics are introduced in Bond (2026).
+The A* algorithm was introduced by Hart, Nilsson, and Raphael (1968). The dual-process model of cognition (System 1 / System 2) is developed in Kahneman, *Thinking, Fast and Slow* (2011). The use of Mahalanobis distance in behavioral modeling connects to the broader metric learning literature surveyed by Kulis (2013). The ultimatum game data referenced throughout this chapter comes from the cross-cultural studies of Henrich et al. (2001, 2005) and the meta-analysis of Oosterbeek et al. (2004). Stake-size effects are documented in Slonim and Roth (1998). The framing effects referenced in Section 7.6 are from Liberman, Samuels, and Ross (2004). The connection between sacred values and deontological constraints is developed by Tetlock et al. (2000). The Bond Geodesic formulation and its application to behavioral economics are introduced in Bond (2026).
 
 
 \newpage
 
-# Chapter 7: Equilibrium on Manifolds
+# Chapter 8: Equilibrium on Manifolds
 
 > *"The shortest path between two truths in the real domain passes through the complex domain."*
 > --- Jacques Hadamard
@@ -2998,9 +3233,9 @@ This chapter develops a generalization of Nash equilibrium to the multi-dimensio
 
 ![Ultimatum game: Nash equilibrium maximizes scalar payoff; the Bond Geodesic Equilibrium balances multiple dimensions.](images/ch07-nash-vs-bge.png)
 
-## 7.1 The Limitations of Nash Equilibrium
+## 8.1 The Limitations of Nash Equilibrium
 
-### 7.1.1 Scalar Payoffs and the Information They Destroy
+### 8.1.1 Scalar Payoffs and the Information They Destroy
 
 A Nash equilibrium is a strategy profile $(\sigma_1^*, \sigma_2^*, \ldots, \sigma_n^*)$ such that no agent can increase their scalar payoff by unilaterally changing their strategy:
 
@@ -3010,7 +3245,7 @@ This is a fixed-point condition: each agent is best-responding to the others. Th
 
 For the 9-dimensional economic decision space defined in the `eris-econ` framework---with dimensions for consequences, rights, fairness, autonomy, privacy/trust, social impact, virtue/identity, legitimacy, and epistemic status---a scalar utility function discards eight dimensions. The resulting equilibrium concept can describe what agents choose, but it cannot explain *why*, and it systematically fails to predict choices where the discarded dimensions dominate.
 
-### 7.1.2 The Ultimatum Game Revisited
+### 8.1.2 The Ultimatum Game Revisited
 
 Chapter 1 introduced the ultimatum game as a concrete illustration of scalar metric failure (Section 1.1.2). The puzzle is worth revisiting now that we have the geometric machinery to resolve it.
 
@@ -3075,19 +3310,19 @@ This is the pattern that Section 1.1.2 identified and that this chapter now form
 
 ---
 
-## 7.2 The Bond Geodesic Equilibrium
+## 8.2 The Bond Geodesic Equilibrium
 
-### 7.2.1 Definition
+### 8.2.1 Definition
 
 The Bond Geodesic Equilibrium generalizes Nash by replacing scalar utility maximization with multi-dimensional path optimization on a manifold. Each agent $i$ has:
 
-- A **decision complex** $\mathcal{E}_i = (V_i, E_i, w_i)$: a weighted directed graph whose vertices are economic states in $\mathbb{R}^9$ and whose edges represent available actions, with weights given by the Mahalanobis distance plus boundary penalties (Chapter 6).
+- A **decision complex** $\mathcal{E}_i = (V_i, E_i, w_i)$: a weighted directed graph whose vertices are economic states in $\mathbb{R}^9$ and whose edges represent available actions, with weights given by the Mahalanobis distance plus boundary penalties (Chapter 7).
 - A **starting state** $s_i \in V_i$: the agent's current position in the decision space.
 - A **goal set** $G_i \subseteq V_i$: the set of states the agent considers desirable endpoints.
 
-An agent's **strategy** is a path through their decision complex from $s_i$ to some vertex in $G_i$. The cost of a strategy is the total path weight---the sum of all edge weights along the path. Each edge weight is the Mahalanobis distance $\sqrt{\Delta \mathbf{a}^\top \Sigma^{-1} \Delta \mathbf{a}}$ plus any boundary penalties incurred by that transition, as developed in Chapter 6. The optimal strategy, given a fixed decision complex, is the minimum-cost path: the **Bond Geodesic**, computed by A* search.
+An agent's **strategy** is a path through their decision complex from $s_i$ to some vertex in $G_i$. The cost of a strategy is the total path weight---the sum of all edge weights along the path. Each edge weight is the Mahalanobis distance $\sqrt{\Delta \mathbf{a}^\top \Sigma^{-1} \Delta \mathbf{a}}$ plus any boundary penalties incurred by that transition, as developed in Chapter 7. The optimal strategy, given a fixed decision complex, is the minimum-cost path: the **Bond Geodesic**, computed by A* search.
 
-**Definition 7.1 (Bond Geodesic Equilibrium).** A strategy profile $(p_1^*, p_2^*, \ldots, p_n^*)$ is a Bond Geodesic Equilibrium if no agent can reduce their path cost by unilaterally changing their path:
+**Definition 8.1 (Bond Geodesic Equilibrium).** A strategy profile $(p_1^*, p_2^*, \ldots, p_n^*)$ is a Bond Geodesic Equilibrium if no agent can reduce their path cost by unilaterally changing their path:
 
 $$\text{cost}(p_i^*) \leq \text{cost}(p_i) \quad \forall p_i \in \text{Paths}(\mathcal{E}_i'), \forall i$$
 
@@ -3095,13 +3330,13 @@ where $\mathcal{E}_i'$ is agent $i$'s decision complex as modified by the strate
 
 The critical difference from Nash is that the "payoff" is not a scalar externally imposed on the agent, but a path cost that emerges from the geometry of the agent's own decision manifold. The manifold encodes *all* nine dimensions simultaneously. Two strategies might have identical monetary consequences (dimension $d_1$) but differ vastly in their rights implications ($d_2$), fairness costs ($d_3$), or identity impact ($d_7$). The BGE respects these differences; the Nash equilibrium, operating on scalar projections, cannot.
 
-### 7.2.2 The Nine Dimensions
+### 8.2.2 The Nine Dimensions
 
 The dimension structure underlying the BGE is defined in the `eris-econ` framework as an enumeration: consequences ($d_1$), rights ($d_2$), fairness ($d_3$), autonomy ($d_4$), privacy/trust ($d_5$), social impact ($d_6$), virtue/identity ($d_7$), legitimacy ($d_8$), and epistemic status ($d_9$). Dimensions $d_1$ through $d_4$ are *transferable* in bilateral exchange---they obey a conservation law where $\Delta d_k(A) + \Delta d_k(B) = 0$. Dimensions $d_5$ through $d_9$ are *evaluative*---not conserved, allowing mutual gains from trade. Fairness ($d_3$) is partially transferable, its conservation properties depending on context. This classification determines the structure of the feasible set in multi-agent games: transferable dimensions create zero-sum constraints while evaluative dimensions permit positive-sum outcomes.
 
 Every economic state is represented as an immutable `EconomicState`---a frozen dataclass wrapping a length-9 tuple, following the same immutable state vector pattern introduced in Chapter 1 (Section 1.2.2). The `Dim` enumeration enables named dimension access (`state[Dim.FAIRNESS]`) rather than numeric indexing, preventing off-by-one errors and making code self-documenting.
 
-### 7.2.3 The Decision Complex in Code
+### 8.2.3 The Decision Complex in Code
 
 The `eris-econ` framework implements the decision complex as a class that encapsulates the weighted graph, the covariance structure, and the boundary penalty system:
 
@@ -3138,13 +3373,13 @@ def compute_weights(self) -> None:
         )
 ```
 
-The `edge_weight` function from the metrics module combines Mahalanobis distance with boundary penalties: `w(a, b) = d_M(a, b) + \sum_k \beta_k \cdot \mathbf{1}[\text{boundary } k \text{ crossed}]`. This means that every edge cost simultaneously accounts for monetary changes, rights implications, fairness shifts, identity costs, and all other dimensions---weighted by the precision matrix $\Sigma^{-1}$ and subject to the discontinuous penalties imposed by moral-economic boundaries. The edge weight function is the bridge between the continuous geometry of the Mahalanobis metric (Chapter 6) and the discrete moral constraints that make economic decisions qualitatively different from pure optimization.
+The `edge_weight` function from the metrics module combines Mahalanobis distance with boundary penalties: `w(a, b) = d_M(a, b) + \sum_k \beta_k \cdot \mathbf{1}[\text{boundary } k \text{ crossed}]`. This means that every edge cost simultaneously accounts for monetary changes, rights implications, fairness shifts, identity costs, and all other dimensions---weighted by the precision matrix $\Sigma^{-1}$ and subject to the discontinuous penalties imposed by moral-economic boundaries. The edge weight function is the bridge between the continuous geometry of the Mahalanobis metric (Chapter 7) and the discrete moral constraints that make economic decisions qualitatively different from pure optimization.
 
 ---
 
-## 7.3 Computing BGE: Iterated Best Response
+## 8.3 Computing BGE: Iterated Best Response
 
-### 7.3.1 The Algorithm
+### 8.3.1 The Algorithm
 
 Computing a BGE requires finding a fixed point: a state where every agent's path is optimal given every other agent's path. The natural algorithm is **iterated best response**, where agents take turns re-optimizing. The implementation in `equilibrium.py` follows a clean three-phase structure:
 
@@ -3205,7 +3440,7 @@ def compute_bge(
     )
 ```
 
-**Phase 1: Independent initialization.** Each agent computes their optimal path in isolation, ignoring all other agents. This is equivalent to each agent solving a single-player A* search on their own decision complex---the same pathfinding algorithm developed in Chapter 6. The result is a set of initial strategies that will generally *not* be an equilibrium, because each agent's complex does not yet reflect the impact of others' choices.
+**Phase 1: Independent initialization.** Each agent computes their optimal path in isolation, ignoring all other agents. This is equivalent to each agent solving a single-player A* search on their own decision complex---the same pathfinding algorithm developed in Chapter 7. The result is a set of initial strategies that will generally *not* be an equilibrium, because each agent's complex does not yet reflect the impact of others' choices.
 
 **Phase 2: Sequential re-optimization.** In each iteration, every agent is given the opportunity to revise their strategy. The `strategy_callback` is the mechanism by which inter-agent coupling enters the computation: it takes the current agent and the dictionary of all other agents' current paths, and modifies the agent's decision complex accordingly. This might mean updating edge weights (if another agent's strategy changes market prices), adding or removing edges (if another agent's path opens or closes options), or adjusting boundary penalties (if another agent's behavior shifts social norms). After the callback modifies the complex, `compute_weights()` recalculates all edge weights, and A* finds the new optimal path.
 
@@ -3230,7 +3465,7 @@ class BGEResult:
 
 The `converged` flag distinguishes genuine equilibria from timeout states, which is essential for downstream analysis---a non-converged result may indicate cycling (no equilibrium exists in pure strategies) or insufficient iterations.
 
-### 7.3.2 The Agent Abstraction
+### 8.3.2 The Agent Abstraction
 
 Each agent in the BGE computation carries their own decision complex, starting position, and goal set:
 
@@ -3246,13 +3481,13 @@ class Agent:
     heuristic: Optional[Callable] = None
 ```
 
-The optional heuristic enables the dual-process cognitive model discussed in Chapter 6: the heuristic $h(n)$ corresponds to System 1 (fast, automatic moral intuition), while the accumulated cost $g(n)$ corresponds to System 2 (deliberate calculation). An agent with no heuristic falls back to Dijkstra's algorithm---pure deliberative reasoning with no intuitive shortcuts.
+The optional heuristic enables the dual-process cognitive model discussed in Chapter 7: the heuristic $h(n)$ corresponds to System 1 (fast, automatic moral intuition), while the accumulated cost $g(n)$ corresponds to System 2 (deliberate calculation). An agent with no heuristic falls back to Dijkstra's algorithm---pure deliberative reasoning with no intuitive shortcuts.
 
 ---
 
-## 7.4 Convergence Analysis
+## 8.4 Convergence Analysis
 
-### 7.4.1 General Convergence Conditions
+### 8.4.1 General Convergence Conditions
 
 Iterated best response is not guaranteed to converge for arbitrary games. In classical game theory, best response dynamics can cycle in games like matching pennies. The same is true for BGE computation: if the strategy callback creates strong enough coupling between agents' decision complexes, the system can oscillate indefinitely.
 
@@ -3264,11 +3499,11 @@ $$|\mathcal{C}_i(\mathbf{p}_{-i}) - \mathcal{C}_i(\mathbf{p}_{-i}')| \leq L \cdo
 
 with $L < 1$, then the iterated best response is a contraction mapping on the space of strategy profiles, and convergence to a unique fixed point is guaranteed by the Banach fixed-point theorem. The number of iterations required is $O(\log(1/\epsilon) / \log(1/L))$ for convergence tolerance $\epsilon$.
 
-**Boundary penalty discreteness.** The boundary penalty system (Chapter 6) introduces discrete jumps in edge weights when moral-economic boundaries are crossed. These jumps create "attractor" regions in the strategy space where all agents' paths avoid boundary violations. The `boundary_penalty` function checks for named violations---theft (rights going negative), coercion (large autonomy drops), deception (epistemic drops), exploitation (fairness declining while consequences improve)---and adds the corresponding penalty $\beta_k$ for each crossing. Sacred-value boundaries ($\beta = \infty$) create hard partitions: paths crossing a sacred boundary have infinite cost and are never selected, permanently eliminating entire regions of the strategy space.
+**Boundary penalty discreteness.** The boundary penalty system (Chapter 7) introduces discrete jumps in edge weights when moral-economic boundaries are crossed. These jumps create "attractor" regions in the strategy space where all agents' paths avoid boundary violations. The `boundary_penalty` function checks for named violations---theft (rights going negative), coercion (large autonomy drops), deception (epistemic drops), exploitation (fairness declining while consequences improve)---and adds the corresponding penalty $\beta_k$ for each crossing. Sacred-value boundaries ($\beta = \infty$) create hard partitions: paths crossing a sacred boundary have infinite cost and are never selected, permanently eliminating entire regions of the strategy space.
 
 Once every agent's path lies within a boundary-respecting region, the continuous Mahalanobis component dominates, and the contraction property takes over.
 
-### 7.4.2 Empirical Convergence Behavior
+### 8.4.2 Empirical Convergence Behavior
 
 In the `eris-econ` implementation, the maximum iteration limit of 100 serves as a practical safeguard. For the economic games tested---ultimatum games, dictator games, public goods games, market entry games---convergence typically occurs within 5--15 iterations. The convergence profile follows a characteristic pattern:
 
@@ -3278,21 +3513,21 @@ In the `eris-econ` implementation, the maximum iteration limit of 100 serves as 
 
 Non-convergence (hitting the 100-iteration limit) is diagnostic: it typically indicates either that the game has no pure-strategy BGE (the manifold analogue of a game with no pure-strategy Nash equilibrium) or that the strategy callback introduces oscillatory coupling that prevents contraction. In either case, the `converged=False` flag in the `BGEResult` alerts the analyst that the returned paths should be interpreted with caution.
 
-### 7.4.3 Mixed BGE and Existence
+### 8.4.3 Mixed BGE and Existence
 
 The existence of mixed BGE follows from a reduction argument to finite Nash equilibrium. Given a finite graph with finitely many paths, the set of mixed strategies (probability distributions over paths) forms a compact convex set. The best-response correspondence inherits the upper hemicontinuity and convex-valuedness properties required by Kakutani's fixed-point theorem. Therefore:
 
-**Theorem 7.2 (Existence of Mixed BGE).** Every finite game on Economic Decision Complexes admits at least one mixed Bond Geodesic Equilibrium.
+**Theorem 8.2 (Existence of Mixed BGE).** Every finite game on Economic Decision Complexes admits at least one mixed Bond Geodesic Equilibrium.
 
 The proof is constructive: enumerate all paths for each agent, construct the augmented finite game where each path is a pure strategy, and apply Nash's existence theorem to the augmented game. The BGE of the original game corresponds to the Nash equilibrium of the augmented game. This reduction preserves the full multi-dimensional cost structure---the payoff of a path in the augmented game is its total Mahalanobis-plus-boundary cost, not a scalar projection.
 
 ---
 
-## 7.5 The Reduction Theorem
+## 8.5 The Reduction Theorem
 
 The most important theoretical property of BGE is that it generalizes Nash equilibrium rather than replacing it. This is not merely an aesthetic desideratum---it means that the entire apparatus of classical game theory remains available as a special case.
 
-**Theorem 7.1 (Reduction to Nash).** Let $(p_1^*, p_2^*, \ldots, p_n^*)$ be a Bond Geodesic Equilibrium on decision complexes $\{\mathcal{E}_i\}$. If the precision matrix $\Sigma^{-1}$ assigns zero weight to all dimensions except $d_1$ (consequences), i.e.,
+**Theorem 8.1 (Reduction to Nash).** Let $(p_1^*, p_2^*, \ldots, p_n^*)$ be a Bond Geodesic Equilibrium on decision complexes $\{\mathcal{E}_i\}$. If the precision matrix $\Sigma^{-1}$ assigns zero weight to all dimensions except $d_1$ (consequences), i.e.,
 
 $$(\Sigma^{-1})_{jj} = 0 \quad \forall j \neq 0$$
 
@@ -3310,7 +3545,7 @@ The implementation provides a `nash_projection` function that performs this redu
 def nash_projection(bge_result: BGEResult) -> Dict[str, float]:
     """Project BGE to Nash-like monetary costs (d_1 only).
 
-    Demonstrates Theorem 7.1: BGE reduces to Nash when only
+    Demonstrates Theorem 8.1: BGE reduces to Nash when only
     the consequences dimension is active.
     """
     return {aid: path.total_cost for aid, path in bge_result.agent_paths.items()}
@@ -3318,13 +3553,13 @@ def nash_projection(bge_result: BGEResult) -> Dict[str, float]:
 
 This function extracts the scalar path costs from a BGE result. When the BGE was computed with a full 9-dimensional precision matrix, these costs reflect the multi-dimensional path weight. When computed with a $d_1$-only precision matrix, they reflect only monetary costs---and the BGE *is* the Nash equilibrium.
 
-**Why the reduction matters.** The reduction theorem validates BGE as a *proper* generalization. Any result that holds for Nash equilibrium also holds for BGE restricted to one dimension. Any empirical finding that matches Nash predictions is automatically consistent with BGE (since Nash is a special case). But BGE can also explain phenomena that Nash cannot---the ultimatum game offers from Section 7.1.2, loss aversion, the endowment effect, framing sensitivity---because it has access to the eight dimensions that the Nash projection discards. This is the multi-dimensional analogue of the observation that special relativity reduces to Newtonian mechanics at low velocities: the generalization is validated by the fact that it recovers the known theory in the appropriate limit.
+**Why the reduction matters.** The reduction theorem validates BGE as a *proper* generalization. Any result that holds for Nash equilibrium also holds for BGE restricted to one dimension. Any empirical finding that matches Nash predictions is automatically consistent with BGE (since Nash is a special case). But BGE can also explain phenomena that Nash cannot---the ultimatum game offers from Section 8.1.2, loss aversion, the endowment effect, framing sensitivity---because it has access to the eight dimensions that the Nash projection discards. This is the multi-dimensional analogue of the observation that special relativity reduces to Newtonian mechanics at low velocities: the generalization is validated by the fact that it recovers the known theory in the appropriate limit.
 
 ---
 
-## 7.6 Behavioral Friction
+## 8.6 Behavioral Friction
 
-### 7.6.1 Definition
+### 8.6.1 Definition
 
 The total cost of an agent's optimal path through their decision complex is a quantity with a natural behavioral interpretation. We call it **behavioral friction**:
 
@@ -3344,7 +3579,7 @@ def behavioral_friction(path: PathResult) -> float:
 
 Behavioral friction is the manifold-native measure of decision difficulty. It captures not just the monetary cost of an action but the full cognitive and emotional cost of executing it---the rights implications, the fairness considerations, the identity impact, the social consequences, and the epistemic uncertainty, all integrated through the Mahalanobis metric.
 
-### 7.6.2 Interpretation
+### 8.6.2 Interpretation
 
 Higher behavioral friction means the decision is harder to execute. A decision with low friction along the Bond Geodesic---one that primarily traverses the consequences dimension, with minimal perturbation to other dimensions---is easy. A decision with high friction---one that activates multiple dimensions, crosses boundary penalties, or requires large displacements in identity or fairness space---is difficult, regardless of its monetary attractiveness.
 
@@ -3358,11 +3593,11 @@ At the system level, the `BGEResult` reports `total_behavioral_friction`---the s
 
 ---
 
-## 7.7 Emergent Behavioral Properties
+## 8.7 Emergent Behavioral Properties
 
 The most striking consequence of the multi-dimensional geometric framework is that behavioral "biases"---phenomena that behavioral economics has catalogued as departures from rational choice theory---emerge as natural geometric properties of the decision manifold. They are not hard-coded parameters, ad-hoc utility function modifications, or psychological primitives. They are consequences of the fact that the decision space has more than one dimension.
 
-### 7.7.1 Loss Aversion
+### 8.7.1 Loss Aversion
 
 Loss aversion is the empirical finding that losses loom larger than gains of equal magnitude. Kahneman and Tversky estimated the loss aversion coefficient $\lambda \approx 2.0$--$2.5$: a loss of \$X feels roughly 2--2.5 times as bad as a gain of \$X feels good.
 
@@ -3430,7 +3665,7 @@ def loss_aversion_ratio(gain_state, loss_state, reference, sigma_inv) -> float:
 
 There is nothing in this computation that imposes loss aversion. It is a *consequence* of the geometry: losses are farther from the reference point than gains in a multi-dimensional space because they activate more dimensions.
 
-### 7.7.2 The Endowment Effect
+### 8.7.2 The Endowment Effect
 
 The endowment effect is the finding that people demand more to give up an object they own (willingness-to-accept, WTA) than they would pay to acquire the same object (willingness-to-pay, WTP). The ratio WTA/WTP typically ranges from 1.5 to 3.0 in experimental settings.
 
@@ -3440,7 +3675,7 @@ The `endowment_effect` function in `behavioral.py` computes the WTA and WTP mani
 
 The WTA/WTP ratio exceeds 1.0 because the seller traverses more dimensions with larger displacements than the buyer. The ratio *increases* with the number of activated dimensions---an object with purely monetary significance (only $d_1$ active) has WTA/WTP close to 1.0, while a family heirloom (activating $d_1$, $d_2$, $d_4$, $d_6$, $d_7$, and possibly $d_8$) has WTA/WTP much greater than 1.0. This matches experimental evidence: the endowment effect is stronger for goods with emotional, identity, or social significance.
 
-### 7.7.3 Reference Dependence
+### 8.7.3 Reference Dependence
 
 Classical utility theory evaluates options in absolute terms: option A has utility $u(A)$, option B has utility $u(B)$, and the agent chooses the larger. Behavioral economics has established that agents instead evaluate options *relative to a reference point*---typically their current state.
 
@@ -3461,7 +3696,7 @@ def reference_dependence(current, option_a, option_b, sigma_inv):
 
 Two agents with identical option sets but different current states will compute different distances to the same options, and may therefore make different choices. This is exactly Kahneman and Tversky's reference dependence: preferences are defined over changes from a reference point, not over final states. In the manifold framework, this is simply the fact that distance depends on the starting point---a tautology in metric spaces, but one with profound behavioral implications.
 
-### 7.7.4 Framing Effects
+### 8.7.4 Framing Effects
 
 A framing effect occurs when two logically equivalent descriptions of the same decision lead to different choices. In the geometric framework, a frame is a **gauge transformation**: a rotation of the description basis that changes how the same objective state is represented as an attribute vector:
 
@@ -3480,11 +3715,11 @@ The key distinction is between gauge-invariant and gauge-sensitive agents. A per
 
 ---
 
-## 7.8 Dimensional Loss Aversion
+## 8.8 Dimensional Loss Aversion
 
-Section 7.7.1 showed that loss aversion emerges from the asymmetry between the dimensional profiles of gains and losses. We now push this analysis further to show that the *magnitude* of loss aversion depends on the number and type of non-monetary dimensions activated by the loss.
+Section 8.7.1 showed that loss aversion emerges from the asymmetry between the dimensional profiles of gains and losses. We now push this analysis further to show that the *magnitude* of loss aversion depends on the number and type of non-monetary dimensions activated by the loss.
 
-### 7.8.1 The Dimensional Multiplier
+### 8.8.1 The Dimensional Multiplier
 
 Consider three scenarios involving a loss of equal monetary magnitude ($M$):
 
@@ -3504,7 +3739,7 @@ This matches the canonical Kahneman-Tversky estimate.
 
 $$\lambda_{\text{heirloom}} \approx 3.0 \text{ or higher}$$
 
-### 7.8.2 The Geometric Mechanism
+### 8.8.2 The Geometric Mechanism
 
 The pattern is systematic: the loss aversion coefficient $\lambda$ increases with the number of dimensions activated by the loss. This is a direct consequence of the Mahalanobis distance formula. If a gain produces a displacement vector $\Delta_g$ with $k$ nonzero components and a loss produces a displacement vector $\Delta_l$ with $m > k$ nonzero components, then the ratio of distances scales approximately as:
 
@@ -3514,7 +3749,7 @@ For the diagonal case (no cross-dimensional coupling), this simplifies to a weig
 
 This analysis makes a testable prediction: loss aversion should be *context-dependent*, varying with the type of good and the nature of the loss. Pure monetary losses should produce low $\lambda$; losses involving identity, social bonds, or moral violations should produce high $\lambda$. This prediction is consistent with the experimental literature. List (2003) found that experienced traders show minimal endowment effects for commodity goods (low dimensional activation). Ariely, Huber, and Wertenbroch (2005) found stronger effects for hedonic goods than utilitarian goods (hedonic goods activate more identity and social dimensions). The geometric framework explains *why* these findings hold: the relevant variable is not "type of good" as a categorical label but the number and weight of non-monetary dimensions activated by the transaction.
 
-### 7.8.3 Implications for Mechanism Design
+### 8.8.3 Implications for Mechanism Design
 
 Dimensional loss aversion has direct implications for the design of markets, auctions, and policies. If the goal is to reduce the friction of a transaction---to lower the behavioral friction of the equilibrium---the designer should minimize the number of non-monetary dimensions displaced by the transaction.
 
@@ -3528,25 +3763,25 @@ Concretely:
 
 ---
 
-## 7.9 The Covariance Structure of Real Decisions
+## 8.9 The Covariance Structure of Real Decisions
 
 The BGE computation depends critically on the covariance matrix $\Sigma$, which determines the Mahalanobis metric and therefore the relative importance of each dimension and the coupling between dimensions. The `eris-econ` framework provides a default covariance matrix (`_default_sigma()` in `games.py`) with an empirically motivated structure. The key design choice is the asymmetry between monetary and moral dimensions: the consequences dimension has variance 25.0, meaning that a unit change in monetary value is relatively low-cost in Mahalanobis terms---money varies on a large scale, so each dollar matters less. The moral dimensions ($d_2$ through $d_9$) each have variance 0.25, meaning that small changes in fairness, identity, or rights are high-cost---these dimensions vary on a small scale, so each increment matters more.
 
 The off-diagonal entries encode dimensional couplings well-documented in the behavioral economics literature: consequences-fairness ($\rho = 0.5$, because fair outcomes tend to be mutually beneficial), rights-legitimacy ($\rho = 0.15$, because rights violations undermine institutional trust), identity-social impact ($\rho = 0.1$, because self-image and social reputation covary), and trust-epistemic ($\rho = 0.1$, because low-trust environments produce poor information).
 
-These couplings mean that the Mahalanobis distance is not a simple weighted Euclidean distance. Cross-dimensional terms contribute to the metric, capturing the fact that a simultaneous change in rights *and* legitimacy is not the same as the sum of independent changes in each. The joint displacement may be more or less costly than the sum of marginal displacements, depending on the sign of the correlation. This is not a parametric assumption imposed to generate behavioral phenomena; it is an empirical observation about the *scales* at which economic dimensions naturally vary. The precision matrix $\Sigma^{-1}$ inverts these scales, and the behavioral properties documented in Sections 7.7--7.8 emerge as consequences of that inversion.
+These couplings mean that the Mahalanobis distance is not a simple weighted Euclidean distance. Cross-dimensional terms contribute to the metric, capturing the fact that a simultaneous change in rights *and* legitimacy is not the same as the sum of independent changes in each. The joint displacement may be more or less costly than the sum of marginal displacements, depending on the sign of the correlation. This is not a parametric assumption imposed to generate behavioral phenomena; it is an empirical observation about the *scales* at which economic dimensions naturally vary. The precision matrix $\Sigma^{-1}$ inverts these scales, and the behavioral properties documented in Sections 8.7--7.8 emerge as consequences of that inversion.
 
 ---
 
-## 7.10 Summary and Looking Ahead
+## 8.10 Summary and Looking Ahead
 
 This chapter developed the Bond Geodesic Equilibrium as a multi-dimensional generalization of Nash equilibrium on decision manifolds. The key results are:
 
-1. **BGE is a fixed-point condition on paths**, not payoffs. Each agent minimizes total path cost through their decision complex, where cost integrates all nine dimensions via the Mahalanobis metric plus boundary penalties. The iterated best response algorithm in `compute_bge()` finds this fixed point by cycling through agents, updating each agent's complex based on others' strategies, and re-running A* (Chapter 6) until convergence.
+1. **BGE is a fixed-point condition on paths**, not payoffs. Each agent minimizes total path cost through their decision complex, where cost integrates all nine dimensions via the Mahalanobis metric plus boundary penalties. The iterated best response algorithm in `compute_bge()` finds this fixed point by cycling through agents, updating each agent's complex based on others' strategies, and re-running A* (Chapter 7) until convergence.
 
-2. **BGE reduces to Nash** when all non-monetary dimensions are deactivated (Theorem 7.1). This validates BGE as a proper generalization: classical results are a special case, not a competing framework.
+2. **BGE reduces to Nash** when all non-monetary dimensions are deactivated (Theorem 8.1). This validates BGE as a proper generalization: classical results are a special case, not a competing framework.
 
-3. **Convergence** is promoted by metric smoothness (Lipschitz contraction of the best-response mapping) and boundary penalty discreteness (attractor regions that partition the strategy space). Mixed BGE existence follows from reduction to finite Nash equilibrium on the augmented game (Theorem 7.2).
+3. **Convergence** is promoted by metric smoothness (Lipschitz contraction of the best-response mapping) and boundary penalty discreteness (attractor regions that partition the strategy space). Mixed BGE existence follows from reduction to finite Nash equilibrium on the augmented game (Theorem 8.2).
 
 4. **Behavioral friction** is the total path cost of the Bond Geodesic---a measure of decision difficulty that integrates cognitive, emotional, moral, and economic costs into a single geometric quantity.
 
@@ -3556,17 +3791,17 @@ This chapter developed the Bond Geodesic Equilibrium as a multi-dimensional gene
 
 7. **The ultimatum game** (Chapter 1) is resolved naturally: the BGE predicts 40--50% offers because the manifold distance to a fair split is shorter than the distance to a greedy offer, once fairness, identity, and social dimensions are accounted for.
 
-Chapter 8 turns from equilibrium to optimization: given a model with multiple dimensions, how do we find the Pareto frontier of configurations that optimally trade off accuracy against complexity? Where this chapter used the manifold structure of the decision space to generalize equilibrium, Chapter 8 applies multi-objective optimization across varying numbers of active dimensions---a different algorithmic problem, but one that shares the same foundational commitment to treating multi-dimensional structure as the primary object of analysis rather than collapsing it to a scalar.
+Chapter 9 turns from equilibrium to optimization: given a model with multiple dimensions, how do we find the Pareto frontier of configurations that optimally trade off accuracy against complexity? Where this chapter used the manifold structure of the decision space to generalize equilibrium, Chapter 9 applies multi-objective optimization across varying numbers of active dimensions---a different algorithmic problem, but one that shares the same foundational commitment to treating multi-dimensional structure as the primary object of analysis rather than collapsing it to a scalar.
 
 
 \newpage
 
-# Chapter 8: Pareto Optimization
+# Chapter 9: Pareto Optimization
 
 > *"The optimum is not a point but a surface, and the task of the engineer is to understand that surface before choosing where to stand on it."*
 > --- Vilfredo Pareto, *Manual of Political Economy* (1906), adapted
 
-The preceding chapters have developed a geometric vocabulary for multi-dimensional model analysis: state vectors (Chapter 1), subset enumeration (Chapter 11), distance metrics, and sensitivity profiling. Each of these tools produces results in multiple dimensions. Yet at some point the practitioner must *decide*---which configuration to deploy, which feature set to adopt, how much complexity to tolerate. The temptation is to collapse the multi-dimensional result into a single number and optimize that number. This chapter explains why that temptation must be resisted, what to do instead, and how the structural fuzzing framework implements the alternative.
+The preceding chapters have developed a geometric vocabulary for multi-dimensional model analysis: state vectors (Chapter 3), subset enumeration (Chapter 4), distance metrics, and sensitivity profiling. Each of these tools produces results in multiple dimensions. Yet at some point the practitioner must *decide*---which configuration to deploy, which feature set to adopt, how much complexity to tolerate. The temptation is to collapse the multi-dimensional result into a single number and optimize that number. This chapter explains why that temptation must be resisted, what to do instead, and how the structural fuzzing framework implements the alternative.
 
 The alternative is Pareto optimization: identifying the set of configurations that cannot be improved on one objective without sacrificing another, and then reasoning about the structure of that set directly. No weights are chosen. No objectives are combined. The geometry of the tradeoff surface speaks for itself.
 
@@ -3575,9 +3810,9 @@ The alternative is Pareto optimization: identifying the set of configurations th
 
 ![Pareto frontier in dimension-count vs prediction-error space. Gold points are non-dominated.](images/ch08-pareto-frontier.png)
 
-## 8.1 Pareto Dominance: The Fundamental Definition
+## 9.1 Pareto Dominance: The Fundamental Definition
 
-### 8.1.1 Dominance in Two Objectives
+### 9.1.1 Dominance in Two Objectives
 
 Consider two configurations $\mathbf{a}$ and $\mathbf{b}$, each evaluated on two objectives $f_1$ and $f_2$ that we wish to minimize. Configuration $\mathbf{a}$ *dominates* $\mathbf{b}$, written $\mathbf{a} \prec \mathbf{b}$, if and only if:
 
@@ -3585,7 +3820,7 @@ $$f_1(\mathbf{a}) \leq f_1(\mathbf{b}) \quad \text{and} \quad f_2(\mathbf{a}) \l
 
 with at least one strict inequality. Dominance is a partial order: given two arbitrary configurations, it is entirely possible that neither dominates the other. Configuration $\mathbf{a}$ may excel on $f_1$ while $\mathbf{b}$ excels on $f_2$. In this case the two are *mutually non-dominated*, and no amount of algorithmic cleverness can rank one above the other without introducing a preference between the objectives.
 
-### 8.1.2 The General Case
+### 9.1.2 The General Case
 
 For $m$ objectives $f_1, f_2, \ldots, f_m$ (all to be minimized), dominance generalizes naturally:
 
@@ -3597,7 +3832,7 @@ $$\mathcal{P} = \{\mathbf{a} \in \mathcal{S} : \nexists\, \mathbf{b} \in \mathca
 
 Every configuration not on the Pareto frontier is strictly inferior to at least one configuration that is: it can be improved on one or more objectives without cost to any other. The frontier is the irreducible set of optimal tradeoffs---the "efficient surface" in Pareto's original terminology.
 
-### 8.1.3 Geometric Interpretation
+### 9.1.3 Geometric Interpretation
 
 In the objective space $\mathbb{R}^m$, the Pareto frontier forms a $(m-1)$-dimensional surface. For two objectives, it is a curve. For three, a surface. The frontier separates the *attainable* region (objective vectors achievable by some configuration) from the *ideal* region (objective vectors better than anything achievable). The shape of this surface---its curvature, its extent, the gaps along it---encodes the fundamental tradeoff structure of the problem.
 
@@ -3605,9 +3840,9 @@ A convex Pareto frontier indicates that tradeoffs are smooth: small sacrifices i
 
 ---
 
-## 8.2 Why Scalarization Fails
+## 9.2 Why Scalarization Fails
 
-### 8.2.1 The Weighted-Sum Approach
+### 9.2.1 The Weighted-Sum Approach
 
 The most common approach to multi-objective optimization is *scalarization*: combine the objectives into a single scalar using a weighted sum,
 
@@ -3617,7 +3852,7 @@ and then minimize $\Phi$. This reduces the problem to standard single-objective 
 
 The difficulty is that scalarization destroys precisely the information that Chapter 1 argued is irrecoverable. Recall the Scalar Irrecoverability Theorem (Section 1.1.1): the projection $\phi : \mathbb{R}^m \to \mathbb{R}^1$ has a null space of dimension $m - 1$. Any two configurations that differ only within this null space are indistinguishable under $\phi$, yet they may occupy entirely different positions on the Pareto frontier. Choosing weights *before* understanding the frontier is choosing a projection *before* understanding the space---precisely the methodological error that the geometric approach is designed to prevent.
 
-### 8.2.2 The Convexity Limitation
+### 9.2.2 The Convexity Limitation
 
 Even when the practitioner is willing to choose weights, scalarization has a structural limitation: weighted-sum optimization can only find points on the *convex hull* of the Pareto frontier. If the frontier is non-convex---containing concave regions or "pockets"---no choice of positive weights can reach the configurations in those regions.
 
@@ -3625,7 +3860,7 @@ To see why, observe that minimizing $\Phi(\mathbf{x}) = \sum w_i f_i(\mathbf{x})
 
 In the structural fuzzing context, non-convex frontiers arise naturally. Consider the two objectives "number of feature groups" (dimensionality $k$) and "prediction error" (MAE). A configuration using two carefully chosen feature groups may outperform all three-group configurations---creating a non-convex pocket at $k = 3$. No weighted combination of $k$ and MAE can discover this pocket. Only direct enumeration and dominance-based filtering can find it.
 
-### 8.2.3 The Preference Inversion Problem
+### 9.2.3 The Preference Inversion Problem
 
 A subtler failure mode of scalarization is *preference inversion*: the optimal configuration under weights $\mathbf{w}_1$ may be ranked lower than a suboptimal configuration under slightly different weights $\mathbf{w}_2$, with no way to determine which weights are "correct" without external domain knowledge. In practice, this means that two teams analyzing the same data with slightly different weight choices can reach opposite conclusions about which configuration is best---and both are "right" within their respective scalarizations.
 
@@ -3633,16 +3868,16 @@ Pareto analysis avoids this entirely. The Pareto frontier is invariant to the ch
 
 ---
 
-## 8.3 Constructing the Pareto Frontier from Subset Results
+## 9.3 Constructing the Pareto Frontier from Subset Results
 
 In the structural fuzzing framework, the most natural pair of objectives is:
 
 - **Objective 1: Minimize dimensionality** $k$ (number of active feature groups). Fewer groups mean simpler models, faster training, easier interpretation.
 - **Objective 2: Minimize prediction error** (MAE). Lower error means better predictive accuracy.
 
-The `enumerate_subsets` function from Chapter 11 produces a list of `SubsetResult` objects, each recording the best MAE achievable with a particular subset of dimensions. The `pareto_frontier` function extracts the non-dominated configurations from this list.
+The `enumerate_subsets` function from Chapter 4 produces a list of `SubsetResult` objects, each recording the best MAE achievable with a particular subset of dimensions. The `pareto_frontier` function extracts the non-dominated configurations from this list.
 
-### 8.3.1 The SubsetResult Data Structure
+### 9.3.1 The SubsetResult Data Structure
 
 Each subset optimization produces a `SubsetResult` that bundles the subset identity with its performance:
 
@@ -3660,9 +3895,9 @@ class SubsetResult:
 
 The `errors` dictionary provides a per-component breakdown---not just the aggregate MAE but how each evaluation metric (accuracy, precision, recall, F1, AUC) contributes to the total error. This decomposition is essential for understanding *why* a configuration performs as it does, not just *how well*. The `pareto_optimal` flag is initially `False` and is set by the Pareto frontier extraction algorithm.
 
-### 8.3.2 From Enumeration to Frontier
+### 9.3.2 From Enumeration to Frontier
 
-The connection between subset enumeration (Chapter 11) and Pareto analysis is direct. Subset enumeration explores the space of possible feature-group combinations:
+The connection between subset enumeration (Chapter 4) and Pareto analysis is direct. Subset enumeration explores the space of possible feature-group combinations:
 
 ```python
 def enumerate_subsets(
@@ -3700,9 +3935,9 @@ For $n$ dimensions with maximum subset size $k$, this generates $\sum_{j=1}^{k} 
 
 ---
 
-## 8.4 Non-Dominated Sorting: The Algorithm
+## 9.4 Non-Dominated Sorting: The Algorithm
 
-### 8.4.1 The Three-Phase Algorithm
+### 9.4.1 The Three-Phase Algorithm
 
 The `pareto_frontier` function implements non-dominated sorting in three phases:
 
@@ -3757,11 +3992,11 @@ $$\text{MAE}(k) < \text{best\_mae\_so\_far} - \epsilon$$
 
 The first candidate (lowest dimensionality) is always included, establishing the baseline. Each subsequent Pareto-optimal point must demonstrate that the additional complexity buys a meaningful improvement in accuracy.
 
-### 8.4.2 Complexity Analysis
+### 9.4.2 Complexity Analysis
 
 Phase 1 requires a single pass over all $m$ results: $O(m)$. Phase 2 sorts at most $n$ representatives: $O(n \log n)$, where $n$ is the number of distinct dimensionality levels. Phase 3 is a single linear scan: $O(n)$. The total complexity is $O(m + n \log n)$, which is dominated by the initial pass when $m \gg n$ (as is typical, since $m = \sum \binom{n}{j}$ grows combinatorially while $n$ is the number of dimensions).
 
-### 8.4.3 The Role of Tolerance
+### 9.4.3 The Role of Tolerance
 
 The `tolerance` parameter (default $\epsilon = 0.01$) deserves careful attention. Without tolerance ($\epsilon = 0$), the frontier includes every dimensionality level where the best MAE is even infinitesimally better than at lower dimensionalities. This produces a frontier cluttered with configurations that offer negligible improvement at the cost of additional complexity.
 
@@ -3771,9 +4006,9 @@ The tolerance also has a geometric interpretation. In the $(k, \text{MAE})$ plan
 
 ---
 
-## 8.5 The Structural Fuzzing Pareto Implementation
+## 9.5 The Structural Fuzzing Pareto Implementation
 
-### 8.5.1 Integration in the Campaign Pipeline
+### 9.5.1 Integration in the Campaign Pipeline
 
 The `run_campaign` function orchestrates the full structural fuzzing analysis, with Pareto extraction as its second stage:
 
@@ -3818,7 +4053,7 @@ pareto_results = pareto_frontier(subset_results)
 
 The result is a `StructuralFuzzReport` that carries both the full set of subset results and the extracted Pareto frontier, enabling downstream analysis to operate on either.
 
-### 8.5.2 Design Decisions
+### 9.5.2 Design Decisions
 
 Several design decisions in the implementation merit discussion.
 
@@ -3830,9 +4065,9 @@ Several design decisions in the implementation merit discussion.
 
 ---
 
-## 8.6 Visualizing Tradeoff Surfaces
+## 9.6 Visualizing Tradeoff Surfaces
 
-### 8.6.1 The Dimensionality-MAE Plot
+### 9.6.1 The Dimensionality-MAE Plot
 
 The primary visualization for Pareto analysis in the structural fuzzing framework is a scatter plot with dimensionality $k$ on the horizontal axis and MAE on the vertical axis. Every evaluated configuration appears as a point. The Pareto-optimal points are highlighted---typically with a different color or a connecting line---forming the frontier.
 
@@ -3857,7 +4092,7 @@ The visual encodes three pieces of information simultaneously:
 2. **The gap between dominated points and the frontier** shows how much room there is for subset selection to matter. A large gap means the choice of *which* dimensions to include is as important as *how many*.
 3. **The slope of the frontier** shows the marginal return to complexity. A steep section means the next dimension buys significant accuracy; a flat section means it does not.
 
-### 8.6.2 The Error Decomposition View
+### 9.6.2 The Error Decomposition View
 
 The aggregate MAE hides which components of the error improve as dimensions are added. A stacked bar chart, with one bar per Pareto-optimal configuration and segments for each error component, reveals this decomposition:
 
@@ -3870,7 +4105,7 @@ The aggregate MAE hides which components of the error improve as dimensions are 
 
 This table---derived from the `errors` dictionary on each `SubsetResult`---shows that recall error improves most dramatically between $k = 1$ and $k = 3$, while AUC error is already low at $k = 1$. The geometric interpretation: the feature groups added at $k = 2$ and $k = 3$ primarily improve the model's ability to detect positive cases (defective modules), while the model's ranking quality (AUC) is largely determined by the first feature group alone.
 
-### 8.6.3 Three-Objective Frontiers
+### 9.6.3 Three-Objective Frontiers
 
 When three objectives are present---say dimensionality, MAE, and robustness (MRI)---the Pareto frontier becomes a surface in $\mathbb{R}^3$. Visualization requires projection. Three useful projections are:
 
@@ -3882,15 +4117,15 @@ Each projection shows a two-dimensional Pareto frontier. A configuration that ap
 
 ---
 
-## 8.7 Pareto Analysis for Feature Selection
+## 9.7 Pareto Analysis for Feature Selection
 
-### 8.7.1 The Feature Selection Problem
+### 9.7.1 The Feature Selection Problem
 
 Feature selection is a classic multi-objective problem: include more features to improve accuracy, or exclude features to reduce overfitting, training time, and interpretive burden. Traditional approaches---filter methods, wrapper methods, embedded methods---ultimately reduce to a single-objective problem by fixing a feature count or a regularization strength. Pareto analysis treats the problem natively as multi-objective.
 
 In the structural fuzzing framework, features are organized into *groups* (the "dimensions" of the state space), and subset enumeration explores all combinations of groups up to a specified maximum size. This is a structured form of feature selection: rather than choosing among $2^{16}$ individual feature subsets (for 16 features), the practitioner chooses among $2^5 - 1 = 31$ group subsets (for 5 groups). The grouping reduces the combinatorial explosion while preserving the semantically meaningful structure of the feature space.
 
-### 8.7.2 Reading the Frontier for Feature Group Importance
+### 9.7.2 Reading the Frontier for Feature Group Importance
 
 The Pareto frontier reveals feature group importance more precisely than univariate sensitivity analysis. Consider a 5-group defect prediction model with groups {Size, Complexity, Halstead, OO, Process}. The frontier might look like:
 
@@ -3911,7 +4146,7 @@ Several observations follow immediately:
 
 This analysis is richer than a simple importance ranking. It tells you not just *which* groups matter but *how they combine*: Complexity and Process are jointly essential, Size is valuable but not critical, and OO and Halstead are dispensable.
 
-### 8.7.3 The Pareto-Guided Selection Rule
+### 9.7.3 The Pareto-Guided Selection Rule
 
 The frontier suggests a concrete decision procedure:
 
@@ -3934,9 +4169,9 @@ With a threshold of $\rho \geq 0.3$, the practitioner selects $k = 3$ (three fea
 
 ---
 
-## 8.8 The Defect Prediction Example
+## 9.8 The Defect Prediction Example
 
-### 8.8.1 Problem Setup
+### 9.8.1 Problem Setup
 
 The `examples/defect_prediction/model.py` file implements a complete defect prediction model with known ground truth, providing a controlled testbed for Pareto analysis. The model uses five feature groups, each containing related software metrics:
 
@@ -3968,7 +4203,7 @@ logit = (
 
 The coefficients reveal the ground truth importance: essential complexity (0.15) and revisions (0.12) are strongest, followed by cyclomatic complexity (0.10), authors (0.10), churn (0.08), design complexity (0.05), and LOC (0.03). OO metrics (coupling, cohesion, inheritance depth) have zero coefficient---they are pure noise.
 
-### 8.8.2 The Evaluation Function
+### 9.8.2 The Evaluation Function
 
 The `make_evaluate_fn` factory creates an evaluation function compatible with the structural fuzzing framework. For each configuration, feature groups with parameter values below 1000 are included; those at or above 1000 are excluded:
 
@@ -3995,9 +4230,9 @@ def evaluate_fn(params: np.ndarray) -> tuple[float, dict[str, float]]:
     # ... compute accuracy, precision, recall, F1, AUC ...
 ```
 
-The evaluation function trains a random forest on the active features, computes five performance metrics, and returns the average absolute deviation from target values as the MAE. The `errors` dictionary records each metric's deviation individually, enabling the error decomposition analysis discussed in Section 8.6.2.
+The evaluation function trains a random forest on the active features, computes five performance metrics, and returns the average absolute deviation from target values as the MAE. The `errors` dictionary records each metric's deviation individually, enabling the error decomposition analysis discussed in Section 9.6.2.
 
-### 8.8.3 Running the Pareto Analysis
+### 9.8.3 Running the Pareto Analysis
 
 A complete Pareto analysis of the defect prediction model proceeds as follows:
 
@@ -4026,7 +4261,7 @@ for r in frontier:
 
 For 5 groups with `max_dims=4`, the enumeration evaluates $\binom{5}{1} + \binom{5}{2} + \binom{5}{3} + \binom{5}{4} = 5 + 10 + 10 + 5 = 30$ subsets. Each 1D subset requires 20 evaluations (grid search), each 2D subset requires 400 (grid product), and each 3D or 4D subset requires 5000 (random search). The total evaluation budget is $5 \times 20 + 10 \times 400 + 10 \times 5000 + 5 \times 5000 = 100 + 4000 + 50{,}000 + 25{,}000 = 79{,}100$ model evaluations.
 
-### 8.8.4 Interpreting the Results
+### 9.8.4 Interpreting the Results
 
 The Pareto frontier for this model recovers the known ground truth. The frontier typically contains:
 
@@ -4041,9 +4276,9 @@ This result validates the Pareto approach: without any knowledge of the ground-t
 
 ---
 
-## 8.9 Beyond Two Objectives: Multi-Objective Extensions
+## 9.9 Beyond Two Objectives: Multi-Objective Extensions
 
-### 8.9.1 Adding Robustness as a Third Objective
+### 9.9.1 Adding Robustness as a Third Objective
 
 The campaign pipeline computes the Model Robustness Index (MRI) for the best configuration found during enumeration. But MRI can also be computed for every Pareto-optimal configuration, creating a three-objective problem: minimize dimensionality, minimize MAE, and minimize MRI (lower MRI indicates greater robustness).
 
@@ -4051,41 +4286,41 @@ This extension reveals an important phenomenon: the most accurate configuration 
 
 The three-objective Pareto frontier makes this tradeoff explicit. A configuration that is Pareto-optimal in (dimensionality, MAE) may be dominated when robustness is included, and vice versa. The three-way frontier is the correct object for decision-making when all three concerns---simplicity, accuracy, and stability---are relevant.
 
-### 8.9.2 Fairness and Subgroup Performance
+### 9.9.2 Fairness and Subgroup Performance
 
 In applications where the model serves diverse populations, subgroup performance metrics become additional objectives. For defect prediction, relevant subgroups might be "large modules vs. small modules" or "legacy code vs. new code." Each subgroup's recall or precision becomes an objective to be minimized (or maximized, after negation).
 
 The Pareto frontier in this expanded objective space identifies configurations that balance performance across subgroups without requiring the practitioner to assign relative importance to each subgroup a priori. This connects directly to Chapter 1's discussion of hidden compensation (Section 1.1.3): a scalar metric can mask disparities that the Pareto frontier reveals.
 
-### 8.9.3 Computational Cost
+### 9.9.3 Computational Cost
 
-The cost of Pareto frontier extraction grows with the number of objectives, but only modestly. The non-dominated sorting algorithm from Section 8.4 generalizes straightforwardly: for $m$ objectives and $n$ candidates, a naive pairwise dominance check requires $O(n^2 m)$ comparisons. For the structural fuzzing application, $n$ is the number of distinct dimensionality levels (at most equal to the number of feature groups, typically 5--10) and $m$ is the number of objectives (typically 2--4). The Pareto extraction itself is never the bottleneck; the model evaluations within `enumerate_subsets` dominate the computation.
+The cost of Pareto frontier extraction grows with the number of objectives, but only modestly. The non-dominated sorting algorithm from Section 9.4 generalizes straightforwardly: for $m$ objectives and $n$ candidates, a naive pairwise dominance check requires $O(n^2 m)$ comparisons. For the structural fuzzing application, $n$ is the number of distinct dimensionality levels (at most equal to the number of feature groups, typically 5--10) and $m$ is the number of objectives (typically 2--4). The Pareto extraction itself is never the bottleneck; the model evaluations within `enumerate_subsets` dominate the computation.
 
 ---
 
-## 8.10 Common Pitfalls
+## 9.10 Common Pitfalls
 
-### 8.10.1 Confusing the Frontier with the Optimum
+### 9.10.1 Confusing the Frontier with the Optimum
 
 The Pareto frontier is not a single answer. It is a *set* of answers, each optimal under a different implicit weighting of the objectives. Practitioners accustomed to single-objective optimization sometimes extract the frontier and then immediately select the point with the lowest MAE, discarding the dimensionality information. This defeats the purpose. The frontier exists precisely so that the tradeoff can be examined and a deliberate choice made.
 
-### 8.10.2 Over-Interpreting Small Frontiers
+### 9.10.2 Over-Interpreting Small Frontiers
 
 When the number of dimensionality levels is small (say, 3--5), the frontier contains very few points and its shape is difficult to interpret. A frontier with two points---one at $k = 1$ and one at $k = 5$---tells you only that intermediate configurations do not improve enough over $k = 1$ to meet the tolerance. It does not tell you that $k = 2, 3, 4$ are useless; it tells you that the *best* configurations at those sizes were not sufficiently better than at $k = 1$. The distinction matters when the number of candidate subsets at each size is small.
 
-### 8.10.3 Tolerance Sensitivity
+### 9.10.3 Tolerance Sensitivity
 
 The tolerance parameter $\epsilon$ has outsized influence on small frontiers. Setting $\epsilon = 0$ produces the maximum number of Pareto-optimal points; setting $\epsilon$ too large collapses the frontier to a single point. There is no universally correct value. A principled approach is to set $\epsilon$ equal to the standard deviation of the optimization noise---the variation in MAE that arises from the stochastic elements of the search (random initialization, random search in 3D+ subsets). Improvements smaller than this noise floor are not reliably meaningful.
 
 ---
 
-## 8.11 Connection to What Follows
+## 9.11 Connection to What Follows
 
 The Pareto frontier identifies *which* configurations represent optimal tradeoffs. It does not, by itself, reveal *how fragile* those tradeoffs are. A configuration sitting on the frontier may occupy a broad, stable region of the parameter space, or it may perch on a narrow ridge where small perturbations send it tumbling off the frontier entirely.
 
-Chapter 9 addresses this question directly through adversarial robustness testing. Where this chapter asks "what are the best tradeoffs?", Chapter 9 asks "how far can we push each tradeoff before it breaks?" The two analyses compose naturally: first identify the Pareto-optimal configurations (this chapter), then stress-test each one to find its breaking points (Chapter 9). Together, they provide a complete picture of the tradeoff landscape---not just its surface, but its depth and stability.
+Chapter 10 addresses this question directly through adversarial robustness testing. Where this chapter asks "what are the best tradeoffs?", Chapter 10 asks "how far can we push each tradeoff before it breaks?" The two analyses compose naturally: first identify the Pareto-optimal configurations (this chapter), then stress-test each one to find its breaking points (Chapter 10). Together, they provide a complete picture of the tradeoff landscape---not just its surface, but its depth and stability.
 
-The progression from enumeration (Chapter 4) through Pareto analysis (this chapter) to adversarial probing (Chapter 9) reflects a general principle of the geometric approach: understanding a space requires examining it at multiple scales. Enumeration maps the space coarsely. Pareto analysis identifies the interesting regions. Adversarial testing probes the fine structure of those regions. Each step narrows the focus while increasing the resolution, building toward the complete geometric characterization that is the goal of the structural fuzzing framework.
+The progression from enumeration (Chapter 4) through Pareto analysis (this chapter) to adversarial probing (Chapter 10) reflects a general principle of the geometric approach: understanding a space requires examining it at multiple scales. Enumeration maps the space coarsely. Pareto analysis identifies the interesting regions. Adversarial testing probes the fine structure of those regions. Each step narrows the focus while increasing the resolution, building toward the complete geometric characterization that is the goal of the structural fuzzing framework.
 
 ---
 
@@ -4104,7 +4339,7 @@ The progression from enumeration (Chapter 4) through Pareto analysis (this chapt
 
 \newpage
 
-# Chapter 9: Adversarial Robustness and the Model Robustness Index
+# Chapter 10: Adversarial Robustness and the Model Robustness Index
 
 > *"The question is not whether the bridge will hold under the load it was designed for. The question is how much more it will hold before it fails."*
 > --- Henry Petroski, *Design Paradigms* (1994)
@@ -4118,9 +4353,9 @@ The central claim is that **robustness is a geometric property of the loss lands
 
 ![Left: broad vs sharp loss-landscape minima. Right: MRI perturbation distribution with percentile markers.](images/ch09-robustness.png)
 
-## 9.1 Why Robustness Matters Beyond Accuracy
+## 10.1 Why Robustness Matters Beyond Accuracy
 
-### 9.1.1 The Sharp Minimum Problem
+### 10.1.1 The Sharp Minimum Problem
 
 Consider a geometric model with $d$ parameters $\boldsymbol{\theta} = (\theta_1, \ldots, \theta_d)$ fitted by minimizing a loss function $\mathcal{L}(\boldsymbol{\theta})$. The fitted parameters $\boldsymbol{\theta}^*$ sit at (or near) a minimum of $\mathcal{L}$. But not all minima are created equal. The Hessian $\mathbf{H} = \nabla^2 \mathcal{L}(\boldsymbol{\theta}^*)$ characterizes the local curvature: large eigenvalues correspond to directions where the loss increases sharply; small eigenvalues correspond to directions where the loss is nearly flat.
 
@@ -4135,7 +4370,7 @@ The practical consequences are immediate. In deployment, parameters may be:
 
 In all these scenarios, a model sitting in a sharp minimum will fail unpredictably, while a model in a broad minimum will degrade gracefully. Structural fuzzing gives you the tools to distinguish the two *before* deployment, not after.
 
-### 9.1.2 The Limitations of Standard Deviation
+### 10.1.2 The Limitations of Standard Deviation
 
 The obvious approach to quantifying sensitivity is to perturb the parameters, measure the resulting errors, and report the standard deviation. This is better than nothing, but it has a fundamental limitation: standard deviation treats all deviations symmetrically. A perturbation that improves the model by 2.0 and one that degrades it by 2.0 contribute equally to the standard deviation. But from a risk perspective, they are not equivalent. The improvement is pleasant; the degradation may be catastrophic.
 
@@ -4145,11 +4380,11 @@ This is precisely what the Model Robustness Index provides.
 
 ---
 
-## 9.2 The Model Robustness Index (MRI)
+## 10.2 The Model Robustness Index (MRI)
 
 The MRI is the core scalar summary of a model's robustness under parameter perturbation. Its design reflects two principles: perturbations should be multiplicative (not additive), and the index should weight tail behavior explicitly.
 
-### 9.2.1 The Perturbation Model
+### 10.2.1 The Perturbation Model
 
 Given a baseline parameter vector $\boldsymbol{\theta} \in \mathbb{R}^d$, we generate perturbed versions by multiplying each parameter by an independent log-normal factor:
 
@@ -4191,7 +4426,7 @@ for _ in range(n_perturbations):
 
 Each $\omega_i = |\text{MAE}_{\text{perturbed}} - \text{MAE}_{\text{baseline}}|$ measures how much the $i$-th perturbation destabilized the model. The collection $\{\omega_1, \ldots, \omega_N\}$ is the empirical *perturbation sensitivity distribution*.
 
-### 9.2.2 The MRI Formula
+### 10.2.2 The MRI Formula
 
 The MRI is a weighted combination of three statistics of the $\omega$ distribution:
 
@@ -4224,7 +4459,7 @@ class ModelRobustnessIndex:
 
 The `worst_case_mae` field tracks the single highest MAE observed across all perturbations---a useful diagnostic that the composite MRI intentionally softens. If `worst_case_mae` is dramatically higher than the baseline MAE, the model has at least one catastrophic failure mode, even if the composite MRI is moderate.
 
-### 9.2.3 Why Weighted Tail Statistics Beat Standard Deviation
+### 10.2.3 Why Weighted Tail Statistics Beat Standard Deviation
 
 The three-component formula deserves careful justification. Why not simply report $\text{std}(\omega)$?
 
@@ -4242,7 +4477,7 @@ The standard deviation of the same $\omega$ distribution might be 0.9---a number
 
 The formula can also be understood as an approximation to the Conditional Value at Risk (CVaR), a standard risk measure in financial mathematics. CVaR at level $\alpha$ is the expected loss in the worst $\alpha$-fraction of scenarios. The MRI's weighted combination of mean and tail percentiles roughly approximates a CVaR-weighted average, blending expected loss with conditional expectations in the upper tail. This connection to risk theory is not accidental: robustness testing *is* risk assessment, applied to computational models rather than financial portfolios.
 
-### 9.2.4 Adjusting the Weights
+### 10.2.4 Adjusting the Weights
 
 The default weights $(0.5, 0.3, 0.2)$ balance average and tail behavior. They are appropriate for general-purpose assessment, but different applications may warrant different emphasis:
 
@@ -4257,11 +4492,11 @@ Because the `ModelRobustnessIndex` dataclass returns all three components alongs
 
 ---
 
-## 9.3 Sensitivity Profiling: Which Parameters Matter?
+## 10.3 Sensitivity Profiling: Which Parameters Matter?
 
 The MRI tells you *how robust* the model is globally. Sensitivity profiling tells you *which parameters are responsible*. The method is ablation: for each dimension, set its value to an inactive sentinel and measure the resulting degradation.
 
-### 9.3.1 The Ablation Protocol
+### 10.3.1 The Ablation Protocol
 
 For each dimension $i$, set $\theta_i$ to the sentinel value (by default, $10^6$---a value large enough to effectively remove the dimension's influence) and evaluate the model. The sensitivity delta is:
 
@@ -4307,33 +4542,33 @@ for rank, r in enumerate(results, 1):
 
 Results are sorted by $\Delta$ in descending order and assigned importance ranks. Rank 1 is the most important dimension---the one whose ablation causes the largest increase in error.
 
-### 9.3.2 Interpreting the Sensitivity Profile
+### 10.3.2 Interpreting the Sensitivity Profile
 
-A large positive $\Delta_i$ means that dimension $i$ is carrying significant predictive load: removing it substantially degrades the model. A near-zero $\Delta_i$ means the dimension contributes almost nothing---it is a candidate for removal (simplifying the model without meaningful accuracy loss, as the Pareto analysis of Chapter 8 would confirm).
+A large positive $\Delta_i$ means that dimension $i$ is carrying significant predictive load: removing it substantially degrades the model. A near-zero $\Delta_i$ means the dimension contributes almost nothing---it is a candidate for removal (simplifying the model without meaningful accuracy loss, as the Pareto analysis of Chapter 9 would confirm).
 
 A *negative* $\Delta_i$---where removing the dimension actually *improves* the model---is the most informative signal of all. It indicates that the parameter value for dimension $i$ has drifted to a harmful configuration, either through overfitting during optimization or through an interaction effect where the dimension's presence degrades other dimensions' contributions. Negative deltas warrant immediate investigation.
 
-### 9.3.3 Relationship to the MRI
+### 10.3.3 Relationship to the MRI
 
 Sensitivity profiling and the MRI answer complementary questions. The MRI says: "the model is fragile." The sensitivity profile says: "*these* dimensions are responsible." Together, they provide both the diagnosis and the prescription:
 
 1. Compute the MRI. If it is low, the model is robust and further investigation may not be needed.
 2. If the MRI is high, run the sensitivity profile. The top-ranked dimensions are where fragility concentrates.
-3. For the top-ranked dimensions, run adversarial threshold search (Section 9.4) to find the exact breaking points.
+3. For the top-ranked dimensions, run adversarial threshold search (Section 10.4) to find the exact breaking points.
 
-This three-stage workflow is exactly how `run_campaign` in the pipeline module orchestrates the analysis, as we will see in Section 9.5.
+This three-stage workflow is exactly how `run_campaign` in the pipeline module orchestrates the analysis, as we will see in Section 10.5.
 
-### 9.3.4 Limitations of One-at-a-Time Ablation
+### 10.3.4 Limitations of One-at-a-Time Ablation
 
-One-at-a-time ablation captures *marginal* importance: how much does each dimension contribute when all others are present? It does not capture *interaction effects*: the case where dimensions $i$ and $j$ are individually unimportant but jointly critical (their information is redundant, and either one alone suffices). The subset enumeration of Chapter 4 and the compositional testing of Section 9.5 address this limitation by exploring multi-dimensional combinations. Sensitivity profiling is a fast screening step, not a complete analysis.
+One-at-a-time ablation captures *marginal* importance: how much does each dimension contribute when all others are present? It does not capture *interaction effects*: the case where dimensions $i$ and $j$ are individually unimportant but jointly critical (their information is redundant, and either one alone suffices). The subset enumeration of Chapter 4 and the compositional testing of Section 10.5 address this limitation by exploring multi-dimensional combinations. Sensitivity profiling is a fast screening step, not a complete analysis.
 
 ---
 
-## 9.4 Adversarial Threshold Search: Finding the Tipping Points
+## 10.4 Adversarial Threshold Search: Finding the Tipping Points
 
 While the MRI provides a global robustness summary and sensitivity profiling identifies the most important dimensions, adversarial threshold search finds the *exact* perturbation magnitudes where the model transitions from "working" to "broken." These are tipping points---the values where qualitative failure begins---and they are precisely the values that neither cross-validation nor global robustness summaries can reveal.
 
-### 9.4.1 The Search Algorithm
+### 10.4.1 The Search Algorithm
 
 For each dimension $i$ and each direction (increase and decrease), the algorithm performs a log-spaced search from the baseline value outward:
 
@@ -4397,7 +4632,7 @@ for direction in ("increase", "decrease"):
 
 The `for/else/continue/break` pattern in the full implementation deserves a note: the inner `break` exits the target loop when a threshold is found, and the outer `break` (after the `else: continue`) exits the search-values loop to move to the next direction. This ensures we find the *first* threshold in each direction---the tipping point closest to the baseline.
 
-### 9.4.2 The Threshold Ratio
+### 10.4.2 The Threshold Ratio
 
 Each `AdversarialResult` records the `threshold_ratio`: the multiplicative factor by which the parameter had to change before a target broke. This is the most immediately interpretable quantity:
 
@@ -4407,11 +4642,11 @@ Each `AdversarialResult` records the `threshold_ratio`: the multiplicative facto
 
 Parameters with low threshold ratios in either direction are the ones that demand the most careful estimation, the tightest confidence intervals, and the most conservative deployment practices. Parameters with high threshold ratios can tolerate rough approximation.
 
-### 9.4.3 Per-Target Sensitivity
+### 10.4.3 Per-Target Sensitivity
 
 The `target_flipped` field in the result reveals *which specific prediction target* was the first to exceed tolerance. This often exposes unexpected couplings. A parameter that nominally controls one aspect of the model may turn out to critically affect a seemingly unrelated prediction. These cross-dimension dependencies are exactly the coupling effects that one-output-at-a-time analysis tends to miss, and they are among the most valuable findings adversarial threshold search can produce.
 
-### 9.4.4 Choosing the Tolerance
+### 10.4.4 Choosing the Tolerance
 
 The `tolerance` parameter defines the boundary between "acceptable" and "broken." This is inherently application-specific:
 
@@ -4421,21 +4656,21 @@ The `tolerance` parameter defines the boundary between "acceptable" and "broken.
 
 Setting tolerance too low produces false positives (thresholds that flag inconsequential changes); setting it too high misses genuine failure modes. A disciplined approach is to derive tolerance from the application's error budget or from domain-specific standards.
 
-### 9.4.5 Computational Cost
+### 10.4.5 Computational Cost
 
 Adversarial threshold search evaluates the model $2 \times n\_steps \times d$ times in the worst case (two directions per dimension, $n\_steps$ search values per direction, $d$ dimensions). With the default $n\_steps = 50$ and a 5-dimensional model, this is 500 evaluations. For expensive models, this can be reduced by:
 
-1. Searching only the top-$k$ dimensions identified by sensitivity profiling (Section 9.3), rather than all $d$ dimensions.
+1. Searching only the top-$k$ dimensions identified by sensitivity profiling (Section 10.3), rather than all $d$ dimensions.
 2. Reducing $n\_steps$ at the cost of coarser threshold estimates.
 3. Using a two-phase approach: a coarse scan to bracket the threshold, followed by a fine scan to refine it.
 
 ---
 
-## 9.5 The Pipeline: Composing the Three Tools
+## 10.5 The Pipeline: Composing the Three Tools
 
 The MRI, sensitivity profiling, and adversarial threshold search are designed to compose into a unified campaign. The `run_campaign` function in the pipeline module orchestrates this composition, executing the tools in the correct order and threading the results of earlier stages into later ones.
 
-### 9.5.1 Campaign Architecture
+### 10.5.1 Campaign Architecture
 
 The campaign proceeds in six stages. Stages 3 through 5 are the robustness tools developed in this chapter:
 
@@ -4453,8 +4688,8 @@ def run_campaign(
 
 The stages are:
 
-1. **Subset enumeration** (Chapter 11): Test all dimension combinations up to a maximum size.
-2. **Pareto frontier** (Chapter 8): Extract the non-dominated configurations from the enumeration results.
+1. **Subset enumeration** (Chapter 4): Test all dimension combinations up to a maximum size.
+2. **Pareto frontier** (Chapter 9): Extract the non-dominated configurations from the enumeration results.
 3. **Sensitivity profiling** (this chapter): Ablate each dimension from the best configuration to rank importance.
 4. **MRI computation** (this chapter): Perturb the best configuration to quantify global robustness.
 5. **Adversarial threshold search** (this chapter): Find the tipping points for every dimension.
@@ -4495,7 +4730,7 @@ for i in range(n_dims):
     adversarial_results.extend(adv)
 ```
 
-### 9.5.2 The Campaign Report
+### 10.5.2 The Campaign Report
 
 All results are collected into a `StructuralFuzzReport` dataclass:
 
@@ -4515,19 +4750,19 @@ class StructuralFuzzReport:
 
 The report is a complete, machine-readable artifact that captures every aspect of the structural fuzzing campaign. Its `summary()` method generates a human-readable text report. But the real value is in the structured data: downstream analysis can query the report programmatically, computing derived quantities (e.g., the ratio of adversarial threshold to MRI, or the correlation between sensitivity rank and threshold ratio) without re-running the campaign.
 
-### 9.5.3 Robustness Testing the Pareto Frontier
+### 10.5.3 Robustness Testing the Pareto Frontier
 
-A natural extension---not yet automated in the pipeline but straightforward to implement---is to compute the MRI for every Pareto-optimal configuration, not just the best one. This answers a question that Chapter 8's Pareto analysis alone cannot: among the non-dominated tradeoffs between accuracy and complexity, *which are the most robust?*
+A natural extension---not yet automated in the pipeline but straightforward to implement---is to compute the MRI for every Pareto-optimal configuration, not just the best one. This answers a question that Chapter 9's Pareto analysis alone cannot: among the non-dominated tradeoffs between accuracy and complexity, *which are the most robust?*
 
 It is entirely possible (and in practice common) that the Pareto-optimal configuration with the lowest MAE is also the most fragile. A 3-dimension configuration at MAE 1.7 might have MRI 0.3, while the 5-dimension configuration at MAE 1.5 has MRI 1.8. The 0.2 improvement in MAE comes at the cost of a 6x increase in fragility. A practitioner who saw only the Pareto frontier would choose the 5-dimension model; a practitioner who also saw the MRI values would think twice.
 
 ---
 
-## 9.6 The Defect Prediction Example, Revisited
+## 10.6 The Defect Prediction Example, Revisited
 
 Chapter 1 introduced a software defect prediction model with five feature groups (Size, Complexity, Halstead, Object-Orientation, Process) and walked through the geometric analysis at a high level. We now return to this example with the full machinery of this chapter, showing what the MRI, sensitivity profile, and adversarial threshold search reveal in concrete detail.
 
-### 9.6.1 Sensitivity Profile
+### 10.6.1 Sensitivity Profile
 
 The sensitivity profile, computed by ablating each of the five dimensions from the best configuration, might produce results like:
 
@@ -4543,7 +4778,7 @@ The model depends overwhelmingly on Complexity and Process. Size contributes mod
 
 But sensitivity profiling adds something the Pareto analysis could not: it tells us that the *specific parameter values* for OO and Halstead in the best configuration contribute almost nothing. This is stronger than saying the dimensions are unnecessary in principle (which is what Pareto analysis shows). It says they are unnecessary *at their current fitted values*, which has direct implications for model simplification and maintenance.
 
-### 9.6.2 MRI Computation
+### 10.6.2 MRI Computation
 
 Running `compute_mri` with 300 perturbations at scale 0.5 on the best configuration produces a perturbation sensitivity distribution. Consider the following hypothetical results:
 
@@ -4559,7 +4794,7 @@ The standard deviation of the $\omega$ distribution might be 0.9. A naive report
 
 The worst-case MAE of 5.2 indicates that at least one perturbation tripled the error. This single data point is too volatile to build an index around (it would change dramatically with different random seeds), but it is a useful flag: somewhere in the parameter neighborhood, there exists a configuration that catastrophically degrades the model.
 
-### 9.6.3 Adversarial Threshold Search
+### 10.6.3 Adversarial Threshold Search
 
 Running adversarial threshold search with tolerance 0.5 on each of the five dimensions produces results like:
 
@@ -4580,7 +4815,7 @@ Several findings stand out:
 
 4. **The targets that flip are dimension-specific.** Complexity perturbation affects high-complexity modules; Process perturbation affects high-churn and legacy modules. The adversarial search has revealed the *coupling structure* between parameters and prediction targets---information that global metrics like the MRI cannot provide.
 
-### 9.6.4 Synthesis
+### 10.6.4 Synthesis
 
 Combining all three tools, the defect prediction model's robustness profile is:
 
@@ -4593,9 +4828,9 @@ None of these findings are available from accuracy, precision, recall, or F1. Th
 
 ---
 
-## 9.7 The Geometry of Robustness
+## 10.7 The Geometry of Robustness
 
-### 9.7.1 Robustness as a Property of the Loss Landscape
+### 10.7.1 Robustness as a Property of the Loss Landscape
 
 The MRI can be connected to the local geometry of the loss landscape through the Hessian. For a quadratic loss surface near the minimum:
 
@@ -4609,7 +4844,7 @@ In this regime, the MRI is approximately proportional to $\sqrt{\text{tr}(\mathb
 
 But the approximation breaks down when the loss surface is non-quadratic---when it has asymmetric curvature, flat plateaus that transition into cliffs, or multiple local minima in the perturbation neighborhood. In these cases, the MRI's empirical sampling approach captures behavior that the Hessian analysis misses. The Hessian is a local linear approximation; the MRI is a global (within the perturbation radius) nonlinear probe. Both are useful, but the MRI is more general.
 
-### 9.7.2 Directional Robustness
+### 10.7.2 Directional Robustness
 
 The MRI as defined is *isotropic*: perturbations are drawn uniformly in all parameter directions. This is appropriate as a screening tool, but it can be refined. If the sensitivity profile identifies dimension $i$ as critical, one can compute a *directional MRI* by perturbing only dimension $i$ while holding all others fixed. The comparison between the global MRI and the directional MRI for dimension $i$ reveals how much of the model's total fragility is attributable to that single dimension.
 
@@ -4619,21 +4854,21 @@ $$\boldsymbol{\theta}^{(\text{pert})} = \boldsymbol{\theta}^* + \epsilon \cdot \
 
 The directional MRI profile---MRI as a function of direction---is a scalar field on the unit sphere $S^{d-1}$ in parameter space. Its maxima correspond to the directions of greatest fragility; its minima correspond to the directions of greatest robustness. This is the "robustness sphere" that generalizes the scalar MRI to a full directional characterization.
 
-### 9.7.3 Robustness Under Non-Euclidean Perturbation
+### 10.7.3 Robustness Under Non-Euclidean Perturbation
 
-The log-space perturbation model (Section 9.2.1) implicitly uses a non-Euclidean metric on parameter space. In the positive orthant $\mathbb{R}_{>0}^d$, the log-space metric is:
+The log-space perturbation model (Section 10.2.1) implicitly uses a non-Euclidean metric on parameter space. In the positive orthant $\mathbb{R}_{>0}^d$, the log-space metric is:
 
 $$d_{\log}(\boldsymbol{\theta}_1, \boldsymbol{\theta}_2) = \sqrt{\sum_{i=1}^d \left(\log \frac{\theta_{1,i}}{\theta_{2,i}}\right)^2}$$
 
 This is the Euclidean distance in log-coordinates, but it is *not* Euclidean in the original coordinates. Perturbations that are uniformly distributed in log-space are *not* uniformly distributed in the original space---they are biased toward larger perturbations in the upward direction (multiplication) and smaller perturbations in the downward direction (division). This asymmetry reflects the natural geometry of positive parameters: doubling a parameter is as "far" as halving it, in the log-metric sense.
 
-Chapter 10 will develop more sophisticated non-Euclidean perturbation strategies, using the manifold structure of specific parameter spaces to generate perturbations that respect the geometry of the problem. The log-space perturbation used here is a special case---but a broadly applicable one that works well for most geometric models.
+Chapter 11 will develop more sophisticated non-Euclidean perturbation strategies, using the manifold structure of specific parameter spaces to generate perturbations that respect the geometry of the problem. The log-space perturbation used here is a special case---but a broadly applicable one that works well for most geometric models.
 
 ---
 
-## 9.8 Practical Considerations
+## 10.8 Practical Considerations
 
-### 9.8.1 Number of Perturbation Samples
+### 10.8.1 Number of Perturbation Samples
 
 The default of 300 perturbation samples provides reliable estimates of the mean and 75th percentile. The 95th percentile is estimated from approximately 15 samples in the upper tail ($300 \times 0.05 = 15$), which is adequate for detecting gross fragility but may be noisy for precise quantification. The following table provides guidance:
 
@@ -4646,7 +4881,7 @@ The default of 300 perturbation samples provides reliable estimates of the mean 
 
 Computational cost scales linearly with $N$, so the choice is a direct tradeoff between statistical precision and runtime.
 
-### 9.8.2 Reproducibility
+### 10.8.2 Reproducibility
 
 The `compute_mri` function accepts an optional `rng` parameter (a NumPy `Generator` instance) for reproducibility. When reproducibility matters---and it almost always does in scientific and engineering contexts---pass an explicit generator:
 
@@ -4657,7 +4892,7 @@ mri_result = compute_mri(params, evaluate_fn, rng=rng)
 
 If no generator is provided, the function creates one with seed 42, ensuring that results are reproducible by default. This is a deliberate design choice: robustness analysis should produce the same results when run twice with the same inputs.
 
-### 9.8.3 When to Run Each Tool
+### 10.8.3 When to Run Each Tool
 
 The three tools have different computational costs and answer different questions. The following decision tree guides their use:
 
@@ -4669,27 +4904,27 @@ The three tools have different computational costs and answer different question
 
 ---
 
-## 9.9 Connections to Related Work
+## 10.9 Connections to Related Work
 
-### 9.9.1 Flatness and Generalization
+### 10.9.1 Flatness and Generalization
 
 The relationship between the sharpness of a loss minimum and generalization performance has been studied extensively in the deep learning literature. Hochreiter and Schmidhuber (1997) observed that flat minima tend to generalize better than sharp ones. Keskar et al. (2017) showed that large-batch training tends to converge to sharp minima with poor generalization. The MRI provides a practical, model-agnostic tool for measuring this property---without requiring access to the training procedure or the loss function's analytical form.
 
-### 9.9.2 Bayesian Model Comparison
+### 10.9.2 Bayesian Model Comparison
 
 The Bayesian evidence (marginal likelihood) naturally penalizes models with sharp posterior peaks, because it integrates the likelihood over the entire parameter space. A model with a sharp peak must have its probability mass concentrated in a small region, which the prior penalizes. The MRI can be viewed as a frequentist complement to the Bayesian evidence: instead of integrating the likelihood, it samples the neighborhood of the MAP estimate and summarizes the distribution of deviations. The MRI is easier to compute (it requires no prior specification and no integration) and directly measures the quantity of practical interest (sensitivity to parameter perturbation).
 
-### 9.9.3 Adversarial Machine Learning
+### 10.9.3 Adversarial Machine Learning
 
 The adversarial threshold search shares its philosophy with adversarial example generation in deep learning (Goodfellow et al., 2014; Carlini and Wagner, 2017), but operates in parameter space rather than input space. Input-space adversarial examples find the smallest perturbation to an *input* that changes the *output*. Parameter-space adversarial thresholds find the smallest perturbation to a *parameter* that changes the *output beyond tolerance*. The geometric intuition is the same---finding the nearest decision boundary---but the space being searched and the practical implications are different.
 
 ---
 
-## 9.10 What Comes Next
+## 10.10 What Comes Next
 
-This chapter has developed tools for characterizing the robustness of a model at a single operating point---the best configuration found by optimization. Chapter 10 extends this analysis in two directions. First, it introduces *adversarial probing*: systematic exploration of the full parameter space to find not just tipping points along individual dimensions but adversarial *regions*---connected subsets of parameter space where the model fails. This requires the topological tools (persistent homology) developed in Chapter 5, because the shape of an adversarial region---whether it is a thin sliver or a broad basin, whether it is simply connected or has holes---determines the practical risk it poses. Second, Chapter 10 develops methods for *hardening* a model against the vulnerabilities that the MRI and adversarial threshold search reveal, closing the loop from diagnosis to treatment.
+This chapter has developed tools for characterizing the robustness of a model at a single operating point---the best configuration found by optimization. Chapter 11 extends this analysis in two directions. First, it introduces *adversarial probing*: systematic exploration of the full parameter space to find not just tipping points along individual dimensions but adversarial *regions*---connected subsets of parameter space where the model fails. This requires the topological tools (persistent homology) that Chapter 11 develops, because the shape of an adversarial region---whether it is a thin sliver or a broad basin, whether it is simply connected or has holes---determines the practical risk it poses. Second, Chapter 11 develops methods for *hardening* a model against the vulnerabilities that the MRI and adversarial threshold search reveal, closing the loop from diagnosis to treatment.
 
-The progression from Chapter 8 to Chapter 10 mirrors the progression from a static to a dynamic understanding of the model. Chapter 8 asks: "Which configurations are optimal?" This chapter asks: "How fragile are those optima?" Chapter 10 will ask: "What does the failure landscape look like, and can we reshape it?"
+The progression from Chapter 9 to Chapter 11 mirrors the progression from a static to a dynamic understanding of the model. Chapter 9 asks: "Which configurations are optimal?" This chapter asks: "How fragile are those optima?" Chapter 11 will ask: "What does the failure landscape look like, and can we reshape it?"
 
 ---
 
@@ -4705,25 +4940,25 @@ The progression from Chapter 8 to Chapter 10 mirrors the progression from a stat
 
 **9.5.** The MRI weights $(0.5, 0.3, 0.2)$ can be interpreted as an approximation to CVaR. Derive the exact CVaR at level $\alpha = 0.05$ from the empirical $\omega$ distribution and compare it to the MRI. Under what distribution shapes do the two diverge most?
 
-**9.6.** Extend the `run_campaign` function to compute the MRI for every Pareto-optimal configuration (not just the best one). Plot the Pareto frontier in three dimensions: (dimensionality, MAE, MRI). Describe the tradeoff surface. Is there a Pareto frontier in this three-objective space, and if so, how does it differ from the two-objective frontier of Chapter 8?
+**9.6.** Extend the `run_campaign` function to compute the MRI for every Pareto-optimal configuration (not just the best one). Plot the Pareto frontier in three dimensions: (dimensionality, MAE, MRI). Describe the tradeoff surface. Is there a Pareto frontier in this three-objective space, and if so, how does it differ from the two-objective frontier of Chapter 9?
 
 
 \newpage
 
-# Chapter 10: Adversarial Probing
+# Chapter 11: Adversarial Probing
 
 > *"The best way to understand a system is to try to break it---and then listen carefully to the sound it makes."*
 > --- Attributed to Richard Hamming
 
-The Model Robustness Index developed in Chapter 9 answers a critical question: *how stable is this configuration under random perturbation?* But random perturbation is blunt. It tells you that a model is fragile without telling you *why*, and it tells you that a model is robust without telling you *to what*. This chapter sharpens the MRI into a family of directed probing tools that interrogate model internals with the precision of a radar system. Where Chapter 9 threw noise at a model and measured the aggregate response, this chapter sends *specific, controlled signals* and reads the reflections.
+The Model Robustness Index developed in Chapter 10 answers a critical question: *how stable is this configuration under random perturbation?* But random perturbation is blunt. It tells you that a model is fragile without telling you *why*, and it tells you that a model is robust without telling you *to what*. This chapter sharpens the MRI into a family of directed probing tools that interrogate model internals with the precision of a radar system. Where Chapter 10 threw noise at a model and measured the aggregate response, this chapter sends *specific, controlled signals* and reads the reflections.
 
-We develop this idea into three concrete tools: the StructureProbe scanner (Section 10.3), parametric intensity sweeps (Section 10.4), and compositional interaction testing (Section 10.5). Section 10.6 then shows how the same mathematical framework extends from parameter-space fuzzing to signal-space fuzzing through the Decoder Robustness Index (DRI), applying MRI principles to acoustic decoders where semantic distance replaces raw error.
+We develop this idea into three concrete tools: the StructureProbe scanner (Section 11.3), parametric intensity sweeps (Section 11.4), and compositional interaction testing (Section 11.5). Section 11.6 then shows how the same mathematical framework extends from parameter-space fuzzing to signal-space fuzzing through the Decoder Robustness Index (DRI), applying MRI principles to acoustic decoders where semantic distance replaces raw error.
 
 ---
 
-## 10.1 The Radar Analogy
+## 11.1 The Radar Analogy
 
-### 10.1.1 From Physical Radar to Computational Probing
+### 11.1.1 From Physical Radar to Computational Probing
 
 A radar transmitter emits a pulse of known shape $s(t)$. The environment reflects it, and the receiver records $r(t)$. The object of interest is the *transfer function* $H$ such that $r = H(s)$. By sweeping the frequency of $s$ and recording the response, the radar constructs a spectral signature of the target.
 
@@ -4733,7 +4968,7 @@ $$\delta(\alpha) = d\bigl(M(x),\; M(T_\alpha(x))\bigr)$$
 
 where $d$ is an appropriate distance function---$L^2$ norm in representation space, MAE in prediction space, or semantic distance in classification space. The function $\delta : [0, 1] \to \mathbb{R}_{\geq 0}$ is the *intensity-response curve*, and its shape encodes the model's structural relationship to the perturbation.
 
-### 10.1.2 Reading the Reflection Profile
+### 11.1.2 Reading the Reflection Profile
 
 Three canonical profiles emerge across domains:
 
@@ -4743,16 +4978,16 @@ Three canonical profiles emerge across domains:
 
 **Linear profile** ($\delta(\alpha) \approx k\alpha$). Proportional degradation with no hidden tipping points---the most benign failure mode.
 
-### 10.1.3 Invariance and Sensitivity as Structural Signatures
+### 11.1.3 Invariance and Sensitivity as Structural Signatures
 
 Transforms divide into *invariant* (semantics-preserving) and *stress* (semantics-destroying), a domain-dependent classification:
 
-In parameter-space fuzzing (Chapter 9):
+In parameter-space fuzzing (Chapter 10):
 
 - **Invariant perturbations** are small multiplicative shifts. A model robust to 10% parameter variation occupies a broad minimum---desirable for deployment.
 - **Stress perturbations** are large directional shifts or dimension ablations. A model that does not respond when an entire feature group is deactivated has not learned to use that group.
 
-In acoustic decoder testing (Section 10.5):
+In acoustic decoder testing (Section 11.5):
 
 - **Invariant transforms** include amplitude scaling and circular time shifts. A correct decoder should recognize the same coda regardless of recording volume or temporal alignment.
 - **Stress transforms** include Doppler shift, multipath echo, and click dropout. These degrade the signal in ways that may legitimately change the decoder's output.
@@ -4761,9 +4996,9 @@ The *sensitivity gap*---the ratio of mean displacement under stress transforms t
 
 ---
 
-## 10.2 Parametric Transforms: The Intensity-Zero Identity
+## 11.2 Parametric Transforms: The Intensity-Zero Identity
 
-### 10.2.1 The Design Principle
+### 11.2.1 The Design Principle
 
 Every parametric transform must satisfy one non-negotiable property:
 
@@ -4790,9 +5025,9 @@ class AcousticTransform:
         return lambda signal, sr: self(signal, sr, intensity)
 ```
 
-The `at_intensity` method returns a closure with fixed perturbation strength, enabling composition into chains (Section 10.5) or integration with higher-order functions.
+The `at_intensity` method returns a closure with fixed perturbation strength, enabling composition into chains (Section 11.5) or integration with higher-order functions.
 
-### 10.2.2 Intensity Sweeps
+### 11.2.2 Intensity Sweeps
 
 The most informative single measurement is the *intensity sweep*: evaluating the model's response at uniformly spaced levels from 0 to 1:
 
@@ -4810,7 +5045,7 @@ def intensity_sweep(self, decoder, signals, sr, transform, n_points=10):
 
 Plotting all transform sweeps on a single figure produces the model's *sensitivity fingerprint*---a visual summary revealing which transforms the model tolerates, which it resists, and at what intensities transitions occur.
 
-### 10.2.3 Adversarial Threshold Search
+### 11.2.3 Adversarial Threshold Search
 
 Where the sweep gives a coarse picture, binary search finds the exact threshold:
 
@@ -4838,13 +5073,13 @@ def find_adversarial_threshold(self, decoder, signal, sr, transform,
     return high
 ```
 
-A threshold of 0.95 means near-total robustness; 0.05 means the faintest perturbation flips the answer. The algorithm is identical to Chapter 9's parameter-space adversarial search---binary search on a monotone predicate finds the transition in $O(\log(1/\epsilon))$ evaluations regardless of domain.
+A threshold of 0.95 means near-total robustness; 0.05 means the faintest perturbation flips the answer. The algorithm is identical to Chapter 10's parameter-space adversarial search---binary search on a monotone predicate finds the transition in $O(\log(1/\epsilon))$ evaluations regardless of domain.
 
 ---
 
-## 10.3 StructureProbe: The Probe Response Matrix
+## 11.3 StructureProbe: The Probe Response Matrix
 
-### 10.3.1 The Measurement Protocol
+### 11.3.1 The Measurement Protocol
 
 Given a model $M$, an input corpus $\{x_1, \ldots, x_N\}$, and $K$ parametric transforms, the StructureProbe scanner constructs a $K \times J$ *probe response matrix* where entry $(k, j)$ is the mean displacement when transform $T_k$ is applied at intensity $\alpha_j$:
 
@@ -4852,9 +5087,9 @@ $$\bar{\delta}_{kj} = \frac{1}{N} \sum_{i=1}^{N} d\bigl(M(x_i),\; M(T_k(x_i, \al
 
 Each row is an intensity-response curve. Each column is a cross-transform sensitivity snapshot.
 
-### 10.3.2 From Ablation to Graded Perturbation
+### 11.3.2 From Ablation to Graded Perturbation
 
-Chapter 9's sensitivity profile ablates each dimension (on/off). The probe response matrix generalizes this to *graded* perturbation. For dimension $i$ with baseline value $\theta_i$, define:
+Chapter 10's sensitivity profile ablates each dimension (on/off). The probe response matrix generalizes this to *graded* perturbation. For dimension $i$ with baseline value $\theta_i$, define:
 
 $$T_i(\theta, \alpha) = \theta \text{ with } \theta_i \leftarrow \theta_i \cdot e^{\alpha \cdot \sigma}$$
 
@@ -4878,21 +5113,21 @@ def probe_response_matrix(params, dim_names, evaluate_fn,
     return matrix
 ```
 
-### 10.3.3 Topological Analysis of Probe Surfaces
+### 11.3.3 Topological Analysis of Probe Surfaces
 
 When the probe response matrix is analyzed with persistent homology (Chapter 5), additional structure emerges. Treating the matrix as a height function on a grid, the Vietoris-Rips complex reveals connected components (clusters of transforms with similar profiles) and loops (closed sensitivity circuits suggesting redundancy in the transform library). This connection---TDA applied to the outputs of adversarial probing---is a key integrative theme: geometric tools analyzing the results of other geometric tools.
 
 ---
 
-## 10.4 Compositional Testing: Probing Dimension Interactions
+## 11.4 Compositional Testing: Probing Dimension Interactions
 
-### 10.4.1 Beyond Single-Dimension Probing
+### 11.4.1 Beyond Single-Dimension Probing
 
 The probe response matrix perturbs one dimension at a time, revealing *marginal* sensitivity but missing *interactions*. Two dimensions might individually show low sensitivity but produce catastrophic failure when perturbed simultaneously---the parameter-space analogue of drug interactions in pharmacology.
 
 Exhaustive pairwise probing (testing all $\binom{n}{2}$ dimension pairs at multiple intensities) is feasible for small $n$ but scales quadratically. For larger problems, the compositional testing framework provides a structured alternative that reveals the most important interactions without exhaustive search.
 
-### 10.4.2 Greedy Dimension-Building Sequences
+### 11.4.2 Greedy Dimension-Building Sequences
 
 The `compositional_test` function builds dimension subsets incrementally, revealing interactions:
 
@@ -4918,7 +5153,7 @@ At each step, the algorithm tries adding each remaining dimension, re-optimizes 
 
 The trajectory's shape is diagnostic: steep initial descent means a few key dimensions dominate; gradual uniform descent means all dimensions contribute equally; plateau-then-drop indicates synergistic interactions detectable only through combinatorial probing.
 
-### 10.4.3 Transform Chains in Signal Space
+### 11.4.3 Transform Chains in Signal Space
 
 The compositional principle extends to signal space through *transform chains*:
 
@@ -4952,9 +5187,9 @@ A model that handles each individual transform at intensity 0.6 but fails under 
 
 ---
 
-## 10.5 The Decoder Robustness Index: MRI for Signal Space
+## 11.5 The Decoder Robustness Index: MRI for Signal Space
 
-### 10.5.1 From Parameters to Signals
+### 11.5.1 From Parameters to Signals
 
 The DRI applies the MRI's mathematical structure to *input perturbation* rather than *parameter perturbation*. The formula carries over unchanged:
 
@@ -4962,7 +5197,7 @@ $$\text{DRI} = 0.5 \cdot \bar{\omega} + 0.3 \cdot P_{75}(\omega) + 0.2 \cdot P_{
 
 where each $\omega_i$ is now the displacement between baseline and perturbed predictions, and lower DRI indicates greater robustness.
 
-### 10.5.2 Graduated Omega via Semantic Distance
+### 11.5.2 Graduated Omega via Semantic Distance
 
 The DRI's key innovation is *semantic distance* rather than binary match/mismatch. For a cetacean decoder classifying whale codas, misclassifying *rhythm* (fundamental structure) is worse than misclassifying *ornamentation* (fine detail):
 
@@ -4998,7 +5233,7 @@ class CodaSemanticDistance:
 
 The hybrid formula---minimum 0.5 penalty for any flip, scaling to 1.0 for maximally different predictions---ensures the DRI never ignores a decision flip. An ornamentation change gets $\omega \approx 0.54$; a rhythm change gets $\omega \approx 0.93$. The graduated omega reflects the domain's feature hierarchy.
 
-### 10.5.3 The Full DRI Pipeline
+### 11.5.3 The Full DRI Pipeline
 
 The `DecoderRobustnessIndex.measure` method orchestrates four phases---per-transform intensity sweeps, compositional chain testing, adversarial threshold search, and DRI computation---mirroring the structure of the `run_campaign` pipeline in the structural fuzzing framework:
 
@@ -5017,7 +5252,7 @@ The `DRIResult` provides three granularity levels:
 2. **DRI by category.** Separate values for invariant and stress transforms, revealing whether weaknesses lie in unlearned symmetries or over-sensitivity to legitimate distortion.
 3. **Per-transform diagnostics.** Mean omega per transform, chain results, and adversarial thresholds---the full radar image.
 
-### 10.5.4 The Acoustic Transform Suite
+### 11.5.4 The Acoustic Transform Suite
 
 Nine transforms form the probing library, categorized by invariance expectation:
 
@@ -5037,9 +5272,9 @@ The `is_invariant` flag drives separate `dri_invariant` and `dri_stress` aggrega
 
 ---
 
-## 10.6 Connection to the Structural Fuzzing Pipeline
+## 11.6 Connection to the Structural Fuzzing Pipeline
 
-### 10.6.1 The Six-Step Campaign
+### 11.6.1 The Six-Step Campaign
 
 The structural fuzzing pipeline orchestrates all probing tools into a unified analysis:
 
@@ -5057,18 +5292,18 @@ report = run_campaign(
 
 | Stage | Tool | Chapter | Question |
 |-------|------|---------|----------|
-| 1 | Subset enumeration | 4 | Which dimension combinations matter? |
-| 2 | Pareto frontier | 5 | Which configurations are non-dominated? |
-| 3 | Sensitivity profiling | 10 | Which dimensions drive predictions? |
+| 1 | Subset enumeration | 11 | Which dimension combinations matter? |
+| 2 | Pareto frontier | 8 | Which configurations are non-dominated? |
+| 3 | Sensitivity profiling | 9 | Which dimensions drive predictions? |
 | 4 | Model Robustness Index | 9 | How stable is the best configuration? |
 | 5 | Adversarial thresholds | 10 | Where does each dimension break? |
-| 6 | Compositional testing | 10 | How do dimensions interact? |
+| 6 | Compositional testing | 12 | How do dimensions interact? |
 
-### 10.6.2 The Report as a Geometric Object
+### 11.6.2 The Report as a Geometric Object
 
 The `StructuralFuzzReport` returned by `run_campaign` is itself a geometric object. Its fields encode: a set of *points* in the (dimensions, MAE) plane (subset results), a *frontier* in this plane (Pareto-optimal configurations), a *vector* of importances (sensitivity profile), a *scalar* with supporting distribution (the MRI and its omega distribution), a set of *boundaries* in parameter space (adversarial thresholds), and a *path* through subset space (the compositional building sequence). Taken together, these define the geometric structure of the model's configuration space as explored by the probing campaign.
 
-### 10.6.3 Portability of the Framework
+### 11.6.3 Portability of the Framework
 
 The MRI/DRI mathematical structure is domain-agnostic. The specific transforms change, but the measurement protocol, aggregation formula, and diagnostic decomposition remain identical:
 
@@ -5088,25 +5323,25 @@ with $\omega$ computed as domain-appropriate distance between baseline and pertu
 
 ---
 
-## 10.7 Practical Considerations
+## 11.7 Practical Considerations
 
-### 10.7.1 Computational Budget
+### 11.7.1 Computational Budget
 
 A full DRI measurement with 9 transforms, 3 intensity levels, 50 chains, and 100 signals requires approximately 7,800 model evaluations. Three strategies reduce cost: subsample the corpus (if the profile is stable at $N = 20$, use 20); reduce the intensity grid (3 levels captures most curves); and parallelize (transform evaluations are embarrassingly parallel).
 
-### 10.7.2 Deterministic Seeding
+### 11.7.2 Deterministic Seeding
 
 All stochastic transforms are seeded from the input's content hash, ensuring identical perturbations across model comparisons and enabling differential analysis of model updates.
 
-### 10.7.3 Choosing the Distance Function
+### 11.7.3 Choosing the Distance Function
 
 The distance function must match the output space: $L^2$ norm for continuous outputs, semantic distance for classifications, edit distance for sequences. The DRI's graduated semantic distance is a general pattern for any classification domain where some errors are worse than others.
 
 ---
 
-## 10.8 Summary and Forward Connections
+## 11.8 Summary and Forward Connections
 
-### 10.8.1 What This Chapter Established
+### 11.8.1 What This Chapter Established
 
 This chapter developed the adversarial probing framework:
 
@@ -5117,17 +5352,17 @@ This chapter developed the adversarial probing framework:
 5. **The Decoder Robustness Index (DRI)** as MRI for signal-space perturbation with graduated semantic distance.
 6. **Topological analysis** of probe surfaces using persistent homology (Chapter 5).
 
-The unifying theme is the radar analogy: *the difference between "sent" and "received" encodes the structure of the system being probed*.
+The unifying theme is the radar analogy: *the difference between "sent" and "received" encodes the structure of the system being probed*. Chapter 23 pushes the same idea one level further—from probing a model's *parameters* and *signals* to probing the *relation* it is evaluated on—introducing the **cross-relation generalization gap** (the relation-space analogue of §10.1.3's sensitivity gap) and **probe calibration** (the intensity-zero identity of §10.2, applied to the evaluation instrument itself).
 
-### 10.8.2 Connection to Part III
+### 11.8.2 Connection to Part III
 
-Part III develops the design patterns that operationalize these tools:
+Part III shifts from developing tools in isolation to deploying them in integrated systems. The probing framework is central:
 
-- **Chapter 11** develops the subset enumeration pattern for systematic dimension exploration.
-- **Chapter 12** introduces compositional testing for greedy dimension-building.
-- **Chapter 13** applies group-theoretic augmentation to exploit symmetries.
+- **Chapter 12** applies probing to continuous monitoring, tracking how sensitivity fingerprints evolve and triggering alerts when adversarial thresholds drop.
+- **Chapter 13** integrates probing with pathfinding (Chapter 7), navigating from fragile to robust configurations along geodesics using the probe response surface as the cost function.
+- **Chapter 14** combines probing with multi-objective optimization, computing Pareto frontiers in the (MAE, DRI) plane to select configurations that are simultaneously accurate and robust.
 
-Part II taught the individual tools. Part III teaches the patterns for combining them into complete analyses.
+The transition from Part II to Part III mirrors the transition from constructing individual instruments to building an orchestra. Each instrument---subset enumeration, Pareto analysis, sensitivity profiling, MRI, adversarial probing, TDA---has been developed and tested in isolation. Part III teaches them to play together.
 
 
 \newpage
@@ -5138,7 +5373,7 @@ Part II taught the individual tools. Part III teaches the patterns for combining
 
 \newpage
 
-# Chapter 11: The Subset Enumeration Pattern
+# Chapter 12: The Subset Enumeration Pattern
 
 > *"The art of being wise is the art of knowing what to overlook."*
 > --- William James, *The Principles of Psychology* (1890)
@@ -5147,16 +5382,16 @@ A model with $n$ parameter dimensions admits $2^n - 1$ non-empty subsets of thos
 
 This chapter develops the subset enumeration pattern: the systematic exploration of all dimension combinations up to a specified cardinality. We begin with the combinatorial landscape and the conditions under which brute-force enumeration is feasible. We then examine the `optimize_subset` algorithm in detail, including its log-space parameterization and sentinel-value encoding for inactive dimensions. The `SubsetResult` data structure captures the output of each optimization in a typed, composable form. The `enumerate_subsets` function orchestrates the full sweep. We close with practical heuristics---cardinality limits, early stopping---and a worked example from software defect prediction that reveals which feature groups genuinely drive predictive performance.
 
-The pattern connects backward to the motivating example of Chapter 1, where subset enumeration first appeared as Step 1 of the geometric validation pipeline, and forward to Chapter 8, where Pareto frontier analysis operates over the space of `SubsetResult` objects to identify non-dominated tradeoffs between model complexity and predictive quality.
+The pattern connects backward to the motivating example of Chapter 1, where subset enumeration first appeared as Step 1 of the geometric validation pipeline, and forward to Chapter 9, where Pareto frontier analysis operates over the space of `SubsetResult` objects to identify non-dominated tradeoffs between model complexity and predictive quality.
 
 ---
 
 
 ![Hasse diagram of the subset lattice for four feature dimensions, colored by prediction error.](images/ch11-hasse-diagram.png)
 
-## 11.1 The Combinatorial Explosion
+## 12.1 The Combinatorial Explosion
 
-### 11.1.1 Counting Subsets
+### 12.1.1 Counting Subsets
 
 Given a set of $n$ dimensions, the number of subsets of size exactly $k$ is:
 
@@ -5178,7 +5413,7 @@ For the defect prediction example introduced in Chapter 1, $n = 5$ feature group
 
 Thirty-one subsets is a small number. Even with an expensive evaluation function---say, training a random forest classifier---the full enumeration completes in seconds. This is the regime where brute-force subset testing is not merely acceptable but *optimal*: it guarantees that no combination is overlooked, eliminates the need for heuristic search strategies, and produces a complete map of the structural landscape.
 
-### 11.1.2 The Scaling Boundary
+### 12.1.2 The Scaling Boundary
 
 The picture changes with $n$. The following table shows $N(n, k_{\max})$ for representative values:
 
@@ -5194,7 +5429,7 @@ Two observations. First, the full enumeration $k_{\max} = n$ is practical only f
 
 Why? Because the structural questions of interest are usually comparative: *does adding dimension $d$ to an existing subset improve performance?* The answer to this question is already captured by subsets of size $k$ and $k+1$ for small $k$. If Complexity alone achieves MAE 3.8 and {Complexity, Process} achieves MAE 2.1, then we know the marginal value of Process in the presence of Complexity. Extending to {Complexity, Process, Size} at MAE 1.7 tells us the marginal value of Size given the other two. By $k = 4$, the marginal contributions are usually small and the structural picture is clear.
 
-### 11.1.3 Why Brute Force Beats Heuristics
+### 12.1.3 Why Brute Force Beats Heuristics
 
 The alternative to brute-force enumeration is heuristic search: forward selection, backward elimination, or stochastic methods like genetic algorithms. These approaches are necessary when $n$ is large, but they carry well-documented risks:
 
@@ -5208,11 +5443,11 @@ When $n$ is small enough for brute force, there is no reason to accept these lim
 
 ---
 
-## 11.2 The `optimize_subset` Algorithm
+## 12.2 The `optimize_subset` Algorithm
 
 The core of subset enumeration is the `optimize_subset` function, which takes a set of active dimensions and finds the best parameter values for those dimensions while holding all inactive dimensions at a sentinel value. The algorithm makes three design decisions that merit detailed examination: log-space parameterization, sentinel values for inactive dimensions, and adaptive search strategy.
 
-### 11.2.1 Log-Space Parameterization
+### 12.2.1 Log-Space Parameterization
 
 Parameters that represent scales, weights, or regularization strengths typically span several orders of magnitude. A parameter that might reasonably take any value from 0.01 to 100 has a range ratio of 10,000:1. A uniform grid over this range would place 99% of its points above 1.0, leaving the sub-unit region---often the most interesting---severely undersampled.
 
@@ -5239,7 +5474,7 @@ for i, dim in enumerate(active_dims):
 
 The random samples are drawn uniformly in $[\log_{10}(0.01), \log_{10}(100)] = [-2, 2]$ and then exponentiated, producing a distribution that is uniform in log-space. This is equivalent to drawing from a log-uniform distribution over $[0.01, 100]$, which is the maximum-entropy prior for a scale parameter whose order of magnitude is unknown.
 
-### 11.2.2 Sentinel Values for Inactive Dimensions
+### 12.2.2 Sentinel Values for Inactive Dimensions
 
 When only a subset of dimensions is active, the remaining dimensions must be assigned values that effectively "turn them off." The `optimize_subset` function uses a sentinel value of $10^6$ (the `inactive_value` parameter):
 
@@ -5268,7 +5503,7 @@ for i, indices in enumerate(group_indices):
 
 A parameter value of $10^6$ is well above the threshold of 1000, so the corresponding feature group is excluded. A parameter value in $[0.01, 100]$ is well below the threshold, so the group is included. The gap between the search range and the threshold provides a wide margin that prevents numerical edge cases.
 
-### 11.2.3 Adaptive Search Strategy
+### 12.2.3 Adaptive Search Strategy
 
 The `optimize_subset` function uses three different search strategies depending on the number of active dimensions:
 
@@ -5321,7 +5556,7 @@ The fixed seed (`rng = np.random.default_rng(42)`) ensures reproducibility: the 
 
 ---
 
-## 11.3 `SubsetResult` as a Typed Data Structure
+## 12.3 `SubsetResult` as a Typed Data Structure
 
 Each call to `optimize_subset` returns a `SubsetResult` object. This is not merely a container for the output; it is a typed data structure designed for downstream composition.
 
@@ -5351,7 +5586,7 @@ The fields serve distinct roles:
 
 - **`errors`**: a dictionary of per-metric errors. For the defect prediction example, this might contain `{"Accuracy": 3.2, "Precision": -1.5, "Recall": 5.1, "F1": 2.8, "AUC": -0.3}`. The dictionary preserves the full multi-dimensional evaluation---exactly the information that, as Chapter 1 argued, scalar summaries destroy.
 
-- **`pareto_optimal`**: a boolean flag, initially `False`, set to `True` by the Pareto frontier analysis (Chapter 8) for configurations that are non-dominated in the (n_dims, MAE) plane. This flag allows downstream code to filter for Pareto-optimal results without re-computing the frontier.
+- **`pareto_optimal`**: a boolean flag, initially `False`, set to `True` by the Pareto frontier analysis (Chapter 9) for configurations that are non-dominated in the (n_dims, MAE) plane. This flag allows downstream code to filter for Pareto-optimal results without re-computing the frontier.
 
 The `__repr__` method provides a concise summary:
 
@@ -5371,7 +5606,7 @@ This design follows the principle stated in Section 1.2.2: state vectors are imm
 
 ---
 
-## 11.4 The `enumerate_subsets` Function
+## 12.4 The `enumerate_subsets` Function
 
 With `optimize_subset` handling individual subsets and `SubsetResult` capturing the output, the `enumerate_subsets` function orchestrates the full sweep:
 
@@ -5415,7 +5650,7 @@ return results
 
 This means `results[0]` is always the best configuration found, regardless of how many dimensions it uses. The caller can then apply additional filtering (e.g., "best result with at most 2 dimensions") or pass the full list to Pareto frontier analysis.
 
-### 11.4.1 The Role of `max_dims`
+### 12.4.1 The Role of `max_dims`
 
 The `max_dims` parameter is the primary lever for controlling computational cost. Its effect on the total number of evaluations is:
 
@@ -5432,7 +5667,7 @@ where $C(k)$ is the per-subset evaluation count: $C(1) = n_{\text{grid}}$, $C(2)
 
 With `max_dims = 4`, the total is 79,100 evaluations. With `max_dims = 2`, it drops to 4,100. The choice depends on the cost of a single evaluation: if `evaluate_fn` takes 1 millisecond (as in the defect prediction example with pre-trained models), the full sweep completes in under 80 seconds. If it takes 1 second, `max_dims = 2` might be the practical limit.
 
-### 11.4.2 Integration with the Pipeline
+### 12.4.2 Integration with the Pipeline
 
 The `enumerate_subsets` function is the first step of the full structural fuzzing campaign, orchestrated by the `run_campaign` function in `pipeline.py`:
 
@@ -5475,9 +5710,9 @@ The `subset_results` field stores the complete enumeration. The `pareto_results`
 
 ---
 
-## 11.5 Practical Heuristics
+## 12.5 Practical Heuristics
 
-### 11.5.1 Choosing `max_dims`
+### 12.5.1 Choosing `max_dims`
 
 The choice of `max_dims` involves a tradeoff between coverage and cost. Three guidelines:
 
@@ -5487,19 +5722,19 @@ The choice of `max_dims` involves a tradeoff between coverage and cost. Three gu
 
 **Diminishing returns.** After running with a given $k_{\max}$, inspect the results. If the best configuration of size $k_{\max}$ is not substantially better than the best of size $k_{\max} - 1$, there is little reason to increase $k_{\max}$. The Pareto frontier provides a natural diagnostic: if the frontier flattens (the MAE improvement from adding one more dimension is less than some threshold $\delta$), the enumeration has reached the point of diminishing returns.
 
-### 11.5.2 Early Stopping
+### 12.5.2 Early Stopping
 
 The current `enumerate_subsets` implementation tests all subsets at each size before moving to the next. An alternative is early stopping: if no subset of size $k$ improves on the best result of size $k - 1$ by more than $\delta$, skip sizes $k+1, k+2, \ldots$
 
 This heuristic is not implemented in the framework's core because it sacrifices completeness: a subset of size $k+1$ might improve dramatically over anything at size $k$ due to a synergy that only emerges when three or more dimensions interact. Such cases are rare but consequential, and the whole point of brute-force enumeration is to catch them. In practice, early stopping is best reserved for exploratory runs where speed matters more than thoroughness.
 
-### 11.5.3 Tuning `n_grid` and `n_random`
+### 12.5.3 Tuning `n_grid` and `n_random`
 
 The `n_grid` parameter controls the resolution of 1D and 2D searches. Increasing it from 20 to 50 improves resolution (the multiplicative step drops from 1.66 to 1.19) but increases the 2D cost from 400 to 2,500 evaluations per subset. For smooth evaluation functions, `n_grid = 20` is usually sufficient. For functions with narrow optima or sharp transitions, `n_grid = 50` or higher may be warranted.
 
 The `n_random` parameter controls the coverage of 3D+ searches. The expected coverage of a random search depends on the effective dimensionality of the loss landscape. If the loss depends strongly on only one of the $k$ active dimensions, then 5,000 random samples provide excellent coverage of that dimension even in a $k$-dimensional space. If the loss depends on all $k$ dimensions with comparable sensitivity, coverage scales as $n_{\text{random}}^{1/k}$---about 17 effective grid points per dimension for $k = 3$ and $n_{\text{random}} = 5000$, or about 8 for $k = 4$. These numbers are adequate for identifying the approximate optimum but not for precise characterization. For the latter, a targeted refinement step (not part of the core framework) can be applied to the most promising configurations.
 
-### 11.5.4 The Zero-Dimensional Baseline
+### 12.5.4 The Zero-Dimensional Baseline
 
 The `optimize_subset` function handles the edge case of zero active dimensions:
 
@@ -5521,11 +5756,11 @@ This baseline measures the evaluation function's output when *all* dimensions ar
 
 ---
 
-## 11.6 Worked Example: Defect Prediction
+## 12.6 Worked Example: Defect Prediction
 
 The defect prediction example, introduced in Chapter 1 and implemented in `examples/defect_prediction/model.py`, provides a concrete demonstration of the subset enumeration pattern. The model predicts whether a software module contains defects based on 16 software metrics organized into five feature groups.
 
-### 11.6.1 Feature Groups as Dimensions
+### 12.6.1 Feature Groups as Dimensions
 
 The `FEATURE_GROUPS` dictionary defines the mapping from feature group names to feature indices:
 
@@ -5550,7 +5785,7 @@ Each group aggregates related software metrics:
 
 The choice of five groups rather than sixteen individual features is itself a modeling decision. It reduces the number of subsets from $2^{16} - 1 = 65{,}535$ to $2^5 - 1 = 31$, making brute-force enumeration trivially feasible. More importantly, it aligns the structural analysis with the conceptual structure of the domain: practitioners think in terms of "size metrics" and "complexity metrics," not individual features. The subset enumeration pattern operates at the level of these semantic groups.
 
-### 11.6.2 The Evaluation Function
+### 12.6.2 The Evaluation Function
 
 The `make_evaluate_fn` function constructs an evaluation function compatible with the structural fuzzing framework:
 
@@ -5578,7 +5813,7 @@ target_values = {
 
 The errors are signed differences (predicted minus target), and the MAE is the mean of their absolute values. A configuration with MAE 0 would match all targets exactly. The multi-dimensional error vector preserves the direction of deviation---overperformance versus underperformance on each metric---while the MAE provides a scalar summary for sorting.
 
-### 11.6.3 What the Enumeration Reveals
+### 12.6.3 What the Enumeration Reveals
 
 Running `enumerate_subsets` with `max_dims = 4` on the defect prediction example produces 30 `SubsetResult` objects (all subsets of sizes 1 through 4 from the five groups). The results, sorted by MAE, typically exhibit the following pattern:
 
@@ -5608,15 +5843,15 @@ The {Complexity, Process} pair is substantially better than any singleton, demon
 
 **Three- and four-dimension results ($k = 3, 4$).** Adding Size to {Complexity, Process} reduces MAE to approximately 1.7. Adding Halstead or OO provides marginal further improvement. The pattern is one of diminishing returns: two dimensions capture most of the predictive structure, a third adds a meaningful increment, and the fourth and fifth add little.
 
-### 11.6.4 Connecting to the Pareto Frontier
+### 12.6.4 Connecting to the Pareto Frontier
 
-The 30 `SubsetResult` objects, when plotted in the $(k, \text{MAE})$ plane, define a point cloud from which the Pareto frontier is extracted (Chapter 8). The frontier typically contains four points:
+The 30 `SubsetResult` objects, when plotted in the $(k, \text{MAE})$ plane, define a point cloud from which the Pareto frontier is extracted (Chapter 9). The frontier typically contains four points:
 
 $$\{(\text{Complexity})\}, \; \{(\text{Complexity, Process})\}, \; \{(\text{Complexity, Process, Size})\}, \; \{(\text{all})\}$$
 
 Each Pareto-optimal point represents the best achievable MAE at its cardinality. The frontier makes the complexity-performance tradeoff explicit: the practitioner can see that going from 2 to 3 dimensions buys a 0.4-point MAE improvement, while going from 3 to 5 dimensions buys only 0.2 points. Whether the additional features are worth the added model complexity is a domain decision, but the subset enumeration pattern provides the quantitative basis for making it.
 
-### 11.6.5 The Ground Truth Test
+### 12.6.5 The Ground Truth Test
 
 The synthetic data in `model.py` has a known ground truth. The defect probability is generated as:
 
@@ -5640,29 +5875,29 @@ The subset enumeration correctly recovers this structure: Complexity and Process
 
 ---
 
-## 11.7 Computational Considerations
+## 12.7 Computational Considerations
 
-### 11.7.1 Parallelism
+### 12.7.1 Parallelism
 
 The `enumerate_subsets` loop is embarrassingly parallel: each subset can be optimized independently. The current implementation is sequential for simplicity, but parallelization is straightforward---each call to `optimize_subset` is a pure function with no shared state (beyond the evaluation function, which must be thread-safe).
 
 For the defect prediction example, parallelizing over subsets would reduce wall-clock time roughly linearly with the number of available cores, since the per-subset computation (training a random forest on ~700 samples) is dominated by CPU time rather than I/O.
 
-### 11.7.2 Memory
+### 12.7.2 Memory
 
 Each `SubsetResult` stores a parameter vector of length $n$ (a NumPy array), an error dictionary, and metadata. For $n = 5$, this is negligible. For $n = 100$ with $N(100, 3) = 166{,}750$ subsets, the memory footprint is approximately $166{,}750 \times (100 \times 8 + \text{overhead}) \approx 200$ MB---large but manageable.
 
 The more significant memory concern is the evaluation function itself. If `evaluate_fn` loads a large model or dataset into memory, the cost is paid once (at construction time, via `make_evaluate_fn`) and amortized over all evaluations.
 
-### 11.7.3 Reproducibility
+### 12.7.3 Reproducibility
 
 The `optimize_subset` function uses a fixed random seed (`rng = np.random.default_rng(42)`) for the 3D+ random search. This ensures that the same subset always produces the same result, which is essential for reproducibility. However, it also means that the random samples are the same for every subset of the same size. This is a deliberate design choice: it eliminates one source of variability (different random seeds for different subsets) and makes it possible to attribute performance differences between subsets entirely to the choice of active dimensions.
 
 ---
 
-## 11.8 Relationship to Other Patterns
+## 12.8 Relationship to Other Patterns
 
-### 11.8.1 Subset Enumeration vs. Forward/Backward Selection
+### 12.8.1 Subset Enumeration vs. Forward/Backward Selection
 
 The `run_campaign` function in `pipeline.py` runs both brute-force enumeration and the greedy baselines (forward selection and backward elimination), storing the results in the `forward_results` and `backward_results` fields of `StructuralFuzzReport`. This design enables direct comparison:
 
@@ -5672,21 +5907,21 @@ The `run_campaign` function in `pipeline.py` runs both brute-force enumeration a
 
 When the three methods agree---they select the same dimensions and rank them similarly---the result is robust. When they disagree---as they will when dimensions interact non-additively---the brute-force enumeration is the ground truth, and the discrepancy reveals the limitations of the greedy methods.
 
-### 11.8.2 Subset Enumeration and Sensitivity Analysis
+### 12.8.2 Subset Enumeration and Sensitivity Analysis
 
 Sensitivity analysis (asking "how much does the objective change when I perturb one dimension?") is a local probe: it examines the neighborhood of a single configuration. Subset enumeration is a global survey: it examines the entire lattice of dimension combinations. The two are complementary. Sensitivity analysis reveals *which dimensions are important near the current optimum*; subset enumeration reveals *which dimension combinations define the best optima*.
 
 In the pipeline, sensitivity analysis is applied to the best configuration found by subset enumeration. The combination provides both global structure (which subsets are best overall) and local structure (which dimensions are most influential at the optimum).
 
-### 11.8.3 Subset Enumeration and Pareto Analysis
+### 12.8.3 Subset Enumeration and Pareto Analysis
 
-As discussed in Section 11.6.4, the output of `enumerate_subsets`---a list of `SubsetResult` objects---is the natural input to Pareto frontier analysis. The Pareto frontier operates over the $(k, \text{MAE})$ plane, identifying configurations that are non-dominated: no other configuration has both fewer dimensions *and* lower MAE.
+As discussed in Section 12.6.4, the output of `enumerate_subsets`---a list of `SubsetResult` objects---is the natural input to Pareto frontier analysis. The Pareto frontier operates over the $(k, \text{MAE})$ plane, identifying configurations that are non-dominated: no other configuration has both fewer dimensions *and* lower MAE.
 
-The Pareto analysis (Chapter 8) does not depend on the enumeration being exhaustive. It produces a valid frontier from any set of results. But the frontier is most informative when the input is complete: if a subset was not tested, its potential position on the frontier is unknown, and the frontier may be suboptimal. This is another argument for brute-force enumeration when it is feasible: it guarantees that the Pareto frontier is exact.
+The Pareto analysis (Chapter 9) does not depend on the enumeration being exhaustive. It produces a valid frontier from any set of results. But the frontier is most informative when the input is complete: if a subset was not tested, its potential position on the frontier is unknown, and the frontier may be suboptimal. This is another argument for brute-force enumeration when it is feasible: it guarantees that the Pareto frontier is exact.
 
 ---
 
-## 11.9 Summary
+## 12.9 Summary
 
 The subset enumeration pattern is the simplest and most powerful tool in the structural fuzzing framework. It works by exhaustion: test every combination, record the result, sort by performance. Its effectiveness rests on three conditions that hold in practice for a wide range of problems:
 
@@ -5698,40 +5933,40 @@ The subset enumeration pattern is the simplest and most powerful tool in the str
 
 When these conditions hold, `enumerate_subsets` with a moderate `max_dims` produces a complete structural map in acceptable time. The `SubsetResult` objects that emerge---typed, immutable, carrying both scalar and multi-dimensional performance data---feed directly into Pareto analysis, sensitivity profiling, adversarial testing, and every other downstream stage of the structural fuzzing pipeline.
 
-The pattern's limitation is equally clear: it does not scale to hundreds of dimensions. For those problems, the heuristic methods---forward selection, backward elimination, and the stochastic approaches discussed in Chapter 12---are necessary. But the heuristics are most effective when calibrated against the brute-force ground truth on a reduced problem, and the transition from exact enumeration to approximate search is the subject of the next chapter.
+The pattern's limitation is equally clear: it does not scale to hundreds of dimensions. For those problems, the heuristic methods---forward selection, backward elimination, and the stochastic approaches discussed in Chapter 13---are necessary. But the heuristics are most effective when calibrated against the brute-force ground truth on a reduced problem, and the transition from exact enumeration to approximate search is the subject of the next chapter.
 
 ---
 
-## 11.10 Looking Ahead
+## 12.10 Looking Ahead
 
-Chapter 12 introduces the *compositional testing pattern*, which addresses the question that subset enumeration leaves open: **in what order should dimensions be added?** Subset enumeration tells us that {Complexity, Process, Size} is a strong 3-dimensional configuration, but it does not tell us whether to start with Complexity and add Process, or start with Process and add Complexity. The compositional test builds dimensions incrementally, measuring the marginal contribution of each addition in context, and produces an ordering that reveals the causal structure of dimension interactions. Where subset enumeration maps the landscape, compositional testing traces a path through it.
+Chapter 13 introduces the *compositional testing pattern*, which addresses the question that subset enumeration leaves open: **in what order should dimensions be added?** Subset enumeration tells us that {Complexity, Process, Size} is a strong 3-dimensional configuration, but it does not tell us whether to start with Complexity and add Process, or start with Process and add Complexity. The compositional test builds dimensions incrementally, measuring the marginal contribution of each addition in context, and produces an ordering that reveals the causal structure of dimension interactions. Where subset enumeration maps the landscape, compositional testing traces a path through it.
 
 
 \newpage
 
-# Chapter 12: Compositional Testing
+# Chapter 13: Compositional Testing
 
 > *"The whole is other than the sum of its parts."*
 > --- Kurt Koffka, *Principles of Gestalt Psychology* (1935)
 
-Chapters 11 and 9 developed two complementary views of multi-dimensional model behavior. Subset enumeration (Chapter 11) asks: which combinations of dimensions produce the best fit? Sensitivity profiling (Chapter 9) asks: how much does each dimension contribute to the baseline? Both are indispensable. Both are incomplete.
+Chapters 12 and 10 developed two complementary views of multi-dimensional model behavior. Subset enumeration (Chapter 12) asks: which combinations of dimensions produce the best fit? Sensitivity profiling (Chapter 10) asks: how much does each dimension contribute to the baseline? Both are indispensable. Both are incomplete.
 
 Subset enumeration tests every combination independently, but it does not reveal *how* dimensions interact---whether the combination of Complexity and Process is better than expected from their individual contributions, or merely the sum of two independent effects. Sensitivity profiling measures the marginal contribution of each dimension by ablation, but it holds all other dimensions fixed, missing the cases where removing two dimensions simultaneously is far worse (or far better) than removing each alone.
 
 The gap between these methods is the subject of this chapter. Compositional testing fills the gap by systematically measuring the *interactions* between dimensions---the synergies and redundancies that emerge when dimensions are combined. The key insight is that interaction effects are not anomalies to be ignored but first-class geometric features of the model's behavior landscape. A dimension pair that exhibits strong synergy occupies a qualitatively different region of the evaluation space than a pair whose contributions are merely additive. Detecting, quantifying, and interpreting these interactions is essential for understanding why a model works and when it will break.
 
-We begin with a precise definition of what single-dimension analysis misses (Section 12.1), develop the interaction matrix formalism (Section 12.2), introduce the compositional testing algorithm implemented in the structural fuzzing framework (Section 12.3), discuss interpretation of results (Section 12.4), connect compositional testing to sensitivity profiling (Section 12.5), and close with the forward connection to Chapter 13.
+We begin with a precise definition of what single-dimension analysis misses (Section 13.1), develop the interaction matrix formalism (Section 13.2), introduce the compositional testing algorithm implemented in the structural fuzzing framework (Section 13.3), discuss interpretation of results (Section 13.4), connect compositional testing to sensitivity profiling (Section 13.5), and close with the forward connection to Chapter 14.
 
 ---
 
 
 ![Pairwise dimension interaction matrix: red indicates synergy, blue indicates redundancy.](images/ch12-interaction-heatmap.png)
 
-## 12.1 The Limits of Single-Dimension Analysis
+## 13.1 The Limits of Single-Dimension Analysis
 
-### 12.1.1 Ablation Assumes Independence
+### 13.1.1 Ablation Assumes Independence
 
-Recall the sensitivity profiling function from Chapter 9. Given a baseline parameter vector and an evaluation function, it measures the effect of deactivating each dimension one at a time:
+Recall the sensitivity profiling function from Chapter 10. Given a baseline parameter vector and an evaluation function, it measures the effect of deactivating each dimension one at a time:
 
 ```python
 def sensitivity_profile(
@@ -5770,7 +6005,7 @@ def sensitivity_profile(
 
 The structure is clean: iterate over dimensions, ablate one, measure the damage. The result is a ranked list of importance scores. But notice the implicit assumption: the delta for dimension $i$ is computed while *all other dimensions remain active*. This is a conditional measurement, not a marginal one. The sensitivity of dimension $i$ depends on the presence of dimensions $j, k, \ldots$, and that dependency is never measured.
 
-### 12.1.2 The Interaction Problem
+### 13.1.2 The Interaction Problem
 
 To see why this matters, consider a model with five dimensions and the following behavior:
 
@@ -5783,7 +6018,7 @@ This failure mode is not exotic. It arises whenever two dimensions provide *comp
 
 The general principle: single-dimension analysis decomposes a multi-dimensional space into independent axes. When the structure of the problem aligns with those axes, the decomposition is faithful. When the structure is *rotated* relative to the axes---when the important directions in the space are diagonal, not axis-aligned---single-dimension analysis misses the structure entirely.
 
-### 12.1.3 Quantifying What Is Missed
+### 13.1.3 Quantifying What Is Missed
 
 Let $f(\mathbf{x})$ denote the MAE for parameter vector $\mathbf{x}$, and let $\mathbf{x}^{(-i)}$ denote the vector with dimension $i$ set to its inactive value. The sensitivity profile computes:
 
@@ -5807,9 +6042,9 @@ The interaction matrix $\Phi \in \mathbb{R}^{n \times n}$ collects all pairwise 
 
 ---
 
-## 12.2 The Interaction Matrix
+## 13.2 The Interaction Matrix
 
-### 12.2.1 Construction
+### 13.2.1 Construction
 
 Computing the full interaction matrix for $n$ dimensions requires evaluating $\binom{n}{2}$ pairwise ablations, plus the $n$ single-dimension ablations from the sensitivity profile, plus the baseline. The total cost is:
 
@@ -5855,7 +6090,7 @@ def build_interaction_matrix(
     return phi
 ```
 
-### 12.2.2 Reading the Matrix
+### 13.2.2 Reading the Matrix
 
 The interaction matrix is symmetric with zero diagonal. Its entries directly answer the question: "Do these two dimensions interact?"
 
@@ -5877,7 +6112,7 @@ Several patterns are immediately visible:
 
 3. **Near-additive: Size + Complexity** ($\Phi = +0.02$). These dimensions contribute nearly independently. Knowing one tells you almost nothing about the other's effect.
 
-### 12.2.3 Higher-Order Interactions
+### 13.2.3 Higher-Order Interactions
 
 Pairwise interactions do not tell the complete story. A triple of dimensions $\{i, j, k\}$ can exhibit a three-way interaction that is invisible to any pair:
 
@@ -5887,13 +6122,13 @@ The three-way interaction is the residual after accounting for all individual an
 
 In practice, higher-order interactions are rarer than pairwise ones, and when they do occur they tend to involve dimensions that already exhibit strong pairwise interactions. A practical strategy is to compute the full pairwise matrix first, identify the pairs with the largest $|\Phi_{ij}|$, and then compute three-way interactions only for triples that include at least one strongly interacting pair.
 
-This strategy connects directly to the subset enumeration of Chapter 11. Subset enumeration tests all combinations up to a maximum size, producing a complete picture of model behavior across the combinatorial space. The interaction matrix provides a *structured decomposition* of those results: instead of a flat list of subset performances, the matrix reveals *why* certain subsets perform well (synergistic interactions among their members) and others poorly (redundancy among their members). Subset enumeration is the exhaustive search; compositional testing is the analytical lens that makes the search results interpretable.
+This strategy connects directly to the subset enumeration of Chapter 12. Subset enumeration tests all combinations up to a maximum size, producing a complete picture of model behavior across the combinatorial space. The interaction matrix provides a *structured decomposition* of those results: instead of a flat list of subset performances, the matrix reveals *why* certain subsets perform well (synergistic interactions among their members) and others poorly (redundancy among their members). Subset enumeration is the exhaustive search; compositional testing is the analytical lens that makes the search results interpretable.
 
 ---
 
-## 12.3 The Compositional Testing Algorithm
+## 13.3 The Compositional Testing Algorithm
 
-### 12.3.1 Greedy Dimension Building
+### 13.3.1 Greedy Dimension Building
 
 The structural fuzzing framework implements compositional testing through a greedy dimension-building strategy. Rather than exhaustively evaluating all possible orderings, it constructs a single optimal ordering by starting with one dimension and iteratively adding the dimension that produces the greatest improvement:
 
@@ -5976,7 +6211,7 @@ The algorithm produces a `CompositionResult` containing four parallel sequences:
 - `mae_sequence`: the optimized MAE at each step, after re-optimizing all active dimensions jointly.
 - `param_sequence`: the full parameter vector at each step.
 
-### 12.3.2 Re-optimization at Each Step
+### 13.3.2 Re-optimization at Each Step
 
 A critical design decision in the implementation is that `optimize_subset` is called at every step with *all* currently active dimensions. When dimension $j$ is added to the active set $\{d_1, d_2, \ldots, d_k\}$, the optimization does not merely find the best value for $j$ while holding $d_1, \ldots, d_k$ fixed. It re-optimizes the entire $(k+1)$-dimensional subset jointly.
 
@@ -6026,7 +6261,7 @@ else:
 
 For one or two active dimensions, grid search in log-space is exhaustive and exact. For three or more, random search in log-space provides good coverage at controllable cost. The log-space parameterization ensures that the search covers both fine-grained and coarse-grained parameter values uniformly, which is critical when parameters span multiple orders of magnitude.
 
-### 12.3.3 Computational Cost
+### 13.3.3 Computational Cost
 
 The greedy compositional test starting from one dimension with $n - 1$ candidates requires the following number of `optimize_subset` calls:
 
@@ -6038,13 +6273,13 @@ The greedy compositional test starting from one dimension with $n - 1$ candidate
 
 The total is $1 + \sum_{k=1}^{n-1}(n-k) = 1 + \frac{n(n-1)}{2}$, which is $O(n^2)$. Each call's internal cost varies with dimensionality, but the outer structure is quadratic in $n$. For typical structural fuzzing applications with $n \leq 10$, this is entirely tractable.
 
-Compare this to the full subset enumeration of Chapter 11, which tests $\sum_{k=1}^{n} \binom{n}{k} = 2^n - 1$ subsets. The compositional test is exponentially cheaper but produces a single greedy ordering rather than the complete combinatorial picture. The two analyses are complementary: enumeration maps the full landscape, while compositional testing traces a single efficient path through it.
+Compare this to the full subset enumeration of Chapter 12, which tests $\sum_{k=1}^{n} \binom{n}{k} = 2^n - 1$ subsets. The compositional test is exponentially cheaper but produces a single greedy ordering rather than the complete combinatorial picture. The two analyses are complementary: enumeration maps the full landscape, while compositional testing traces a single efficient path through it.
 
 ---
 
-## 12.4 Interpreting Compositional Results
+## 13.4 Interpreting Compositional Results
 
-### 12.4.1 The MAE Sequence
+### 13.4.1 The MAE Sequence
 
 The primary output of compositional testing is the MAE sequence: a list of error values, one for each step of the greedy construction. A typical result might look like:
 
@@ -6067,11 +6302,11 @@ This sequence encodes several types of information.
 
 The gains exhibit strong diminishing returns: the first dimension added (Process) produces a gain of 1.72, while the last (Halstead) produces only 0.07. This is a common pattern. It arises because each successive dimension can only capture the variance unexplained by the already-active dimensions, and that unexplained variance shrinks with each addition.
 
-**Diminishing-returns elbow.** The point where marginal gains transition from substantial to negligible---the "elbow" of the MAE curve---is a natural place to draw a complexity boundary. In the example above, the elbow occurs at step 2 (adding Size), after which further dimensions contribute less than 0.15 MAE each. A practitioner might reasonably conclude that three dimensions (Complexity, Process, Size) capture the essential behavior and the remaining two add complexity without proportionate benefit. This connects directly to the Pareto analysis of Chapter 5: the elbow in the compositional sequence often corresponds to a Pareto-optimal point on the (dimensionality, MAE) frontier.
+**Diminishing-returns elbow.** The point where marginal gains transition from substantial to negligible---the "elbow" of the MAE curve---is a natural place to draw a complexity boundary. In the example above, the elbow occurs at step 2 (adding Size), after which further dimensions contribute less than 0.15 MAE each. A practitioner might reasonably conclude that three dimensions (Complexity, Process, Size) capture the essential behavior and the remaining two add complexity without proportionate benefit. This connects directly to the Pareto analysis of Chapter 9: the elbow in the compositional sequence often corresponds to a Pareto-optimal point on the (dimensionality, MAE) frontier.
 
 **Interaction signatures.** The marginal gains also encode interaction information, though less directly than the interaction matrix. If the gain from adding dimension $j$ to the set $\{d_1, \ldots, d_k\}$ is much larger than $j$'s individual ablation delta from the sensitivity profile, then $j$ is synergistic with the current active set: it contributes more in combination than it does alone. Conversely, if the gain is much smaller than the ablation delta, the current set already captures most of $j$'s information---a signature of redundancy.
 
-### 12.4.2 Synergy versus Redundancy
+### 13.4.2 Synergy versus Redundancy
 
 The interaction matrix $\Phi_{ij}$ provides the precise decomposition, but the compositional test's MAE sequence offers a sequential view that is often more actionable. Define the *expected marginal gain* at step $k$ as the ablation delta $\Delta_{j}$ of the dimension $j$ being added (measured from the full model). Then:
 
@@ -6081,7 +6316,7 @@ The interaction matrix $\Phi_{ij}$ provides the precise decomposition, but the c
 
 This comparison is not exact---the sensitivity profile's $\Delta_j$ is measured from the full model, not from the current partial model---but it provides a useful diagnostic. Large discrepancies between expected and actual marginal gains are strong signals of interaction effects that warrant further investigation.
 
-### 12.4.3 Order Dependence
+### 13.4.3 Order Dependence
 
 The greedy ordering is not necessarily unique. When two candidate dimensions produce similar MAE improvements at a given step, the algorithm breaks ties arbitrarily (in practice, by iteration order). Different starting dimensions can also produce different orderings.
 
@@ -6091,11 +6326,11 @@ To probe order dependence, run the compositional test from multiple starting dim
 
 ---
 
-## 12.5 Connection to Sensitivity Profiling
+## 13.5 Connection to Sensitivity Profiling
 
-### 12.5.1 Ablation as a Special Case
+### 13.5.1 Ablation as a Special Case
 
-Sensitivity profiling (Chapter 9) and compositional testing are two perspectives on the same underlying question: how does model behavior depend on dimension membership? The connection is precise.
+Sensitivity profiling (Chapter 10) and compositional testing are two perspectives on the same underlying question: how does model behavior depend on dimension membership? The connection is precise.
 
 Sensitivity profiling *removes* dimensions from a full model one at a time. It answers: "Given everything, what happens when we lose this?" The result is a vector of individual importance scores.
 
@@ -6103,7 +6338,7 @@ Compositional testing *adds* dimensions to an empty (or minimal) model one at a 
 
 These are dual perspectives. In a purely additive model---one where $\Phi_{ij} = 0$ for all pairs---the sensitivity ranking and the compositional ordering are exact reverses of each other: the most important dimension to remove is the most important to add. In a model with interactions, they diverge, and the divergence is precisely the interaction structure.
 
-### 12.5.2 The Pipeline Integration
+### 13.5.2 The Pipeline Integration
 
 The structural fuzzing pipeline runs both analyses as part of a complete campaign. Examining the pipeline orchestration reveals the design:
 
@@ -6156,9 +6391,9 @@ class StructuralFuzzReport:
     backward_results: list[SubsetResult] = field(default_factory=list)
 ```
 
-An analyst examining the report can compare the sensitivity ranking (which dimensions are most important to *keep*) with the compositional ordering (which dimensions are most important to *add*). Agreement between the two provides confidence in a clean, additive dimension structure. Disagreement signals interaction effects that require the interaction matrix analysis of Section 12.2 to resolve.
+An analyst examining the report can compare the sensitivity ranking (which dimensions are most important to *keep*) with the compositional ordering (which dimensions are most important to *add*). Agreement between the two provides confidence in a clean, additive dimension structure. Disagreement signals interaction effects that require the interaction matrix analysis of Section 13.2 to resolve.
 
-### 12.5.3 Reconciling the Two Views
+### 13.5.3 Reconciling the Two Views
 
 When sensitivity and composition disagree, the reconciliation procedure is:
 
@@ -6171,9 +6406,9 @@ This reconciliation procedure transforms a confusing disagreement between two an
 
 ---
 
-## 12.6 Practical Patterns
+## 13.6 Practical Patterns
 
-### 12.6.1 Choosing the Starting Dimension
+### 13.6.1 Choosing the Starting Dimension
 
 The `compositional_test` function requires a `start_dim` parameter. This choice affects the resulting ordering and can bias the analysis. Three strategies are common:
 
@@ -6181,11 +6416,11 @@ The `compositional_test` function requires a `start_dim` parameter. This choice 
 
 **Start from the least important dimension.** Starting from the weakest dimension reveals whether apparently weak dimensions become important in combination. If the greedy algorithm selects unexpected dimensions early in the sequence, the model has strong interactions that sensitivity profiling would miss.
 
-**Start from each dimension in turn.** Run $n$ compositional tests, one from each starting dimension, and compare the orderings. This is the most thorough approach and directly reveals order dependence (Section 12.4.3). The cost is $n$ times higher, but for models with $n \leq 10$ it remains practical.
+**Start from each dimension in turn.** Run $n$ compositional tests, one from each starting dimension, and compare the orderings. This is the most thorough approach and directly reveals order dependence (Section 13.4.3). The cost is $n$ times higher, but for models with $n \leq 10$ it remains practical.
 
 The pipeline's default behavior uses `start_dim=0`, which corresponds to the first dimension in the names list. For a thorough analysis, the pipeline supports overriding this parameter, and running multiple compositional tests with different starting points is recommended when the interaction structure is unknown.
 
-### 12.6.2 Detecting Emergent Dimensions
+### 13.6.2 Detecting Emergent Dimensions
 
 An *emergent dimension* is one whose compositional marginal gain far exceeds its individual ablation delta. Formally, if the marginal gain of adding dimension $j$ at step $k$ is $G_j^{(k)}$ and the ablation delta is $\Delta_j$, then the emergence ratio is:
 
@@ -6195,7 +6430,7 @@ An emergence ratio substantially greater than 1.0 indicates that dimension $j$ i
 
 Emergence often arises in models where dimensions encode different *aspects* of the same underlying phenomenon. A model predicting material failure might have one dimension for stress and another for temperature. Neither alone predicts failure well (both have low $\Delta$), but together they define the stress-temperature failure envelope: a region in the joint space where failure probability is high. The emergence ratio captures this synergy quantitatively.
 
-### 12.6.3 Diagnosing Redundancy Clusters
+### 13.6.3 Diagnosing Redundancy Clusters
 
 When a group of dimensions are mutually redundant, the compositional test reveals this as a cluster of diminishing marginal gains. After the first dimension in the cluster is added, subsequent cluster members contribute very little because their information is already represented.
 
@@ -6205,13 +6440,13 @@ To identify redundancy clusters from the compositional result:
 2. Compute the ratio $R_j = G_j / \Delta_j$ (gain relative to individual importance).
 3. Group consecutive dimensions with $R_j < 0.3$ (or another threshold) into clusters.
 
-Each cluster represents a set of dimensions that are largely interchangeable. The model could use any one of them as a representative, reducing dimensionality without significant loss of information. This directly connects to the dimensionality reduction motivation of Chapter 8's Pareto analysis: redundancy clusters are the mechanism by which models achieve good performance with fewer dimensions.
+Each cluster represents a set of dimensions that are largely interchangeable. The model could use any one of them as a representative, reducing dimensionality without significant loss of information. This directly connects to the dimensionality reduction motivation of Chapter 9's Pareto analysis: redundancy clusters are the mechanism by which models achieve good performance with fewer dimensions.
 
 ---
 
-## 12.7 A Geometric Interpretation
+## 13.7 A Geometric Interpretation
 
-### 12.7.1 The Composition Path in Evaluation Space
+### 13.7.1 The Composition Path in Evaluation Space
 
 Each step of the compositional test produces a point in the evaluation space: a (dimensionality, MAE) pair. The sequence of points traces a *composition path* from the starting dimension to the full model. This path is a one-dimensional curve through the $n$-dimensional parameter space, projected onto the two-dimensional (dimensionality, MAE) plane.
 
@@ -6222,17 +6457,17 @@ The geometry of this path encodes interaction information:
 - **Plateau** indicates complete redundancy: the new dimension adds no information.
 - **Ascent** (MAE increases) is theoretically possible if re-optimization of the expanded set finds a worse optimum than the restricted set. In practice, this is rare because the search space strictly expands with each added dimension, but it can occur with random search in high dimensions where the search budget is insufficient.
 
-### 12.7.2 Composition Paths and the Pareto Frontier
+### 13.7.2 Composition Paths and the Pareto Frontier
 
-The composition path can be overlaid on the Pareto frontier from Chapter 8. Pareto-optimal points represent the best possible MAE for each dimensionality, while the composition path represents the MAE achieved by a particular greedy construction. The gap between the composition path and the Pareto frontier measures the cost of the greedy approximation: how much worse the greedy ordering is compared to the optimal subset at each dimensionality.
+The composition path can be overlaid on the Pareto frontier from Chapter 9. Pareto-optimal points represent the best possible MAE for each dimensionality, while the composition path represents the MAE achieved by a particular greedy construction. The gap between the composition path and the Pareto frontier measures the cost of the greedy approximation: how much worse the greedy ordering is compared to the optimal subset at each dimensionality.
 
 If the composition path lies close to the Pareto frontier at every step, the greedy algorithm is performing well---the interaction structure is sufficiently captured by the greedy choices. If the composition path deviates significantly from the Pareto frontier at some step, the greedy algorithm has made a suboptimal choice at that point, and the interaction structure contains non-greedy features (e.g., a triple of dimensions that is strong as a unit but whose pairwise components are weak).
 
-This comparison provides a calibration of the compositional test's reliability. When the gap is small, the compositional ordering can be trusted as a faithful representation of the dimension importance hierarchy. When the gap is large, the full combinatorial analysis of Chapter 11 is needed to understand the true structure.
+This comparison provides a calibration of the compositional test's reliability. When the gap is small, the compositional ordering can be trusted as a faithful representation of the dimension importance hierarchy. When the gap is large, the full combinatorial analysis of Chapter 12 is needed to understand the true structure.
 
-### 12.7.3 The Interaction Matrix as a Metric Tensor
+### 13.7.3 The Interaction Matrix as a Metric Tensor
 
-There is a deeper geometric interpretation of the interaction matrix $\Phi$ that connects to the Riemannian framework of Chapters 6 and 9. Consider the space of *dimension activation vectors* $\mathbf{a} \in \{0, 1\}^n$, where $a_i = 1$ indicates that dimension $i$ is active. The evaluation function restricted to this discrete space defines a function $f : \{0, 1\}^n \to \mathbb{R}$.
+There is a deeper geometric interpretation of the interaction matrix $\Phi$ that connects to the Riemannian framework of Chapters 7 and 10. Consider the space of *dimension activation vectors* $\mathbf{a} \in \{0, 1\}^n$, where $a_i = 1$ indicates that dimension $i$ is active. The evaluation function restricted to this discrete space defines a function $f : \{0, 1\}^n \to \mathbb{R}$.
 
 If we approximate $f$ by a second-order expansion around the all-active point $\mathbf{a} = \mathbf{1}$:
 
@@ -6244,21 +6479,21 @@ This is not merely an analogy. When the discrete activation space is relaxed to 
 
 ---
 
-## 12.8 Limitations and Extensions
+## 13.8 Limitations and Extensions
 
-### 12.8.1 Greedy Suboptimality
+### 13.8.1 Greedy Suboptimality
 
 The compositional test is greedy: at each step, it adds the single best dimension without lookahead. This can fail when the optimal sequence requires adding a dimension that is individually suboptimal but enables a strong subsequent addition. For example, if dimensions B and C are strongly synergistic but individually weak, the greedy algorithm will never discover their combination because it will always prefer individually stronger dimensions A and D at the first two steps.
 
-The full subset enumeration of Chapter 11 does not suffer from this limitation---it tests all combinations---but it is exponentially more expensive. A practical middle ground is *beam search*: at each step, retain the top $b$ candidates (not just the best one) and continue from each. With beam width $b = 3$, the cost increases by a factor of 3 but the algorithm can discover dimension combinations that are invisible to the purely greedy approach.
+The full subset enumeration of Chapter 12 does not suffer from this limitation---it tests all combinations---but it is exponentially more expensive. A practical middle ground is *beam search*: at each step, retain the top $b$ candidates (not just the best one) and continue from each. With beam width $b = 3$, the cost increases by a factor of 3 but the algorithm can discover dimension combinations that are invisible to the purely greedy approach.
 
-### 12.8.2 Sensitivity to Starting Point
+### 13.8.2 Sensitivity to Starting Point
 
-As discussed in Section 12.6.1, the starting dimension affects the resulting ordering. More subtly, the starting dimension determines the *evaluation baseline* for all subsequent marginal gains. Starting from a strong dimension means that subsequent gains are measured against a strong baseline, making them appear smaller. Starting from a weak dimension means that gains are measured against a weak baseline, making them appear larger.
+As discussed in Section 13.6.1, the starting dimension affects the resulting ordering. More subtly, the starting dimension determines the *evaluation baseline* for all subsequent marginal gains. Starting from a strong dimension means that subsequent gains are measured against a strong baseline, making them appear smaller. Starting from a weak dimension means that gains are measured against a weak baseline, making them appear larger.
 
 This is not a bias in the statistical sense---both orderings are correct descriptions of the greedy construction from their respective starting points---but it means that marginal gains from different starting points are not directly comparable. When comparing orderings from different starting points, compare the MAE values at each step, not the marginal gains.
 
-### 12.8.3 Scaling to High Dimensions
+### 13.8.3 Scaling to High Dimensions
 
 The quadratic cost of the compositional test ($O(n^2)$ calls to `optimize_subset`) makes it tractable for $n \leq 20$ but expensive beyond that. For high-dimensional spaces, two strategies reduce the cost:
 
@@ -6270,7 +6505,7 @@ Both strategies sacrifice completeness for tractability. The structural fuzzing 
 
 ---
 
-## 12.9 Summary
+## 13.9 Summary
 
 Compositional testing addresses a fundamental gap in single-dimension analysis: the interaction structure between dimensions. The key contributions of this chapter are:
 
@@ -6284,11 +6519,11 @@ Compositional testing addresses a fundamental gap in single-dimension analysis: 
 
 5. **The geometric interpretation.** The interaction matrix functions as a metric tensor on the dimension activation space, encoding how curvature in the activation space maps to curvature in the evaluation space. Compositional testing traces an approximately geodesic path through this space.
 
-The analysis developed in this chapter is *local*: it characterizes interactions around a specific baseline configuration (for ablation) or along a specific greedy path (for composition). It does not guarantee that the interaction structure is the same in other regions of the parameter space. For models with strongly nonlinear evaluation functions, interactions can appear and disappear as the baseline moves. Chapter 13 extends the analysis by examining how compositional structures change under perturbation, connecting the local interaction picture to the global robustness framework developed in Chapter 9.
+The analysis developed in this chapter is *local*: it characterizes interactions around a specific baseline configuration (for ablation) or along a specific greedy path (for composition). It does not guarantee that the interaction structure is the same in other regions of the parameter space. For models with strongly nonlinear evaluation functions, interactions can appear and disappear as the baseline moves. Chapter 14 extends the analysis by examining how compositional structures change under perturbation, connecting the local interaction picture to the global robustness framework developed in Chapter 8.
 
 ---
 
-## 12.10 Exercises
+## 13.10 Exercises
 
 **12.1.** Given a model with four dimensions and the following ablation deltas: $\Delta_A = 1.0$, $\Delta_B = 0.5$, $\Delta_C = 0.3$, $\Delta_D = 0.1$, and the pairwise ablation results $f(\mathbf{x}^{(-AB)}) - f(\mathbf{x}) = 2.0$, $f(\mathbf{x}^{(-AC)}) - f(\mathbf{x}) = 1.2$, $f(\mathbf{x}^{(-AD)}) - f(\mathbf{x}) = 1.1$, compute the interaction matrix entries $\Phi_{AB}$, $\Phi_{AC}$, and $\Phi_{AD}$. Classify each pair as synergistic, additive, or redundant.
 
@@ -6302,14 +6537,14 @@ The analysis developed in this chapter is *local*: it characterizes interactions
 
 ---
 
-*Chapter 13 introduces group-theoretic data augmentation, a complementary approach to systematic exploration. Where this chapter asks "which dimensions interact?", Chapter 13 asks "how can known symmetries be exploited to multiply training signal and reduce sample complexity?"---connecting the compositional analysis developed here to the algebraic structure of the data domain.*
+*Chapter 14 extends the compositional framework by examining how interaction structures respond to perturbation. Where this chapter asks "which dimensions interact?", Chapter 14 asks "how stable are those interactions?"---connecting the local composition picture developed here to the global robustness analysis of the full campaign pipeline.*
 
 
 \newpage
 
-# Chapter 13: Group-Theoretic Data Augmentation
+# Chapter 14: Group-Theoretic Data Augmentation
 
-*Structural Fuzzing: Geometric Methods for Adversarial Model Validation --- Andrew H. Bond*
+*Geometric Methods in Computational Modeling --- Andrew H. Bond*
 
 ---
 
@@ -6327,9 +6562,9 @@ We begin with the algebra, move to the computational implementation using real c
 
 ![All eight symmetries of the dihedral group D₄ applied to an L-shaped pattern.](images/ch13-dihedral-grid.png)
 
-## 13.1 Symmetry as a Computational Resource
+## 14.1 Symmetry as a Computational Resource
 
-### 13.1.1 The Cost of Ignorance
+### 14.1.1 The Cost of Ignorance
 
 Consider a neural network trained to classify patterns on a square grid. The training set contains 1{,}000 examples. If the network has no built-in knowledge of rotational symmetry, it must learn from the data that a pattern and its 90-degree rotation belong to the same class. This requires seeing both orientations in the training set --- and ideally seeing them with comparable frequency, lest the network develop an orientation bias.
 
@@ -6337,7 +6572,7 @@ The situation is worse than it appears. The network must not only learn that rot
 
 The cost can be quantified. Let $f: \mathcal{X} \to \mathcal{Y}$ be the target function, let $G$ be a symmetry group acting on $\mathcal{X}$, and suppose $f$ is $G$-invariant: $f(g \cdot x) = f(x)$ for all $g \in G$, $x \in \mathcal{X}$. A model that does not exploit this invariance has an effective hypothesis space of size $|\mathcal{H}|$. A model that enforces $G$-invariance reduces the hypothesis space to $|\mathcal{H}| / |G|$ (up to factors depending on the group action's structure). For $D_4$ with $|G| = 8$, this is an eightfold reduction --- equivalent, in sample complexity terms, to having eight times as much training data.
 
-### 13.1.2 Three Ways to Exploit Symmetry
+### 14.1.2 Three Ways to Exploit Symmetry
 
 There are three distinct strategies for exploiting a known symmetry group, each with different tradeoffs:
 
@@ -6347,13 +6582,13 @@ There are three distinct strategies for exploiting a known symmetry group, each 
 
 **Symmetrized loss.** Average the loss over the group orbit: $\mathcal{L}_{\text{sym}}(x) = \frac{1}{|G|} \sum_{g \in G} \mathcal{L}(g \cdot x)$. This is intermediate between augmentation and architectural enforcement --- it does not expand the dataset but biases the optimization toward invariant solutions.
 
-This chapter focuses primarily on data augmentation, which is the most widely applicable and the strategy implemented in the ARC-AGI codebase. Section 13.5 discusses equivariant architectures as a complement.
+This chapter focuses primarily on data augmentation, which is the most widely applicable and the strategy implemented in the ARC-AGI codebase. Section 14.5 discusses equivariant architectures as a complement.
 
 ---
 
-## 13.2 The Dihedral Group $D_4$
+## 14.2 The Dihedral Group $D_4$
 
-### 13.2.1 Definition and Elements
+### 14.2.1 Definition and Elements
 
 The *dihedral group* $D_n$ is the symmetry group of a regular $n$-gon: the set of all rigid motions of the plane that map the $n$-gon to itself. For a square ($n = 4$), the group $D_4$ has eight elements:
 
@@ -6370,7 +6605,7 @@ The *dihedral group* $D_n$ is the symmetry group of a regular $n$-gon: the set o
 
 The group is generated by two elements: a rotation $r$ (of order 4) and a reflection $s$ (of order 2), subject to the relation $srs = r^{-1}$. Every element can be written as $s^a r^b$ with $a \in \{0, 1\}$ and $b \in \{0, 1, 2, 3\}$, giving $2 \times 4 = 8$ elements.
 
-### 13.2.2 The Group Multiplication Table
+### 14.2.2 The Group Multiplication Table
 
 The multiplication (composition) table of $D_4$ encodes how transformations compose. Rather than listing all 64 entries, we note the key structural facts:
 
@@ -6380,7 +6615,7 @@ The multiplication (composition) table of $D_4$ encodes how transformations comp
 
 These algebraic properties have direct computational consequences. The closure property guarantees that composing any two $D_4$ transforms yields another $D_4$ transform --- there are no "missing" augmentations. The non-abelian structure means that the order of reflection and rotation matters, which is why the `all_dihedral` function in the ARC codebase generates all eight transforms explicitly rather than composing rotations and reflections in arbitrary order.
 
-### 13.2.3 Group Actions on Grids
+### 14.2.3 Group Actions on Grids
 
 A *group action* of $D_4$ on the set of grids $\mathcal{G} = \{0, \ldots, 9\}^{H \times W}$ is a map $\alpha: D_4 \times \mathcal{G} \to \mathcal{G}$ satisfying:
 
@@ -6401,9 +6636,9 @@ A grid with 4-fold rotational symmetry (e.g., an X-pattern centered on the grid)
 
 ---
 
-## 13.3 Implementation: D4 Augmentation for ARC-AGI
+## 14.3 Implementation: D4 Augmentation for ARC-AGI
 
-### 13.3.1 The Core Transform Functions
+### 14.3.1 The Core Transform Functions
 
 The ARC-AGI codebase implements $D_4$ augmentation using NumPy array operations. The fundamental building blocks are rotation and reflection:
 
@@ -6422,7 +6657,7 @@ def reflect_grid(grid: np.ndarray, axis: int = 0) -> np.ndarray:
 
 These two functions correspond to the generators $r$ and $s$ of $D_4$. Every group element can be expressed as a composition of these two operations. The `.copy()` call on reflection outputs is a deliberate engineering choice: NumPy's `flipud` and `fliplr` return *views* into the original array, not independent copies. Without the copy, subsequent in-place modifications to the reflected grid would corrupt the original --- a subtle bug that manifests as non-deterministic training behavior.
 
-### 13.3.2 Generating the Full Orbit
+### 14.3.2 Generating the Full Orbit
 
 The `all_dihedral` function generates all eight $D_4$ transforms of a grid in a single call:
 
@@ -6448,7 +6683,7 @@ The choice to use `fliplr` (horizontal flip) rather than `flipud` as the reflect
 - `fliplr` followed by `rot90` with $k=1$ gives the main diagonal reflection (transpose).
 - `fliplr` followed by `rot90` with $k=3$ gives the anti-diagonal reflection.
 
-### 13.3.3 Consistent Augmentation of Input-Output Pairs
+### 14.3.3 Consistent Augmentation of Input-Output Pairs
 
 For ARC-AGI tasks, augmentation must be *consistent*: the same transformation applied to both the input and output grids of a training pair, so that the transformation rule $\tau: \text{input} \to \text{output}$ is preserved. If we rotate the input by 90 degrees but not the output, the augmented pair encodes a different (and incorrect) rule.
 
@@ -6496,17 +6731,17 @@ def augment_pair(
 
 Three design choices merit attention.
 
-First, the function samples *random* group elements rather than generating the entire orbit. With $n\_augments = 4$, it produces four random augmentations, not all eight $D_4$ transforms. This is a deliberate trade-off: during test-time training (Section 13.4), generating the full orbit of every training pair would increase the training set by a factor of 8, slowing each refinement step. Random sampling provides most of the benefit at lower cost.
+First, the function samples *random* group elements rather than generating the entire orbit. With $n\_augments = 4$, it produces four random augmentations, not all eight $D_4$ transforms. This is a deliberate trade-off: during test-time training (Section 14.4), generating the full orbit of every training pair would increase the training set by a factor of 8, slowing each refinement step. Random sampling provides most of the benefit at lower cost.
 
-Second, the function composes $D_4$ transforms with *color permutations*. Color permutations form a separate symmetry group --- the symmetric group $S_9$ acting on the nine non-background colors (Section 13.7) --- and the combination generates elements of the *direct product* $D_4 \times S_9$. This larger group has $8 \times 9! = 2{,}903{,}040$ elements, far too many to enumerate, which is why random sampling is essential.
+Second, the function composes $D_4$ transforms with *color permutations*. Color permutations form a separate symmetry group --- the symmetric group $S_9$ acting on the nine non-background colors (Section 14.7) --- and the combination generates elements of the *direct product* $D_4 \times S_9$. This larger group has $8 \times 9! = 2{,}903{,}040$ elements, far too many to enumerate, which is why random sampling is essential.
 
 Third, the use of a deterministic `seed` parameter ensures that augmentation is reproducible. Given the same input pair and seed, the function returns the same augmented pairs. This is critical for debugging and for ensuring that test-time training is deterministic across runs.
 
 ---
 
-## 13.4 The ARC-AGI Application
+## 14.4 The ARC-AGI Application
 
-### 13.4.1 Why ARC Puzzles Have Natural $D_4$ Symmetry
+### 14.4.1 Why ARC Puzzles Have Natural $D_4$ Symmetry
 
 The Abstraction and Reasoning Corpus (ARC-AGI) presents tasks as collections of input-output grid pairs. Each task encodes a transformation rule that the solver must infer from the training pairs and apply to unseen test inputs. The grids use a palette of 10 colors (integers 0--9) on grids up to 30 by 30.
 
@@ -6514,7 +6749,7 @@ Most ARC transformation rules are *geometric* in nature: fill a region, extend a
 
 This connects directly to the hyperbolic rule encoding developed in Chapter 3. The `HyperbolicRuleEncoder` maps transformation rules into the Poincare ball, where abstract rules cluster near the origin and specific sub-rules occupy the periphery. When the training pairs are augmented with $D_4$ transforms, the pair encoder sees eight orientations of the same abstract rule. The resulting hyperbolic embeddings cluster more tightly --- the augmented pairs reinforce the abstract rule signal while averaging out the orientation-specific noise.
 
-### 13.4.2 Augmentation in the Solver Pipeline
+### 14.4.2 Augmentation in the Solver Pipeline
 
 The ARC solver's test-time training loop uses augmentation as a core component. The `refine_on_task` method augments each training pair before fine-tuning:
 
@@ -6549,21 +6784,21 @@ candidate_2 = self.predict(z_rule_alt, test_input, device)
 
 This is a particularly elegant use of augmentation. ARC allows two submission attempts per test input. The solver uses the original training pairs for the first attempt and augmented pairs for the second. Because the augmented pairs emphasize the transformation rule from different orientations, the alternative rule encoding $z\_rule\_alt$ may capture aspects of the rule that the original encoding missed --- especially for rules with strong directional components.
 
-### 13.4.3 Interaction with Structure Probing
+### 14.4.3 Interaction with Structure Probing
 
-Chapter 10 introduced the structure probing framework, which applies parametric transforms to grids and measures latent displacement to discover what invariances the model has learned. The connection to $D_4$ augmentation is direct: the `rotate`, `reflect_h`, and `reflect_v` parametric transforms in the probe suite are exactly the generators of $D_4$.
+Chapter 11 introduced the structure probing framework, which applies parametric transforms to grids and measures latent displacement to discover what invariances the model has learned. The connection to $D_4$ augmentation is direct: the `rotate`, `reflect_h`, and `reflect_v` parametric transforms in the probe suite are exactly the generators of $D_4$.
 
 A model trained *without* $D_4$ augmentation will exhibit high latent displacement under rotations and reflections --- the probe reveals that the model has not learned rotational or reflective invariance. A model trained *with* $D_4$ augmentation should exhibit low displacement under these same transforms, because the augmented training data teaches the model that rotated and reflected grids are equivalent.
 
-The structure probe's robustness index (Chapter 10, Section 10.3) thus provides a quantitative measure of how effectively augmentation has been absorbed. A model with high robustness index separates structural invariants (low displacement under $D_4$ transforms) from stress transforms (high displacement under noise and dropout). If $D_4$ augmentation is working correctly, the invariant transforms should produce near-zero displacement; any residual displacement indicates that the model has incompletely learned the symmetry.
+The structure probe's robustness index (Chapter 11, Section 11.3) thus provides a quantitative measure of how effectively augmentation has been absorbed. A model with high robustness index separates structural invariants (low displacement under $D_4$ transforms) from stress transforms (high displacement under noise and dropout). If $D_4$ augmentation is working correctly, the invariant transforms should produce near-zero displacement; any residual displacement indicates that the model has incompletely learned the symmetry.
 
 This creates a diagnostic loop: augment, train, probe, and iterate. If probing reveals that the model remains sensitive to 90-degree rotation despite augmentation, possible causes include insufficient augmentation (increase `n_augments`), architectural bottlenecks (the encoder may lack the capacity to represent rotational invariance), or training instability (the augmented examples may be overwhelming the original signal). The probe provides the diagnostic; the group theory provides the remedy.
 
 ---
 
-## 13.5 Equivariant Architectures
+## 14.5 Equivariant Architectures
 
-### 13.5.1 From Augmentation to Equivariance
+### 14.5.1 From Augmentation to Equivariance
 
 Data augmentation teaches the model invariance through examples. An equivariant architecture enforces it through structure. The distinction is analogous to the difference between testing a program and proving it correct: augmentation checks invariance empirically; equivariance guarantees it mathematically.
 
@@ -6573,7 +6808,7 @@ $$\phi(g \cdot x) = g \cdot \phi(x) \quad \text{for all } g \in G, \; x \in \mat
 
 Note that the group acts on the *output* space as well as the *input* space. Equivariance does not mean that the representation is unchanged by the group action (that would be invariance); it means that the representation transforms *predictably*. A standard CNN convolution layer is equivariant to translations: shifting the input shifts the feature map by the same amount. But standard convolutions are *not* equivariant to rotations --- rotating the input does not simply rotate the feature maps.
 
-### 13.5.2 Group Convolutions
+### 14.5.2 Group Convolutions
 
 A *group convolution* extends the convolution operation to be equivariant to a finite group $G$. For the standard convolution on $\mathbb{Z}^2$, the output at position $x$ is:
 
@@ -6591,7 +6826,7 @@ $$z_{\text{inv}}(x) = \frac{1}{|G|} \sum_{g \in G} z(g, x)$$
 
 This pooling step converts equivariance to invariance. The intermediate equivariant features retain orientation information (useful for predicting oriented outputs), while the pooled features discard it (useful for classification or rule inference).
 
-### 13.5.3 Why ARC Uses Augmentation Instead
+### 14.5.3 Why ARC Uses Augmentation Instead
 
 The ARC-AGI solver uses data augmentation rather than $D_4$-equivariant convolutions for three pragmatic reasons.
 
@@ -6599,13 +6834,13 @@ First, ARC grids are small (up to 30 by 30) and the group is small ($|D_4| = 8$)
 
 Second, ARC tasks sometimes violate $D_4$ symmetry. A rule that says "fill the rightmost column with red" is *not* invariant under 90-degree rotation --- the rotated rule fills the top row, not the rightmost column. For such tasks, $D_4$-equivariant features would be *less* informative than orientation-specific features. Augmentation handles this naturally: the solver sees the rule from multiple orientations and learns to predict the orientation-appropriate output. An equivariant architecture would need an explicit mechanism to break symmetry when the task demands it.
 
-Third, the solver combines $D_4$ transforms with color permutations. Building an architecture equivariant to $D_4 \times S_9$ is substantially more complex than building one equivariant to $D_4$ alone, while augmenting with elements of the product group is straightforward (as shown in Section 13.3.3).
+Third, the solver combines $D_4$ transforms with color permutations. Building an architecture equivariant to $D_4 \times S_9$ is substantially more complex than building one equivariant to $D_4$ alone, while augmenting with elements of the product group is straightforward (as shown in Section 14.3.3).
 
 ---
 
-## 13.6 The Orbit-Stabilizer Theorem in Practice
+## 14.6 The Orbit-Stabilizer Theorem in Practice
 
-### 13.6.1 Detecting Redundant Augmentations
+### 14.6.1 Detecting Redundant Augmentations
 
 Not every grid benefits equally from augmentation. A grid with internal symmetry --- such as a rotationally symmetric pattern --- produces duplicate augmentations, wasting computation and biasing the training set.
 
@@ -6643,7 +6878,7 @@ def unique_orbit(grid: np.ndarray) -> list[np.ndarray]:
 
 In practice, grids with large stabilizers are rare in ARC --- most task grids are asymmetric, yielding the full orbit of 8. But when they do occur, the duplicate augmentations can subtly bias training. If a symmetric grid has orbit size 2 while asymmetric grids have orbit size 8, the symmetric grid is overrepresented by a factor of 4 in the augmented training set. For large-scale training this may not matter; for the few-shot regime of ARC (typically 2--4 training pairs per task), it can shift the inferred rule toward the symmetric example.
 
-### 13.6.2 Burnside's Lemma and Counting Distinct Patterns
+### 14.6.2 Burnside's Lemma and Counting Distinct Patterns
 
 A related question arises in ARC task analysis: *how many truly distinct grid patterns exist*, up to $D_4$ equivalence? Burnside's lemma (also known as the Cauchy-Frobenius lemma) answers this:
 
@@ -6660,9 +6895,9 @@ For a 5 by 5 grid with 10 colors, the total number of grids is $10^{25} \approx 
 
 ---
 
-## 13.7 Extending Beyond $D_4$
+## 14.7 Extending Beyond $D_4$
 
-### 13.7.1 Color Permutation Groups
+### 14.7.1 Color Permutation Groups
 
 The 10 ARC colors form a set $C = \{0, 1, \ldots, 9\}$, and a *color permutation* is a bijection $\sigma: C \to C$. The set of all such permutations is the symmetric group $S_{10}$ of order $10! = 3{,}628{,}800$. However, color 0 has a distinguished role as the background, so the relevant group is typically $S_9$ (permutations of colors 1--9, fixing 0), with order $9! = 362{,}880$.
 
@@ -6687,7 +6922,7 @@ Color permutations commute with $D_4$ transforms: rotating a color-permuted grid
 
 Not all ARC tasks are invariant under arbitrary color permutations. A task whose rule depends on specific color identities (e.g., "replace all blue cells with red") is not $S_9$-invariant. The solver handles this implicitly: the test-time training loop fine-tunes on augmented examples, and if color permutations produce examples that conflict with the true rule, the model learns to downweight them. This is a form of *soft* symmetry exploitation, where the model uses the group orbit as a regularizer but does not enforce strict invariance.
 
-### 13.7.2 Translation Groups
+### 14.7.2 Translation Groups
 
 Square grids support cyclic translations: shifting all cells by $(dr, dc)$ with wraparound. The group of all such translations is $\mathbb{Z}_H \times \mathbb{Z}_W$ for an $H \times W$ grid, with $H \cdot W$ elements. The `_translate` transform in the probing framework implements this:
 
@@ -6706,11 +6941,11 @@ Translation invariance is appropriate for tasks involving periodic patterns (e.g
 
 The full spatial symmetry group of a square grid (combining $D_4$ with translations) is the *semidirect product* $(\mathbb{Z}_n \times \mathbb{Z}_n) \rtimes D_4$, which has $8n^2$ elements. For a 30 by 30 grid, this is $8 \times 900 = 7{,}200$ elements --- large enough that exhaustive enumeration is impractical but small enough that random sampling is effective.
 
-### 13.7.3 Scale Symmetries
+### 14.7.3 Scale Symmetries
 
 The `_scale_up` transform in the probing suite tests invariance to integer scaling: repeating each cell to produce a grid at 2x or 3x resolution. Scale invariance is relevant for ARC tasks involving patterns at multiple scales (e.g., "the output is the input tiled 2x2"). The scaling group is not a standard algebraic group (scaling by 2 and then by 3 gives scaling by 6, but scaling by 2 and then by 1/2 requires a non-integer inverse), but for the integer-valued scales relevant to discrete grids, it forms a multiplicative semigroup.
 
-### 13.7.4 Continuous Symmetries
+### 14.7.4 Continuous Symmetries
 
 The groups discussed so far are *discrete* (finite or countably infinite). Many important symmetries are *continuous*: the rotation group $SO(2)$ (all planar rotations), the Euclidean group $E(2)$ (rotations + translations), and the affine group $\text{Aff}(2)$ (linear maps + translations). These arise naturally in image recognition, physics simulation, and molecular modeling.
 
@@ -6720,9 +6955,9 @@ For the structural fuzzing framework, continuous symmetries enter through the Li
 
 ---
 
-## 13.8 The Algebra of Augmentation Pipelines
+## 14.8 The Algebra of Augmentation Pipelines
 
-### 13.8.1 Augmentation as a Group Homomorphism
+### 14.8.1 Augmentation as a Group Homomorphism
 
 An augmentation pipeline can be formalized as a *group homomorphism* from the symmetry group $G$ to the group of bijections on the data space $\mathcal{X}$:
 
@@ -6732,9 +6967,9 @@ where $T_g: \mathcal{X} \to \mathcal{X}$ is the transform corresponding to group
 
 $$T_{g_1 g_2} = T_{g_1} \circ T_{g_2} \quad \text{for all } g_1, g_2 \in G$$
 
-This is precisely the compatibility condition of a group action (Section 13.2.3). A correct augmentation pipeline is one whose transforms faithfully represent the group structure. An incorrect pipeline --- one where the composition of two transforms does not equal the transform of the composition --- produces inconsistent augmentations that confuse rather than help the model.
+This is precisely the compatibility condition of a group action (Section 14.2.3). A correct augmentation pipeline is one whose transforms faithfully represent the group structure. An incorrect pipeline --- one where the composition of two transforms does not equal the transform of the composition --- produces inconsistent augmentations that confuse rather than help the model.
 
-### 13.8.2 Verifying Group Structure
+### 14.8.2 Verifying Group Structure
 
 The group axioms provide a checklist for verifying an augmentation implementation:
 
@@ -6780,27 +7015,27 @@ def test_d4_group_structure():
         assert any(np.array_equal(o, grid) for o in g_orbit)
 ```
 
-This test is not merely pedagogical. Augmentation bugs --- where the implemented transforms do not form a group --- are a real source of training degradation. A common mistake is implementing reflections as views rather than copies (Section 13.3.1), which causes subsequent rotations to modify the original, breaking the group structure.
+This test is not merely pedagogical. Augmentation bugs --- where the implemented transforms do not form a group --- are a real source of training degradation. A common mistake is implementing reflections as views rather than copies (Section 14.3.1), which causes subsequent rotations to modify the original, breaking the group structure.
 
 ---
 
-## 13.9 Connection to the Geometric Framework
+## 14.9 Connection to the Geometric Framework
 
-### 13.9.1 Symmetry in the State Space
+### 14.9.1 Symmetry in the State Space
 
 The geometric framework of this book represents model configurations as points in a multi-dimensional state space (Chapter 1). Symmetry groups act on this state space, mapping one configuration to an equivalent one. The orbit of a configuration under the symmetry group defines an *equivalence class*, and the quotient space $\mathcal{S} / G$ (the space of equivalence classes) is the effective search space.
 
 For the ARC solver, the state space includes the encoder parameters, the rule embedding, and the decoder parameters. The $D_4$ symmetry acts on this space indirectly: two parameter configurations that differ only in how they represent rotated patterns are equivalent. Data augmentation does not reduce the parameter space directly, but it biases optimization toward configurations that are symmetric under $D_4$, effectively projecting the search onto the quotient space.
 
-### 13.9.2 Orbits as Geodesics
+### 14.9.2 Orbits as Geodesics
 
 On a Riemannian manifold, the orbit of a point under a continuous symmetry group traces a *geodesic* (or more generally, a curve with specific geometric properties). For discrete groups, the orbit is a finite set of points, but the distances between orbit elements are determined by the group structure and the manifold's geometry.
 
 In the Poincare ball (Chapter 3), where ARC rules are embedded, the $D_4$ action on rules has a geometric interpretation. If a rule $h \in \mathbb{B}^d$ encodes "fill the rightmost column," then $r \cdot h$ (the rotated rule) encodes "fill the bottom row." In hyperbolic space, these two rules are at a specific hyperbolic distance determined by how the encoder maps directional information. A well-trained encoder that has absorbed $D_4$ augmentation will place these rules close together (they are the same abstract rule), while an encoder without augmentation may place them far apart (they look like different rules in different orientations).
 
-The hyperbolic distance between orbit elements thus provides a *direct measure of how well augmentation is working*. This complements the probing-based measure from Section 13.4.3: probing measures invariance at the grid level (does the encoder produce the same representation for rotated grids?), while hyperbolic orbit distance measures invariance at the rule level (does the rule encoder produce the same rule for rotated training pairs?).
+The hyperbolic distance between orbit elements thus provides a *direct measure of how well augmentation is working*. This complements the probing-based measure from Section 14.4.3: probing measures invariance at the grid level (does the encoder produce the same representation for rotated grids?), while hyperbolic orbit distance measures invariance at the rule level (does the rule encoder produce the same rule for rotated training pairs?).
 
-### 13.9.3 Equivariance and Parallel Transport
+### 14.9.3 Equivariance and Parallel Transport
 
 There is a deep connection between equivariance and the geometric operation of *parallel transport*. Parallel transport moves a tangent vector along a curve on a manifold while preserving its "direction" relative to the manifold's geometry. An equivariant function $\phi$ satisfying $\phi(g \cdot x) = g \cdot \phi(x)$ can be understood as preserving the group action under the map $\phi$ --- the group element is "transported" from the input space to the feature space without distortion.
 
@@ -6808,9 +7043,9 @@ When the group is continuous, this connection can be made precise through the th
 
 ---
 
-## 13.10 Practical Guidelines
+## 14.10 Practical Guidelines
 
-### 13.10.1 When to Augment
+### 14.10.1 When to Augment
 
 Augment when:
 - The symmetry group is *known* and the target function is invariant under it (or nearly so).
@@ -6822,7 +7057,7 @@ Do *not* augment when:
 - The task explicitly breaks the symmetry. If the label depends on orientation, rotation augmentation teaches the model to ignore orientation --- the opposite of what is needed.
 - The augmented dataset becomes so large that training time is dominated by redundant examples. For $D_4$ with 8 elements, this is rarely an issue; for $S_9$ with 362{,}880 elements, random sampling is essential.
 
-### 13.10.2 How Many Augmentations
+### 14.10.2 How Many Augmentations
 
 For a finite group $G$ acting on a training set of $N$ examples, each with orbit size $|G|$ (assuming trivial stabilizers), the fully augmented set has $N \cdot |G|$ elements. The optimal number of augmentations per example depends on the training regime:
 
@@ -6830,19 +7065,19 @@ For a finite group $G$ acting on a training set of $N$ examples, each with orbit
 - **Random sampling.** Use when $|G|$ is large or training time is constrained. Sample $k$ random group elements per example, where $k$ is tuned on a validation set. The ARC solver uses $k = 4$ as a default.
 - **Adaptive sampling.** Sample more augmentations for examples with high training loss, fewer for well-learned examples. This is not implemented in the current ARC codebase but is a natural extension.
 
-### 13.10.3 Verifying Augmentation Effectiveness
+### 14.10.3 Verifying Augmentation Effectiveness
 
 Three diagnostics assess whether augmentation is helping:
 
 1. **Validation loss.** Compare validation loss with and without augmentation. If augmentation hurts, the symmetry assumption may be wrong or the model may be capacity-limited.
 
-2. **Probing invariance.** Use the structure probe (Chapter 10) to measure latent displacement under group transforms. Post-augmentation displacement should be lower than pre-augmentation displacement for the targeted transforms.
+2. **Probing invariance.** Use the structure probe (Chapter 11) to measure latent displacement under group transforms. Post-augmentation displacement should be lower than pre-augmentation displacement for the targeted transforms.
 
 3. **Orbit consistency.** For each test input, generate all $|G|$ augmented versions, predict outputs for each, and un-transform the predictions. If the model has learned the symmetry, all $|G|$ predictions should agree. The rate of disagreement quantifies residual equivariance error.
 
 ---
 
-## 13.11 Summary
+## 14.11 Summary
 
 Symmetry is not decoration --- it is a computational resource. The dihedral group $D_4$, with its eight elements, is the natural symmetry group of square-grid problems and provides an eightfold multiplication of training signal at negligible cost. The algebra ensures that augmentation is complete (every equivalent configuration is reachable) and non-redundant (the orbit-stabilizer theorem counts duplicates). Consistent augmentation of input-output pairs preserves transformation rules, making $D_4$ augmentation particularly valuable for the few-shot rule inference that ARC-AGI demands.
 
@@ -6854,37 +7089,37 @@ The key ideas of this chapter are:
 
 3. **Consistent augmentation preserves rules.** For input-output pair tasks, the same group element must be applied to both input and output, as implemented in `augment_pair`.
 
-4. **Augmentation complements probing.** The structure probe (Chapter 10) measures whether augmentation has been absorbed; the hyperbolic rule encoder (Chapter 3) measures whether augmented training pairs produce consistent rule embeddings.
+4. **Augmentation complements probing.** The structure probe (Chapter 11) measures whether augmentation has been absorbed; the hyperbolic rule encoder (Chapter 3) measures whether augmented training pairs produce consistent rule embeddings.
 
 5. **The group extends.** Combining $D_4$ with color permutations ($S_9$), translations ($\mathbb{Z}_H \times \mathbb{Z}_W$), and scalings produces a large symmetry group that is best explored by random sampling.
 
 ---
 
-## 13.12 Forward: Symmetry-Aware Fuzzing
+## 14.12 Forward: Symmetry-Aware Fuzzing
 
-Chapter 14 introduces gradient reversal and invariance training, complementary techniques for building robust representations. Where this chapter used symmetry to generate *equivalent* training examples via known group actions, Chapter 14 addresses nuisance variables that cannot be characterized as group actions (recording conditions, domain identity) by learning invariances through adversarial training. The probing framework of Chapter 10 provides the detection mechanism; the group theory of this chapter provides specified invariances; and Chapter 14 provides learned invariances---together covering the full invariance spectrum.
+Chapter 15 takes the symmetry framework from augmentation to *fuzzing*. Where this chapter used symmetry to generate *equivalent* training examples, Chapter 15 uses symmetry to generate *adversarial* test cases --- inputs designed to expose failures in the model's learned invariances. The key insight is that a model's failure to respect a known symmetry is a *bug*, and fuzzing the symmetry group's orbit is a targeted strategy for finding such bugs. The probing framework of Chapter 11 provides the detection mechanism; the group theory of this chapter provides the space of perturbations to search; and Chapter 15 combines them into a systematic adversarial testing methodology.
 
 
 \newpage
 
-# Chapter 14: Gradient Reversal and Invariance Training
+# Chapter 15: Gradient Reversal and Invariance Training
 
 > *"The encoder that remembers everything is the encoder that has learned nothing."*
 > --- Paraphrase of a principle from domain adaptation theory
 
-Chapter 9 introduced adversarial robustness testing: probing a model's behavior under perturbation to discover where and how it breaks. That methodology is *diagnostic*---it measures fragility after the fact. This chapter introduces a complementary technique that is *prescriptive*: gradient reversal training, which forces an encoder to become invariant to specified nuisance variables during training itself. Where Chapter 9 asks "does the model break when we push it?", this chapter asks "can we build a model that *cannot* encode information we do not want it to have?"
+Chapter 10 introduced adversarial robustness testing: probing a model's behavior under perturbation to discover where and how it breaks. That methodology is *diagnostic*---it measures fragility after the fact. This chapter introduces a complementary technique that is *prescriptive*: gradient reversal training, which forces an encoder to become invariant to specified nuisance variables during training itself. Where Chapter 10 asks "does the model break when we push it?", this chapter asks "can we build a model that *cannot* encode information we do not want it to have?"
 
 The motivation is immediate and practical. An encoder trained to classify sperm whale coda types from spectrograms will, left to its own devices, happily memorize the recording conditions---hydrophone frequency response, ambient noise spectrum, ocean reverberation profile---alongside the biological signal. It achieves excellent accuracy on the training set because the recording conditions are correlated with the deployment location, and the deployment location is correlated with the whale clan. The encoder has learned a shortcut: predict the clan, then predict the coda type. On a new hydrophone, deployed in a new ocean basin, this encoder fails catastrophically, because the shortcut no longer holds.
 
 This is not a pathology specific to cetacean bioacoustics. It is the central problem of **domain adaptation**, and it arises whenever surface features are correlated with target labels in the training data but not in the deployment environment. The gradient reversal layer, introduced by Ganin and Lempitsky (2015) and developed further by Ganin et al. (2016), provides an elegant solution: attach an adversarial classifier to the encoder's latent representation, train it to predict the nuisance variable (recording conditions, domain identity, speaker identity), and then *reverse the gradient* flowing back through the encoder, so that the encoder is trained to make the adversarial classifier's job *impossible*. The result is a representation that is invariant to the nuisance variable by construction.
 
-We begin with a precise statement of the invariance problem (Section 14.1), develop the gradient reversal layer and its training procedure (Section 14.2), give the geometric interpretation as projection onto the orthogonal complement of a nuisance subspace (Section 14.3), implement the full system in PyTorch (Section 14.4), apply it to cetacean bioacoustics (Section 14.5), connect to the adversarial robustness framework of Chapter 9 (Section 14.6), and close with forward connections to the group-theoretic augmentation methods of Chapter 15.
+We begin with a precise statement of the invariance problem (Section 15.1), develop the gradient reversal layer and its training procedure (Section 15.2), give the geometric interpretation as projection onto the orthogonal complement of a nuisance subspace (Section 15.3), implement the full system in PyTorch (Section 15.4), apply it to cetacean bioacoustics (Section 15.5), connect to the adversarial robustness framework of Chapter 10 (Section 15.6), and close with forward connections to the group-theoretic augmentation methods of Chapter 16.
 
 ---
 
-## 14.1 The Invariance Problem
+## 15.1 The Invariance Problem
 
-### 14.1.1 Encoders That Memorize Surface Features
+### 15.1.1 Encoders That Memorize Surface Features
 
 Consider an encoder $f_\theta : \mathcal{X} \to \mathcal{Z}$ that maps raw inputs (spectrograms, images, text) to a latent representation $\mathbf{z} = f_\theta(\mathbf{x}) \in \mathbb{R}^d$. A task classifier $g_\phi : \mathcal{Z} \to \mathcal{Y}$ then maps the representation to predictions. The standard training objective minimizes the task loss:
 
@@ -6896,11 +7131,11 @@ Formally, let $s \in \mathcal{S}$ be a **nuisance variable**---an attribute of t
 
 The standard training objective places no constraint on the mutual information $I(\mathbf{z}; s)$ between the latent representation and the nuisance variable. If $s$ is correlated with $y$ in the training data, gradient descent will cheerfully exploit that correlation, producing an encoder for which $I(\mathbf{z}; s)$ is high. The encoder has memorized the surface features.
 
-### 14.1.2 The Domain Shift Failure Mode
+### 15.1.2 The Domain Shift Failure Mode
 
 The consequence of high $I(\mathbf{z}; s)$ is predictable: when the correlation between $s$ and $y$ breaks down---because the model is deployed on a new domain, a new device, or a new population---the encoder's predictions degrade. This is **domain shift**, and it is one of the most common failure modes in applied machine learning.
 
-The adversarial robustness framework of Chapter 9 can *detect* this failure mode after training. The Decoder Robustness Index (DRI), adapted from the Bond Index, applies parametric acoustic transforms at varying intensities and measures how the decoder's output changes:
+The structural fuzzing framework of Chapter 10 can *detect* this failure mode after training. The Decoder Robustness Index (DRI), adapted from the Bond Index, applies parametric acoustic transforms at varying intensities and measures how the decoder's output changes:
 
 ```python
 # From eris_ketos.decoder_robustness — diagnosis after the fact
@@ -6911,7 +7146,7 @@ result = dri.measure(decoder, signals, labels, sr=32000)
 
 The DRI tells you *that* the model is sensitive to recording conditions. Gradient reversal tells the model *not to be*.
 
-### 14.1.3 The Invariance Objective
+### 15.1.3 The Invariance Objective
 
 The goal is to learn a representation $\mathbf{z} = f_\theta(\mathbf{x})$ such that:
 
@@ -6922,9 +7157,9 @@ In information-theoretic terms, we want to maximize $I(\mathbf{z}; y)$ while min
 
 ---
 
-## 14.2 The Gradient Reversal Layer
+## 15.2 The Gradient Reversal Layer
 
-### 14.2.1 Architecture
+### 15.2.1 Architecture
 
 The domain-adversarial neural network (DANN) architecture, introduced by Ganin et al. (2016), augments the standard encoder-classifier pair with a **domain discriminator** $h_\psi : \mathcal{Z} \to \mathcal{S}$ that attempts to predict the nuisance variable from the latent representation:
 
@@ -6948,7 +7183,7 @@ $$\frac{\partial \text{GRL}}{\partial \mathbf{z}} = -\lambda \mathbf{I} \quad \t
 
 where $\lambda > 0$ is a scaling factor that controls the strength of the adversarial signal.
 
-### 14.2.2 The Combined Loss
+### 15.2.2 The Combined Loss
 
 The full training objective is:
 
@@ -6967,7 +7202,7 @@ $$\min_{\theta, \phi} \max_\psi \; \mathcal{L}_{\text{task}}(\theta, \phi) - \la
 
 At equilibrium, the domain discriminator performs at chance level: the latent representation contains no information about the nuisance variable, so no classifier can predict it above baseline.
 
-### 14.2.3 Why Not Just Remove the Nuisance Variable?
+### 15.2.3 Why Not Just Remove the Nuisance Variable?
 
 A natural question: why not simply remove the nuisance variable from the input? If recording conditions are the problem, preprocess the audio to normalize them.
 
@@ -6977,18 +7212,18 @@ Gradient reversal operates at the representation level, where the entanglement h
 
 ---
 
-## 14.3 The Geometric Interpretation
+## 15.3 The Geometric Interpretation
 
-### 14.3.1 The Latent Space as a Vector Space
+### 15.3.1 The Latent Space as a Vector Space
 
 The latent representation $\mathbf{z} \in \mathbb{R}^d$ lives in a $d$-dimensional vector space. Within this space, we can identify two subspaces:
 
 - **The task subspace** $\mathcal{V}_{\text{task}} \subseteq \mathbb{R}^d$: the directions along which $\mathbf{z}$ varies in ways that are predictive of $y$.
 - **The nuisance subspace** $\mathcal{V}_{\text{nuis}} \subseteq \mathbb{R}^d$: the directions along which $\mathbf{z}$ varies in ways that are predictive of $s$.
 
-If these subspaces are orthogonal ($\mathcal{V}_{\text{task}} \perp \mathcal{V}_{\text{nuis}}$), the invariance problem is trivial: project onto $\mathcal{V}_{\text{task}}$ and discard $\mathcal{V}_{\text{nuis}}$. The difficulty arises when the subspaces overlap---when some directions in $\mathbb{R}^d$ are simultaneously predictive of both $y$ and $s$. This overlap is precisely the "entanglement" described in Section 14.2.3.
+If these subspaces are orthogonal ($\mathcal{V}_{\text{task}} \perp \mathcal{V}_{\text{nuis}}$), the invariance problem is trivial: project onto $\mathcal{V}_{\text{task}}$ and discard $\mathcal{V}_{\text{nuis}}$. The difficulty arises when the subspaces overlap---when some directions in $\mathbb{R}^d$ are simultaneously predictive of both $y$ and $s$. This overlap is precisely the "entanglement" described in Section 15.2.3.
 
-### 14.3.2 Gradient Reversal as Orthogonal Projection
+### 15.3.2 Gradient Reversal as Orthogonal Projection
 
 The geometric insight behind gradient reversal is this: the reversed gradient pushes the encoder to produce representations that lie in the **orthogonal complement** of the nuisance subspace.
 
@@ -7006,7 +7241,7 @@ $$\mathbf{g}_{\text{total}} = \nabla_{\mathbf{z}} \mathcal{L}_{\text{task}} - \l
 
 The first term pulls the representation toward $\mathcal{V}_{\text{task}}$. The second term pushes it away from $\mathcal{V}_{\text{nuis}}$. At convergence, the representation has been projected onto $\mathcal{V}_{\text{task}} \cap \mathcal{V}_{\text{nuis}}^\perp$---the subspace that is predictive of the task but orthogonal to the nuisance directions.
 
-### 14.3.3 Connection to SPD Manifolds
+### 15.3.3 Connection to SPD Manifolds
 
 When the features of interest are covariance matrices---as they are for the SPD spectral analysis of Chapter 4---the geometry becomes Riemannian rather than Euclidean. Recall from Chapter 4 that frequency-band covariance matrices live on the SPD manifold $\text{SPD}(n)$, with the log-Euclidean metric:
 
@@ -7027,19 +7262,19 @@ cov_invariant = SPDManifold.exp_map(log_cov) # symmetric -> SPD
 
 This connection is not incidental. The reason gradient reversal generalizes cleanly to non-Euclidean settings is precisely that it operates on gradients---tangent vectors---and tangent spaces are always (locally) Euclidean, regardless of the curvature of the ambient manifold.
 
-### 14.3.4 The Rank of the Nuisance Subspace
+### 15.3.4 The Rank of the Nuisance Subspace
 
 An important practical question is: how many dimensions does the nuisance subspace occupy? If the nuisance variable $s$ is low-dimensional (e.g., a binary domain label), the nuisance subspace $\mathcal{V}_{\text{nuis}}$ is typically low-rank, and gradient reversal can eliminate it without significantly reducing the encoder's capacity for the task.
 
 But if the nuisance variable is high-dimensional (e.g., a full characterization of recording conditions including hydrophone response, noise spectrum, reverberation profile, and depth), $\mathcal{V}_{\text{nuis}}$ may span many directions in $\mathbb{R}^d$, and the orthogonal complement $\mathcal{V}_{\text{nuis}}^\perp$ may have insufficient capacity for the task. In this case, the $\lambda$ parameter mediates a genuine tradeoff: higher $\lambda$ forces stronger invariance at the cost of task performance.
 
-The structural fuzzing framework provides a direct way to diagnose this tradeoff. After training with gradient reversal, apply the DRI from Chapter 9 to measure residual sensitivity to each nuisance dimension. If the DRI for a particular transform (e.g., `amplitude_scale` or `additive_noise`) remains high despite gradient reversal training, the corresponding nuisance direction is entangled with the task subspace in a way that gradient reversal alone cannot resolve.
+The structural fuzzing framework provides a direct way to diagnose this tradeoff. After training with gradient reversal, apply the DRI from Chapter 10 to measure residual sensitivity to each nuisance dimension. If the DRI for a particular transform (e.g., `amplitude_scale` or `additive_noise`) remains high despite gradient reversal training, the corresponding nuisance direction is entangled with the task subspace in a way that gradient reversal alone cannot resolve.
 
 ---
 
-## 14.4 Implementation
+## 15.4 Implementation
 
-### 14.4.1 The Gradient Reversal Layer in PyTorch
+### 15.4.1 The Gradient Reversal Layer in PyTorch
 
 The gradient reversal layer is remarkably simple to implement. The key mechanism is PyTorch's `autograd.Function`, which allows custom forward and backward behavior:
 
@@ -7088,7 +7323,7 @@ class GradientReversalLayer(nn.Module):
 
 The implementation is five lines of computational logic wrapped in PyTorch's autograd machinery. The `forward` method is the identity (with a `clone()` to ensure a clean computational graph). The `backward` method negates the gradient and scales by $\lambda$. That is all gradient reversal *is*.
 
-### 14.4.2 The Domain-Adversarial Network
+### 15.4.2 The Domain-Adversarial Network
 
 The full architecture composes the encoder, task head, gradient reversal layer, and domain head:
 
@@ -7138,7 +7373,7 @@ class DomainAdversarialNetwork(nn.Module):
         return task_logits, domain_logits
 ```
 
-### 14.4.3 The Lambda Schedule
+### 15.4.3 The Lambda Schedule
 
 A critical practical detail is the **lambda schedule**. Starting with a large $\lambda$ destabilizes training: the adversarial signal overwhelms the task gradient before the encoder has learned any useful features. Ganin et al. recommend a schedule that ramps $\lambda$ from 0 to its maximum value over the course of training:
 
@@ -7176,7 +7411,7 @@ def lambda_schedule(
 
 The schedule ensures that the encoder first learns discriminative features for the task (when $\lambda \approx 0$), and only later is forced to discard nuisance information (as $\lambda$ ramps up). Without this schedule, gradient reversal training is notoriously unstable.
 
-### 14.4.4 The Training Loop
+### 15.4.4 The Training Loop
 
 The training loop for domain-adversarial training is structurally similar to standard supervised training, with two loss terms and a lambda schedule:
 
@@ -7253,7 +7488,7 @@ def train_dann(
 
 Note a subtle but important point in the combined loss: we write `loss = loss_task + loss_domain`, *not* `loss = loss_task - lambda * loss_domain`. The sign reversal is handled by the GRL, which negates the gradient flowing from `loss_domain` back through the encoder. The domain head's own parameters receive the *un-reversed* gradient and are trained normally to minimize the domain classification loss. This asymmetry---the same loss term trains the domain head to succeed and the encoder to make it fail---is the essence of the adversarial game.
 
-### 14.4.5 Monitoring Convergence
+### 15.4.5 Monitoring Convergence
 
 The diagnostic signature of successful gradient reversal training is:
 
@@ -7265,9 +7500,9 @@ If the domain accuracy does not decrease, $\lambda$ is too small or the domain h
 
 ---
 
-## 14.5 Application: Cetacean Bioacoustics
+## 15.5 Application: Cetacean Bioacoustics
 
-### 14.5.1 The Recording Condition Problem
+### 15.5.1 The Recording Condition Problem
 
 Cetacean bioacoustics presents a textbook case for gradient reversal. The field data collection pipeline introduces systematic variation that is correlated with, but not caused by, the biological signal:
 
@@ -7279,9 +7514,9 @@ Cetacean bioacoustics presents a textbook case for gradient reversal. The field 
 | Recording gain | Operator settings | Overall amplitude scaling |
 | Sample rate | Equipment generation | Bandwidth truncation |
 
-The `acoustic_transforms` module in `eris_ketos` parameterizes exactly these nuisance factors as intensity-controllable transforms. Chapter 9 used them for post-hoc robustness testing. Here we use the same taxonomy to define the nuisance variable for invariance training.
+The `acoustic_transforms` module in `eris_ketos` parameterizes exactly these nuisance factors as intensity-controllable transforms. Chapter 10 used them for post-hoc robustness testing. Here we use the same taxonomy to define the nuisance variable for invariance training.
 
-### 14.5.2 Architecture for Invariant Coda Classification
+### 15.5.2 Architecture for Invariant Coda Classification
 
 The architecture for invariant coda classification follows the DANN template:
 
@@ -7367,7 +7602,7 @@ class RecordingConditionHead(nn.Module):
 
 The domain head is deliberately smaller than the task head. This is a design choice, not an oversight. A domain head that is too powerful can extract nuisance information from subtle correlations in the latent space that a simpler head would miss, leading to an unstable minimax game. A moderately sized domain head provides a sufficient invariance signal without the pathological dynamics of an overpowered adversary.
 
-### 14.5.3 Assembling and Training the Invariant Classifier
+### 15.5.3 Assembling and Training the Invariant Classifier
 
 ```python
 def build_invariant_coda_classifier(
@@ -7403,11 +7638,11 @@ def build_invariant_coda_classifier(
     )
 ```
 
-### 14.5.4 Integrating SPD Features
+### 15.5.4 Integrating SPD Features
 
 The SPD spectral features from Chapter 4 provide a natural complement to the raw spectrogram encoder. The frequency-band covariance matrix captures inter-band correlations---harmonic relationships, resonance structure---that the spectrogram encoder might miss. But covariance matrices are particularly susceptible to recording-condition contamination: the hydrophone's frequency response multiplies into every off-diagonal entry.
 
-Gradient reversal on SPD features requires operating in the tangent space, as described in Section 14.3.3:
+Gradient reversal on SPD features requires operating in the tangent space, as described in Section 15.3.3:
 
 ```python
 from eris_ketos.spd_spectral import SPDManifold, compute_covariance
@@ -7445,7 +7680,7 @@ class SPDInvariantEncoder(nn.Module):
 
 The SPD features arrive already in tangent space (via `spd_features_from_spectrogram`, which applies the log map and extracts the upper triangle). The gradient reversal layer operates on the encoder's output, which is a standard Euclidean vector. This is the key simplification: by working in the log-Euclidean framework, all the Riemannian geometry is absorbed into the feature extraction step, and the invariance training proceeds in a flat space.
 
-### 14.5.5 Evaluation: DRI Before and After Invariance Training
+### 15.5.5 Evaluation: DRI Before and After Invariance Training
 
 The diagnostic power of combining gradient reversal (prescriptive) with the DRI (diagnostic) is substantial. After invariance training, we re-run the DRI using the same acoustic transform suite:
 
@@ -7476,11 +7711,11 @@ If a recording-condition transform still shows high DRI after invariance trainin
 
 ---
 
-## 14.6 Connection to Adversarial Robustness (Chapter 9)
+## 15.6 Connection to Adversarial Robustness (Chapter 10)
 
-### 14.6.1 Two Sides of the Same Coin
+### 15.6.1 Two Sides of the Same Coin
 
-Chapter 9's adversarial robustness testing and this chapter's gradient reversal training are dual perspectives on the same geometric problem. Both concern the relationship between the encoder's latent space and a set of transformations applied to the input:
+Chapter 10's adversarial robustness testing and this chapter's gradient reversal training are dual perspectives on the same geometric problem. Both concern the relationship between the encoder's latent space and a set of transformations applied to the input:
 
 | Aspect | Ch 9: Adversarial Testing | Ch 14: Gradient Reversal |
 |---|---|---|
@@ -7490,9 +7725,9 @@ Chapter 9's adversarial robustness testing and this chapter's gradient reversal 
 | **Output** | DRI score, sensitivity profile | Invariant encoder |
 | **Geometry** | Measures distances in output space under perturbation | Projects representation onto complement of nuisance subspace |
 
-The connection is more than analogical. The DRI's per-transform sensitivity profile (Section 9.4 of Chapter 9) provides exactly the information needed to configure gradient reversal training: transforms with high DRI scores identify the nuisance dimensions that the encoder has memorized, and these dimensions define the nuisance variable $s$ for the domain discriminator.
+The connection is more than analogical. The DRI's per-transform sensitivity profile (Section 10.4 of Chapter 10) provides exactly the information needed to configure gradient reversal training: transforms with high DRI scores identify the nuisance dimensions that the encoder has memorized, and these dimensions define the nuisance variable $s$ for the domain discriminator.
 
-### 14.6.2 The Feedback Loop
+### 15.6.2 The Feedback Loop
 
 The ideal workflow composes both methods:
 
@@ -7511,9 +7746,9 @@ profile = dri.sensitivity_profile(decoder, signals, sr=32000)
 
 This loop is the invariance analogue of the "fuzz-diagnose-fix-verify" cycle in software security. The structural fuzzing framework provides the diagnostic infrastructure; gradient reversal provides the fix.
 
-### 14.6.3 The Adversarial Threshold Connection
+### 15.6.3 The Adversarial Threshold Connection
 
-Chapter 9 introduced adversarial threshold search: binary search for the minimal transform intensity that flips the decoder's output. The implementation in `eris_ketos.decoder_robustness` finds the exact tipping point:
+Chapter 10 introduced adversarial threshold search: binary search for the minimal transform intensity that flips the decoder's output. The implementation in `eris_ketos.decoder_robustness` finds the exact tipping point:
 
 ```python
 threshold = dri.find_adversarial_threshold(
@@ -7529,9 +7764,9 @@ A positive $\Delta_{\text{threshold}}$ for nuisance transform $t$ indicates succ
 
 ---
 
-## 14.7 Practical Considerations
+## 15.7 Practical Considerations
 
-### 14.7.1 Choosing the Nuisance Variable
+### 15.7.1 Choosing the Nuisance Variable
 
 The choice of nuisance variable is a modeling decision with geometric consequences. Define it too narrowly (e.g., invariance to amplitude scaling only), and the encoder remains sensitive to other recording conditions. Define it too broadly (e.g., invariance to "everything about the recording"), and the nuisance subspace may consume so much of the latent space that task performance collapses.
 
@@ -7547,13 +7782,13 @@ invariant_transforms = [t for t in transforms if t.is_invariant]
 
 These are the transforms that a correct decoder *should* be invariant to. They define the initial nuisance variable. If the DRI reveals additional sensitivities (e.g., to `multipath_echo` or `spectral_mask`), those can be added to the nuisance set in subsequent training rounds.
 
-### 14.7.2 Domain Head Capacity
+### 15.7.2 Domain Head Capacity
 
 The domain discriminator must be strong enough to detect nuisance information when it is present, but not so strong that the adversarial game becomes unstable. In practice, a two-to-three-layer MLP with hidden dimensions roughly half the encoder's latent dimension works well. If the domain head is too weak, it will appear to converge (high domain accuracy plateau) before gradient reversal training has a chance to enforce invariance. If it is too strong, the minimax game oscillates without converging.
 
 A useful diagnostic: if domain accuracy oscillates wildly during training rather than smoothly decreasing, the domain head is too powerful relative to $\lambda$. Reduce the domain head's capacity or decrease $\max\_\lambda$.
 
-### 14.7.3 Multi-Source Invariance
+### 15.7.3 Multi-Source Invariance
 
 In many practical settings, there are multiple nuisance variables: recording device, ocean basin, season, depth. These can be handled by either:
 
@@ -7594,9 +7829,9 @@ The multi-head approach is preferable when the nuisance factors have different s
 
 ---
 
-## 14.8 Theoretical Guarantees and Limitations
+## 15.8 Theoretical Guarantees and Limitations
 
-### 14.8.1 The Ben-David Bound
+### 15.8.1 The Ben-David Bound
 
 The theoretical foundation for gradient reversal in domain adaptation is the Ben-David et al. (2010) bound on target-domain error:
 
@@ -7606,7 +7841,7 @@ where $\epsilon_S(h)$ is the source-domain error, $d_{\mathcal{H}\Delta\mathcal{
 
 Gradient reversal minimizes the middle term: by forcing the encoder to produce domain-invariant representations, it drives $d_{\mathcal{H}\Delta\mathcal{H}}(S, T)$ toward zero. But the bound also contains $C$, which reflects the fundamental tradeoff: if the optimal classifier differs between domains, no invariant representation can achieve low error on both. This is the geometric statement that the task and nuisance subspaces overlap.
 
-### 14.8.2 When Gradient Reversal Fails
+### 15.8.2 When Gradient Reversal Fails
 
 Gradient reversal can fail in three ways:
 
@@ -7620,7 +7855,7 @@ In all three cases, the DRI provides an objective diagnostic. If the DRI for nui
 
 ---
 
-## 14.9 Worked Example: Five-Hydrophone Experiment
+## 15.9 Worked Example: Five-Hydrophone Experiment
 
 To make the preceding theory concrete, consider a controlled experiment with coda recordings from five different hydrophone deployments. The task is to classify coda types (23 classes). The nuisance variable is the hydrophone deployment (5 categories).
 
@@ -7677,7 +7912,7 @@ At convergence, the domain accuracy should approach 20% (chance level for 5 hydr
 
 ---
 
-## 14.10 Summary
+## 15.10 Summary
 
 The gradient reversal layer is a minimal intervention---five lines of autograd logic---with a maximal geometric effect: it projects the encoder's latent representation onto the orthogonal complement of the nuisance subspace, producing representations that are invariant to specified surface features by construction.
 
@@ -7691,22 +7926,22 @@ The chapter developed five interconnected ideas:
 
 4. **The cetacean bioacoustics application.** Recording conditions (hydrophone response, ambient noise, ocean reverberation) contaminate spectral features. Gradient reversal forces the encoder to be invariant to these conditions while preserving biological signal---coda type, rhythmic pattern, spectral content.
 
-5. **The feedback loop with adversarial testing.** The DRI from Chapter 9 diagnoses which nuisance factors the encoder is sensitive to; gradient reversal eliminates those sensitivities; the DRI validates the result. The two methods compose into a "diagnose-treat-verify" pipeline.
+5. **The feedback loop with adversarial testing.** The DRI from Chapter 10 diagnoses which nuisance factors the encoder is sensitive to; gradient reversal eliminates those sensitivities; the DRI validates the result. The two methods compose into a "diagnose-treat-verify" pipeline.
 
 ---
 
-## 14.11 Forward Connection: Chapter 15
+## 15.11 Forward Connection: Chapter 16
 
-The invariance enforced by gradient reversal is *learned*: the encoder discovers which features to discard through the adversarial training process. Chapter 15 introduces **Cholesky parameterization**, ensuring positive-definiteness constraints are maintained throughout metric learning and optimization. Where this chapter addressed the question of *what to be invariant to*, Chapter 15 addresses the question of *how to parameterize the metric itself*---guaranteeing that learned precision matrices remain symmetric and positive definite throughout training.
+The invariance enforced by gradient reversal is *learned*: the encoder discovers which features to discard through the adversarial training process. Chapter 16 introduces a complementary approach based on **group-theoretic augmentation**, where invariances are *specified* rather than learned. If you know that coda classification should be invariant to time shifts, amplitude scaling, and circular permutations of the click sequence, you can encode these invariances directly into the architecture or the training data via group actions---transformations that form a mathematical group under composition.
 
-The two chapters are complementary: gradient reversal shapes *which* information the encoder preserves, while Cholesky parameterization shapes *how* the distance metric over that information is learned. Together they close the loop between invariance training and metric learning.
+The two approaches---learned invariance (gradient reversal) and specified invariance (group augmentation)---address different parts of the invariance spectrum. For nuisance variables that can be precisely characterized as group actions (rotations, translations, permutations), group-theoretic methods are more efficient and provide exact invariance guarantees. For nuisance variables that cannot be characterized as group actions (recording conditions, domain identity), gradient reversal is the appropriate tool. Chapter 16 develops the group-theoretic side and shows how the two approaches combine.
 
 
 \newpage
 
-# Chapter 15: Cholesky Parameterization for Positive-Definiteness
+# Chapter 16: Cholesky Parameterization for Positive-Definiteness
 
-*Structural Fuzzing: Geometric Methods for Adversarial Model Validation* --- Andrew H. Bond
+*Geometric Methods in Computational Modeling* --- Andrew H. Bond
 
 ---
 
@@ -7720,9 +7955,9 @@ We develop the theory, connect it to the SPD manifold geometry of Chapter 4, imp
 
 ---
 
-## 15.1 The Positive-Definiteness Constraint
+## 16.1 The Positive-Definiteness Constraint
 
-### 15.1.1 Why Unconstrained Optimization Fails
+### 16.1.1 Why Unconstrained Optimization Fails
 
 Suppose you want to learn a $9 \times 9$ covariance matrix $\Sigma$ that makes your model's predictions match empirical data. The naive approach is to treat the 81 entries of $\Sigma$ as free parameters and run gradient descent. This fails for three reasons.
 
@@ -7734,17 +7969,17 @@ Suppose you want to learn a $9 \times 9$ covariance matrix $\Sigma$ that makes y
 
 The right solution is to choose a parameterization that makes the constraint *impossible to violate*, so the optimizer never needs to worry about it. This is the Cholesky factorization.
 
-### 15.1.2 The SPD Cone
+### 16.1.2 The SPD Cone
 
 The set of $n \times n$ SPD matrices forms an open convex cone in the $n(n+1)/2$-dimensional space of symmetric matrices (Chapter 4, Definition 4.1). Its boundary consists of positive *semi*-definite matrices --- those with at least one zero eigenvalue. The Cholesky factorization provides a bijection between the interior of this cone and the set of lower-triangular matrices with positive diagonals, mapping the curved boundary of the SPD cone to the simple constraint "diagonal entries positive."
 
 ---
 
-## 15.2 The Cholesky Factorization
+## 16.2 The Cholesky Factorization
 
-### 15.2.1 Statement and Uniqueness
+### 16.2.1 Statement and Uniqueness
 
-**Theorem 15.1** (Cholesky factorization). *Every symmetric positive definite matrix $M \in \text{SPD}(n)$ has a unique decomposition*
+**Theorem 16.1** (Cholesky factorization). *Every symmetric positive definite matrix $M \in \text{SPD}(n)$ has a unique decomposition*
 
 $$M = LL^\top$$
 
@@ -7754,7 +7989,7 @@ The proof proceeds by induction on $n$, partitioning $M$ into a leading $(n-1) \
 
 **Parameter count.** The Cholesky factor $L$ has $n$ diagonal entries and $n(n-1)/2$ off-diagonal entries in the lower triangle, for a total of $n(n+1)/2$ free parameters --- exactly the number of degrees of freedom in a symmetric matrix.
 
-### 15.2.2 The Converse: From $L$ to SPD
+### 16.2.2 The Converse: From $L$ to SPD
 
 The factorization's power for optimization comes from the converse direction. Given *any* lower-triangular matrix $L$ with strictly positive diagonal entries, the product $M = LL^\top$ is automatically:
 
@@ -7765,9 +8000,9 @@ This means we can parameterize our optimization over the entries of $L$ rather t
 
 ---
 
-## 15.3 Log-Diagonal Cholesky Parameterization
+## 16.3 Log-Diagonal Cholesky Parameterization
 
-### 15.3.1 Removing the Last Constraint
+### 16.3.1 Removing the Last Constraint
 
 The diagonal entries $\ell_{ii}$ of $L$ must be strictly positive. We remove this constraint by parameterizing them in log-space. Define
 
@@ -7780,7 +8015,7 @@ Since $\exp(\cdot) : \mathbb{R} \to (0, \infty)$ is a bijection, every real valu
 
 Total: $n(n+1)/2$ unconstrained real parameters that bijectively correspond to the set of $n \times n$ SPD matrices. An optimizer can take gradient steps of any magnitude in any direction without ever leaving the feasible set.
 
-### 15.3.2 Why Log-Space for the Diagonal
+### 16.3.2 Why Log-Space for the Diagonal
 
 The log-space parameterization is not merely a convenience for enforcing positivity. It provides three additional benefits.
 
@@ -7794,7 +8029,7 @@ The multiplicative factor $\ell_{ii}$ compensates for the tendency of $\partial 
 
 **Connection to the SPD manifold.** The log-diagonal parameterization has a natural relationship to the log-Euclidean metric on SPD(n) developed in Chapter 4. Recall that the log-Euclidean distance is $d_{LE}(S_1, S_2) = \|\log(S_1) - \log(S_2)\|_F$, where $\log$ is the matrix logarithm. For diagonal SPD matrices, the matrix logarithm reduces to the elementwise logarithm of the diagonal, and the log-Euclidean distance reduces to the Euclidean distance between the log-diagonals. The log-diagonal Cholesky parameterization thus inherits the desirable scale-equivariance of the log-Euclidean framework for the diagonal portion of the matrix.
 
-### 15.3.3 The Complete Parameterization Map
+### 16.3.3 The Complete Parameterization Map
 
 We can now write the complete map from unconstrained parameters to SPD matrix. Let $\boldsymbol{\phi} \in \mathbb{R}^{n(n+1)/2}$ be the parameter vector, partitioned as:
 
@@ -7809,7 +8044,7 @@ This map is smooth (infinitely differentiable), surjective onto SPD(n), and has 
 
 ---
 
-## 15.4 Implementation: NumPy
+## 16.4 Implementation: NumPy
 
 The `eris-econ` calibration module implements Cholesky parameterization for learning the precision matrix $\Sigma^{-1}$ from observed economic choices. The core routine reconstructs the precision matrix from a flat parameter vector:
 
@@ -7903,7 +8138,7 @@ Note the difference in packing order: here the parameters are packed row-by-row 
 
 ---
 
-## 15.5 Implementation: PyTorch
+## 16.5 Implementation: PyTorch
 
 For deep learning applications where end-to-end gradient computation is required, the Cholesky parameterization integrates naturally with PyTorch's autograd. The key is to store the unconstrained parameters as `nn.Parameter` objects and reconstruct the SPD matrix in the forward pass:
 
@@ -7971,11 +8206,11 @@ A training loop for metric learning instantiates `CholeskyPrecision(n_dims)`, ca
 
 ---
 
-## 15.6 Gradient Flow Through the Cholesky Parameterization
+## 16.6 Gradient Flow Through the Cholesky Parameterization
 
 Understanding the gradient structure helps diagnose training dynamics and motivates initialization strategies.
 
-### 15.6.1 The Jacobian
+### 16.6.1 The Jacobian
 
 Let $M = LL^\top$ where $L$ is lower triangular with positive diagonal. We want the Jacobian $\partial M_{ij} / \partial L_{kl}$ (where $k \geq l$). Since $M_{ij} = \sum_r L_{ir}L_{jr}$, the derivative is:
 
@@ -7991,7 +8226,7 @@ This Jacobian has two important properties.
 
 **Scale coupling.** The factor $L_{kk}$ in the chain rule for diagonal parameters means that the gradient with respect to $\theta_k$ is proportional to $L_{kk}$ itself. Large diagonal entries amplify gradients; small ones suppress them. The log-space parameterization compensates for this scaling effect, producing more uniform gradient magnitudes across the diagonal --- a critical property for stable optimization.
 
-### 15.6.2 Conditioning and Numerical Stability
+### 16.6.2 Conditioning and Numerical Stability
 
 The condition number of $M = LL^\top$ is $\kappa(M) = \kappa(L)^2$. If $L$ has a large ratio between its largest and smallest diagonal entries, $M$ will be poorly conditioned, and numerical errors in the gradient computation will be amplified.
 
@@ -7999,9 +8234,9 @@ In practice, this means the log-diagonal parameters $\theta_i$ should be bounded
 
 ---
 
-## 15.7 Connection to Mahalanobis Distance Learning
+## 16.7 Connection to Mahalanobis Distance Learning
 
-### 15.7.1 Learning $\Sigma^{-1}$ via Cholesky
+### 16.7.1 Learning $\Sigma^{-1}$ via Cholesky
 
 Chapter 2 introduced the Mahalanobis distance
 
@@ -8015,7 +8250,7 @@ $$d_M(\mathbf{a}, \mathbf{b}) = \sqrt{(\mathbf{a} - \mathbf{b})^\top LL^\top (\m
 
 This last form is revealing. The Mahalanobis distance is simply the Euclidean distance after the linear transformation $\mathbf{x} \mapsto L^\top \mathbf{x}$. Learning $\Sigma^{-1}$ is equivalent to learning a linear embedding: the Cholesky factor $L^\top$ maps from the original space to a "whitened" space where Euclidean distance is the correct metric. This connects metric learning to the broader family of linear embedding methods, including PCA, LDA, and the linear layers of neural networks.
 
-### 15.7.2 The Softmax Likelihood
+### 16.7.2 The Softmax Likelihood
 
 In the `eris-econ` framework, the precision matrix is learned from observed choices using a softmax likelihood model. Given an observed choice where an agent at state $\mathbf{s}$ chose option $\mathbf{c}$ over alternatives $\mathbf{r}_1, \ldots, \mathbf{r}_k$, the likelihood is:
 
@@ -8056,7 +8291,7 @@ def neg_log_likelihood(params: np.ndarray) -> float:
 
 The log-sum-exp trick (subtracting `min_cost` before exponentiating) prevents numerical overflow. The L2 regularization on the raw Cholesky parameters penalizes deviation from the identity, acting as a prior that the metric should not be too different from the Euclidean metric unless the data strongly supports it.
 
-### 15.7.3 From Precision to Covariance and Back
+### 16.7.3 From Precision to Covariance and Back
 
 The `eris-econ` framework parameterizes the *precision* matrix $\Sigma^{-1} = LL^\top$ rather than the *covariance* matrix $\Sigma$, because the Mahalanobis distance uses $\Sigma^{-1}$ directly. If you need $\Sigma$ (for example, to sample from a Gaussian or to inspect the learned variances), you invert:
 
@@ -8076,9 +8311,9 @@ The small regularization $10^{-10} \cdot I$ guards against numerical singularity
 
 ---
 
-## 15.8 The Diagonal-Only Simplification
+## 16.8 The Diagonal-Only Simplification
 
-### 15.8.1 When Full Covariance Is Too Expensive
+### 16.8.1 When Full Covariance Is Too Expensive
 
 The full Cholesky parameterization has $n(n+1)/2$ free parameters. For the 9-dimensional ethical-economic space used in `eris-econ`, this is $9 \times 10 / 2 = 45$ parameters. When the training signal is limited --- the `eris-econ` model has 16 prediction targets --- fitting 45 parameters risks overfitting: the precision matrix may learn spurious cross-dimensional correlations that capture noise rather than structure.
 
@@ -8124,7 +8359,7 @@ def _softmax_nll(
 
 Here `log_diag[i]` is $\log(\sigma_i^2)$, and `sigma_inv_diag[i]` $= 1/\sigma_i^2$ is the precision weight for dimension $i$. The squared Mahalanobis distance simplifies to the weighted sum of squared differences: $d_M^2 = \sum_i (a_i - b_i)^2 / \sigma_i^2$, which avoids the matrix multiplication entirely.
 
-### 15.8.2 The Structural Fuzzing Connection
+### 16.8.2 The Structural Fuzzing Connection
 
 The diagonal parameterization is exactly what the structural fuzzing framework uses when searching over dimension subsets. In `structural_fuzz.py`, inactive dimensions receive variance $10^6$ (effectively zero precision weight), and active dimensions are optimized over a log-spaced grid:
 
@@ -8157,7 +8392,7 @@ for _ in range(n_samples):
 
 The structural fuzzing campaign over dimension subsets (Chapter 2, Section 2.6) is therefore a combinatorial search over the *sparsity pattern* of a diagonal precision matrix, combined with log-space optimization of the nonzero entries. Each subset corresponds to a particular mask on the diagonal of $\Sigma^{-1}$, and the framework asks: which mask and scale combination best explains the empirical data?
 
-### 15.8.3 When to Use Full vs. Diagonal
+### 16.8.3 When to Use Full vs. Diagonal
 
 The choice between full and diagonal covariance is a bias-variance tradeoff:
 
@@ -8173,7 +8408,7 @@ The choice between full and diagonal covariance is a bias-variance tradeoff:
 
 **Use diagonal** when the target-to-parameter ratio is low, or when interpretability is paramount. The structural fuzzing framework uses diagonal parameterization because (a) the 16 prediction targets do not reliably constrain 45 parameters, and (b) the ablation and sensitivity analyses are most interpretable when each parameter controls exactly one dimension.
 
-### 15.8.4 Cross-Validation and Bootstrap Analysis
+### 16.8.4 Cross-Validation and Bootstrap Analysis
 
 The `calibration_v2.py` module includes two tools for assessing the reliability of the diagonal parameterization:
 
@@ -8183,13 +8418,13 @@ The `calibration_v2.py` module includes two tools for assessing the reliability 
 
 ---
 
-## 15.9 Advanced Topics
+## 16.9 Advanced Topics
 
-### 15.9.1 The Cholesky Parameterization and Riemannian Optimization
+### 16.9.1 The Cholesky Parameterization and Riemannian Optimization
 
 The Cholesky parameterization provides an alternative to explicit Riemannian optimization on the SPD manifold (Chapter 4). Instead of computing the Riemannian gradient and exponential map at each step (which requires eigendecompositions), we work in the flat parameter space of Cholesky entries and let the nonlinear map $L \mapsto LL^\top$ implicitly handle the manifold geometry. This is computationally cheaper per step, though the induced metric on the parameter space is not the Euclidean metric, so standard optimizers like Adam or L-BFGS are not doing true Riemannian descent. In practice, the Cholesky approach works well for most applications; explicit Riemannian methods become advantageous when $n > 50$ or the condition number is extreme.
 
-### 15.9.2 Determinant and Log-Likelihood
+### 16.9.2 Determinant and Log-Likelihood
 
 Many probabilistic models involve the log-determinant of the precision or covariance matrix. For a multivariate Gaussian, the log-likelihood of observing $\mathbf{x}$ given mean $\boldsymbol{\mu}$ and precision $\Lambda = \Sigma^{-1}$ is:
 
@@ -8203,9 +8438,9 @@ This is a linear function of the log-diagonal parameters --- no eigendecompositi
 
 ---
 
-## 15.10 Synthesis: From Parameterization Patterns to Geometric Framework
+## 16.10 Synthesis: From Parameterization Patterns to Geometric Framework
 
-This chapter completes the core parameterization toolkit of Part III. Let us step back and trace the thread that connects the patterns developed in Chapters 12--15 to the geometric framework established in Part I.
+This chapter completes the core parameterization toolkit of Part III. Let us step back and trace the thread that connects the patterns developed in Chapters 13--15 to the geometric framework established in Part I.
 
 ### The Central Theme
 
@@ -8275,7 +8510,7 @@ For Riemannian optimization on SPD manifolds, see Bonnabel, "Stochastic gradient
 
 The connection between metric learning and linear embeddings is developed in Weinberger and Saul, "Distance metric learning for large margin nearest neighbor classification," *JMLR* 10, 2009. The softmax likelihood for choice modeling has its roots in McFadden's random utility framework: McFadden, "Conditional logit analysis of qualitative choice behavior," in *Frontiers in Econometrics*, Academic Press, 1974.
 
-The `eris-econ` implementation of Cholesky-parameterized calibration and the structural fuzzing framework's diagonal optimization are described in Bond (2026). The cross-validation and bootstrap methods for covariance estimation follow the treatments in Hastie, Tibshirani, and Friedman, *The Elements of Statistical Learning*, Springer, 2009, Chapter 7.
+The `eris-econ` implementation of Cholesky-parameterized calibration and the structural fuzzing framework's diagonal optimization are described in Bond (2026). The cross-validation and bootstrap methods for covariance estimation follow the treatments in Hastie, Tibshirani, and Friedman, *The Elements of Statistical Learning*, Springer, 2009, Chapter 8.
 
 
 \newpage
@@ -8286,7 +8521,7 @@ The `eris-econ` implementation of Cholesky-parameterized calibration and the str
 
 \newpage
 
-# Chapter 16: Building Geometric Pipelines
+# Chapter 17: Building Geometric Pipelines
 
 > *"A complex system that works is invariably found to have evolved from a simple system that worked."*
 > --- John Gall, *Systemantics* (1975)
@@ -8300,9 +8535,9 @@ This chapter is about that composition. We develop the pipeline pattern as a fir
 
 ![Six-stage structural fuzzing pipeline with data flow to the domain-specific evaluation function.](images/ch16-pipeline-architecture.png)
 
-## 16.1 The Pipeline Pattern
+## 17.1 The Pipeline Pattern
 
-### 16.1.1 Why Composition Matters
+### 17.1.1 Why Composition Matters
 
 Each geometric tool from Parts II and III answers one question:
 
@@ -8324,7 +8559,7 @@ This data-flow dependency is what makes a pipeline more than a script that calls
 3. Produce a single structured output that captures all results, rather than scattering them across variables.
 4. Handle partial failures gracefully---if adversarial search times out, the subset and Pareto results should still be available.
 
-### 16.1.2 The Six-Stage Architecture
+### 17.1.2 The Six-Stage Architecture
 
 The structural fuzzing pipeline proceeds through six stages, each building on the previous:
 
@@ -8351,7 +8586,7 @@ The first two stages are tightly coupled: Pareto extraction is a filter over sub
 
 An optional seventh phase runs forward selection and backward elimination baselines, providing classical feature-selection comparisons against the geometric methods. These baselines serve as a sanity check: if forward selection discovers a configuration that the exhaustive subset enumeration missed, something is wrong with the enumeration parameters.
 
-### 16.1.3 Data Flow and the Evaluation Function
+### 17.1.3 Data Flow and the Evaluation Function
 
 A single callable---the evaluation function---is the thread that connects all six stages. Every stage calls this function, sometimes hundreds or thousands of times, with different parameter vectors. The function's signature is the contract that binds the pipeline together:
 
@@ -8366,9 +8601,9 @@ The evaluation function is the pipeline's most important abstraction boundary. E
 
 ---
 
-## 16.2 The `run_campaign` API
+## 17.2 The `run_campaign` API
 
-### 16.2.1 Function Signature and Parameters
+### 17.2.1 Function Signature and Parameters
 
 The `run_campaign` function is the pipeline's public entry point. Its signature exposes every tuning knob while providing sensible defaults:
 
@@ -8401,7 +8636,7 @@ The parameters fall into four groups:
 
 **Pipeline control.** `start_dim` and `candidate_dims` configure the compositional test (which dimension to start from, and which to consider adding). `run_baselines` toggles the forward/backward selection baselines. `verbose` controls progress printing.
 
-### 16.2.2 Stage Execution
+### 17.2.2 Stage Execution
 
 The pipeline executes its six stages in a fixed order, with verbose logging at each transition. The implementation in `pipeline.py` makes the data flow explicit:
 
@@ -8474,7 +8709,7 @@ composition_result = compositional_test(
 
 The adversarial search examines each dimension independently, searching for threshold values above and below the baseline at which the error exceeds the tolerance. The compositional test builds configurations incrementally, starting from a single dimension and greedily adding the dimension that most reduces MAE at each step. Together, these two stages answer complementary questions: adversarial search asks "where does this dimension break?", while compositional testing asks "in what order should dimensions be assembled?"
 
-### 16.2.3 Evaluation Budget
+### 17.2.3 Evaluation Budget
 
 Understanding the total number of evaluations consumed by a campaign is essential for budgeting computation time. The count depends on configuration:
 
@@ -8493,13 +8728,13 @@ Here $C(k)$ is the optimization cost for a $k$-dimensional subset: $n_{\text{gri
 
 For a 5-dimensional problem with defaults ($K = 4$, $n_{\text{grid}} = 20$, $n_{\text{random}} = 5000$), the enumeration stage alone requires approximately $5 \times 20 + 10 \times 400 + 10 \times 5000 + 5 \times 5000 = 79{,}100$ evaluations. If each evaluation takes 100ms (reasonable for a small random forest), the enumeration stage takes about 2 hours. The MRI adds 300 evaluations (30 seconds), sensitivity adds 10 evaluations (1 second), and adversarial search adds roughly 100 evaluations (10 seconds). Enumeration dominates.
 
-For a 9-dimensional problem, the evaluation count rises sharply: $\binom{9}{3} = 84$ three-dimensional subsets and $\binom{9}{4} = 126$ four-dimensional subsets, each requiring 5000 random evaluations, push the total past one million. Section 16.6 discusses strategies for managing this cost.
+For a 9-dimensional problem, the evaluation count rises sharply: $\binom{9}{3} = 84$ three-dimensional subsets and $\binom{9}{4} = 126$ four-dimensional subsets, each requiring 5000 random evaluations, push the total past one million. Section 17.6 discusses strategies for managing this cost.
 
 ---
 
-## 16.3 `StructuralFuzzReport`: Structured Output
+## 17.3 `StructuralFuzzReport`: Structured Output
 
-### 16.3.1 The Report Dataclass
+### 17.3.1 The Report Dataclass
 
 The pipeline returns a `StructuralFuzzReport`---a dataclass that bundles the output of all six stages into a single structured object:
 
@@ -8523,7 +8758,7 @@ Each field holds a typed result object from the corresponding pipeline stage. Th
 
 The optional fields (`mri_result`, `composition_result`) use `None` to indicate that the corresponding stage was skipped or failed. This is the pipeline's mechanism for partial results: if the MRI computation encounters a numerical error, the report still contains valid subset, Pareto, and sensitivity results.
 
-### 16.3.2 Navigating the Results
+### 17.3.2 Navigating the Results
 
 The `StructuralFuzzReport` is designed for programmatic access. After a campaign completes, the typical analysis workflow extracts specific results:
 
@@ -8563,7 +8798,7 @@ for adv in report.adversarial_results:
 
 The report object is also serializable. Because all of its fields are dataclasses with primitive or NumPy-array contents, the report can be pickled for later analysis or converted to JSON for integration with external dashboards.
 
-### 16.3.3 The `summary` Method
+### 17.3.3 The `summary` Method
 
 For quick inspection, `StructuralFuzzReport` provides a `summary` method that delegates to the report formatting system:
 
@@ -8585,9 +8820,9 @@ The lazy import avoids a circular dependency between the pipeline and report mod
 
 ---
 
-## 16.4 Report Generation
+## 17.4 Report Generation
 
-### 16.4.1 Text Reports
+### 17.4.1 Text Reports
 
 The `format_report` function transforms a `StructuralFuzzReport` into a human-readable text summary. The output is organized into sections that mirror the pipeline stages:
 
@@ -8619,7 +8854,7 @@ The report includes signed errors for each metric (positive means the model exce
 
 The text format is designed for three use cases: terminal inspection during development, inclusion in version-controlled reports (the text diffs cleanly), and automated parsing by downstream tools that can extract specific numbers using simple string matching.
 
-### 16.4.2 LaTeX Tables
+### 17.4.2 LaTeX Tables
 
 For publication-quality output, `format_latex_tables` generates ready-to-compile LaTeX table environments:
 
@@ -8652,9 +8887,9 @@ The separation between data (the `StructuralFuzzReport` dataclass) and presentat
 
 ---
 
-## 16.5 Designing Evaluation Functions
+## 17.5 Designing Evaluation Functions
 
-### 16.5.1 The Contract
+### 17.5.1 The Contract
 
 The evaluation function is the bridge between the domain-agnostic pipeline and the domain-specific model. Its contract is simple but demands care:
 
@@ -8672,7 +8907,7 @@ Three properties are essential for correct pipeline behavior:
 2. **Inactive handling.** When `params[i] >= inactive_value`, the evaluation must exclude dimension $i$ entirely---not merely set its weight to zero.
 3. **Graceful degradation.** When all dimensions are inactive (every entry is the sentinel), the function should return large errors rather than raising an exception.
 
-### 16.5.2 The Defect Prediction Pattern
+### 17.5.2 The Defect Prediction Pattern
 
 The defect prediction example in `examples/defect_prediction/model.py` illustrates the standard pattern. The `make_evaluate_fn` factory generates a closure that captures the training data and returns a function with the correct signature:
 
@@ -8711,7 +8946,7 @@ def make_evaluate_fn(
 
 Several design choices are worth noting:
 
-**Feature groups, not individual features.** The 16 raw features are organized into 5 groups (Size, Complexity, Halstead, OO, Process). Each dimension in the parameter vector controls an entire group. This is the dimension grouping pattern from Chapter 1: the pipeline operates on a manageable 5-dimensional space rather than a 16-dimensional one, with each dimension carrying semantic meaning.
+**Feature groups, not individual features.** The 16 raw features are organized into 5 groups (Size, Complexity, Halstead, OO, Process). Each dimension in the parameter vector controls an entire group. This is the dimension grouping pattern from Chapter 3: the pipeline operates on a manageable 5-dimensional space rather than a 16-dimensional one, with each dimension carrying semantic meaning.
 
 **Inactive threshold.** The function checks `params[i] < 1000` rather than comparing against the full sentinel value of $10^6$. This is a pragmatic choice: it ensures that any sufficiently large parameter value deactivates the group, avoiding floating-point comparison issues with the exact sentinel.
 
@@ -8719,7 +8954,7 @@ Several design choices are worth noting:
 
 **Target-relative errors.** Each metric is compared against an explicit target value (e.g., Accuracy target of 75.0). The error dictionary contains signed deviations: positive means the model exceeds the target, negative means it falls short. This convention allows the pipeline to track *which* targets are met and which are not, rather than collapsing everything into a single pass/fail judgment.
 
-### 16.5.3 The Geometric Economics Pattern
+### 17.5.3 The Geometric Economics Pattern
 
 The geometric economics example in `examples/geometric_economics/model.py` shows a different use of the same contract. Here, the parameters are not feature group selectors but variance weights in a Mahalanobis distance computation:
 
@@ -8744,7 +8979,7 @@ The parameter vector has nine entries (one per ethical-economic dimension: Conse
 
 This design demonstrates the versatility of the evaluation function contract. The pipeline neither knows nor cares that the defect prediction example trains a classifier while the economics example tunes a distance metric. Both conform to the same signature, and both produce meaningful MAE and error dictionaries that the pipeline can optimize, perturb, and analyze.
 
-### 16.5.4 Guidelines for Custom Evaluation Functions
+### 17.5.4 Guidelines for Custom Evaluation Functions
 
 When writing a new evaluation function for a domain not covered by the existing examples, follow these guidelines:
 
@@ -8760,9 +8995,9 @@ When writing a new evaluation function for a domain not covered by the existing 
 
 ---
 
-## 16.6 Pipeline Configuration: Speed vs. Thoroughness
+## 17.6 Pipeline Configuration: Speed vs. Thoroughness
 
-### 16.6.1 The Cost Knobs
+### 17.6.1 The Cost Knobs
 
 Three parameters dominate the computation cost of a campaign:
 
@@ -8770,7 +9005,7 @@ Three parameters dominate the computation cost of a campaign:
 - **`n_random`**: Controls optimization quality for 3D+ subsets. Reducing from 5000 to 1000 makes each subset 5x faster at the cost of potentially missing the optimal parameter values.
 - **`n_mri_perturbations`**: Controls MRI statistical reliability. Reducing from 300 to 100 saves 200 evaluations but increases the variance of the P95 estimate.
 
-### 16.6.2 Configuration Profiles
+### 17.6.2 Configuration Profiles
 
 For different stages of a project, different tradeoffs are appropriate:
 
@@ -8809,7 +9044,7 @@ report = sf.run_campaign(
 )
 ```
 
-### 16.6.3 Scaling with Dimensionality
+### 17.6.3 Scaling with Dimensionality
 
 The pipeline's cost scales differently in each stage:
 
@@ -8829,9 +9064,9 @@ For problems with $n > 10$, subset enumeration up to $k = 4$ becomes expensive. 
 
 ---
 
-## 16.7 Error Handling and Partial Results
+## 17.7 Error Handling and Partial Results
 
-### 16.7.1 Failures Within the Evaluation Function
+### 17.7.1 Failures Within the Evaluation Function
 
 The most common failure mode is an exception inside the evaluation function. A degenerate parameter configuration might cause a singular matrix, a division by zero, or a model that fails to converge. The pipeline does not wrap evaluation calls in blanket try/except blocks---doing so would mask bugs in the evaluation function. Instead, the evaluation function itself should handle degenerate cases:
 
@@ -8851,7 +9086,7 @@ def evaluate_fn(params: np.ndarray) -> tuple[float, dict[str, float]]:
 
 The key principle is that every possible parameter vector---including all-inactive, all-extreme, and mixed configurations---should produce a valid `(mae, errors)` tuple. This is a stronger requirement than typical function contracts, but it is necessary because the pipeline will exercise the entire parameter space, including corners that normal usage would never reach.
 
-### 16.7.2 Failures Between Pipeline Stages
+### 17.7.2 Failures Between Pipeline Stages
 
 If a pipeline stage fails (e.g., the adversarial search raises an unhandled exception), the entire `run_campaign` call fails. This is deliberate: the pipeline makes no attempt at partial recovery because the data dependencies between stages make it difficult to reason about which downstream results are still valid.
 
@@ -8903,15 +9138,15 @@ def safe_evaluate_fn(params: np.ndarray) -> tuple[float, dict[str, float]]:
 
 This keeps the pipeline running but may produce misleading results if exceptions occur frequently. Use with caution and always inspect the error dictionary for sentinel values in the report.
 
-### 16.7.3 Interpreting the MRI Under Partial Information
+### 17.7.3 Interpreting the MRI Under Partial Information
 
-The MRI is sensitive to the perturbation distribution. If the evaluation function returns unreliable values for certain parameter regions (e.g., near the inactive threshold), the MRI may over-estimate or under-estimate tail risk. Chapter 7 discusses this issue in detail; here the practical advice is: examine the MRI's `worst_case_mae` field. If it is unreasonably large (orders of magnitude above the baseline MAE), one or more perturbation samples likely hit a degenerate configuration, and the MRI should be recomputed with a smaller `mri_scale`.
+The MRI is sensitive to the perturbation distribution. If the evaluation function returns unreliable values for certain parameter regions (e.g., near the inactive threshold), the MRI may over-estimate or under-estimate tail risk. Chapter 8 discusses this issue in detail; here the practical advice is: examine the MRI's `worst_case_mae` field. If it is unreasonably large (orders of magnitude above the baseline MAE), one or more perturbation samples likely hit a degenerate configuration, and the MRI should be recomputed with a smaller `mri_scale`.
 
 ---
 
-## 16.8 End-to-End Examples
+## 17.8 End-to-End Examples
 
-### 16.8.1 Defect Prediction Campaign
+### 17.8.1 Defect Prediction Campaign
 
 The defect prediction example demonstrates a complete pipeline run from data generation through report output:
 
@@ -8943,7 +9178,7 @@ with open("defect_tables.tex", "w") as f:
 
 The campaign explores all subsets of up to 4 dimensions from the 5 available (31 subsets total), identifies the Pareto frontier, profiles the sensitivity of each dimension, computes the MRI of the best configuration, searches for adversarial thresholds in each dimension, and tests the greedy dimension-addition order. The output captures everything needed for a validation report: which feature groups matter, how robust the model is, and where its tipping points lie.
 
-### 16.8.2 Geometric Economics Campaign
+### 17.8.2 Geometric Economics Campaign
 
 The economics example operates on a higher-dimensional space (9 dimensions) and uses the evaluation function to tune Mahalanobis distance weights rather than feature-group selections:
 
@@ -8979,9 +9214,9 @@ for adv in report.adversarial_results:
 
 The reduced `max_subset_dims` is critical here: with 9 dimensions, exhaustive enumeration up to size 4 would require $\binom{9}{4} = 126$ four-dimensional subsets, each optimized with 2000 random samples. Limiting to 3D subsets keeps the campaign tractable while still revealing the most important dimension interactions.
 
-### 16.8.3 Custom Pipeline with Selective Stages
+### 17.8.3 Custom Pipeline with Selective Stages
 
-For situations where the full pipeline is unnecessary or too slow, the public API (Chapter 1 introduced the state vector and module structure; the `__init__.py` exposes all components) supports composing a custom analysis:
+For situations where the full pipeline is unnecessary or too slow, the public API (Chapter 3 introduced the module structure; the `__init__.py` exposes all components) supports composing a custom analysis:
 
 ```python
 import numpy as np
@@ -9017,17 +9252,17 @@ This pattern---enumerate, filter, then probe each survivor---is more informative
 
 ---
 
-## 16.9 The Pipeline as a Geometric Object
+## 17.9 The Pipeline as a Geometric Object
 
-### 16.9.1 State Space of the Pipeline Itself
+### 17.9.1 State Space of the Pipeline Itself
 
 The pipeline has its own configuration space: the vector of all its parameters (`max_subset_dims`, `n_random`, `n_mri_perturbations`, `mri_scale`, `mri_weights`, `adversarial_tolerance`, `n_grid`). This meta-configuration lives in a space of its own, and the same geometric reasoning that the pipeline applies to models can be applied to the pipeline itself.
 
 For instance: how sensitive is the pipeline's output to `n_random`? If increasing `n_random` from 3000 to 7000 changes the best configuration found, the pipeline was under-sampling at 3000 and the results at that setting are unreliable. If the results are stable, the extra samples are wasted computation. Running the pipeline twice with different `n_random` values and comparing the Pareto frontiers is a simple convergence check---and it is, itself, a sensitivity analysis.
 
-### 16.9.2 Reproducibility
+### 17.9.2 Reproducibility
 
-The pipeline does not set global random seeds. The evaluation function is responsible for its own determinism (as discussed in Section 16.5.1), and the pipeline's internal stages use deterministic algorithms where possible. Subset enumeration is exhaustive (no randomness). Pareto extraction is a deterministic filter. Sensitivity profiling evaluates fixed parameter configurations. Only the MRI stage introduces randomness (random perturbation sampling), and its random seed can be controlled through the evaluation function's internal state.
+The pipeline does not set global random seeds. The evaluation function is responsible for its own determinism (as discussed in Section 17.5.1), and the pipeline's internal stages use deterministic algorithms where possible. Subset enumeration is exhaustive (no randomness). Pareto extraction is a deterministic filter. Sensitivity profiling evaluates fixed parameter configurations. Only the MRI stage introduces randomness (random perturbation sampling), and its random seed can be controlled through the evaluation function's internal state.
 
 For bit-reproducible results across runs, ensure that:
 
@@ -9035,7 +9270,7 @@ For bit-reproducible results across runs, ensure that:
 2. The underlying model (e.g., `RandomForestClassifier(random_state=42)`) uses a fixed random seed.
 3. The NumPy random generator used for MRI perturbations is seeded consistently.
 
-### 16.9.3 Composition with External Tools
+### 17.9.3 Composition with External Tools
 
 The pipeline produces structured data; what happens to that data next is outside the pipeline's scope but worth considering as a design question. Common downstream integrations include:
 
@@ -9049,15 +9284,15 @@ Each of these integrations treats the pipeline's output as a first-class object 
 
 ---
 
-## 16.10 Looking Ahead
+## 17.10 Looking Ahead
 
 This chapter has treated the pipeline as a sequential, single-machine process. For the problems considered in this book---5 to 15 dimensions, evaluation functions that run in milliseconds to seconds---this is sufficient. But two pressures push toward more sophisticated execution models.
 
-First, **scaling to higher dimensions** (Chapter 17) introduces evaluation budgets that exceed what sequential execution can deliver in reasonable time. Distributing subset evaluations across multiple cores or machines, caching evaluation results to avoid redundant computation, and using surrogate models to approximate expensive evaluations are all extensions that preserve the pipeline's logical structure while changing its execution strategy.
+First, **scaling to higher dimensions** (Chapter 18) introduces evaluation budgets that exceed what sequential execution can deliver in reasonable time. Distributing subset evaluations across multiple cores or machines, caching evaluation results to avoid redundant computation, and using surrogate models to approximate expensive evaluations are all extensions that preserve the pipeline's logical structure while changing its execution strategy.
 
-Second, **deploying geometric validation in production** (Chapter 18) requires integrating the pipeline into continuous integration systems, monitoring dashboards, and alerting infrastructure. The pipeline's structured output---the `StructuralFuzzReport`---provides the foundation for these integrations, but the operational concerns (scheduling, retry policies, result storage, alert thresholds) are distinct from the analytical concerns developed in this chapter.
+Second, **deploying geometric validation in production** (Chapter 19) requires integrating the pipeline into continuous integration systems, monitoring dashboards, and alerting infrastructure. The pipeline's structured output---the `StructuralFuzzReport`---provides the foundation for these integrations, but the operational concerns (scheduling, retry policies, result storage, alert thresholds) are distinct from the analytical concerns developed in this chapter.
 
-Chapter 17 takes up the scaling challenge, developing methods for efficient exploration of high-dimensional spaces where exhaustive enumeration is infeasible and the geometric tools from Parts II and III must be adapted to operate under strict computational budgets.
+Chapter 18 takes up the scaling challenge, developing methods for efficient exploration of high-dimensional spaces where exhaustive enumeration is infeasible and the geometric tools from Parts II and III must be adapted to operate under strict computational budgets.
 
 ---
 
@@ -9076,12 +9311,12 @@ The pipeline is not the final word on geometric validation---it is a starting po
 
 \newpage
 
-# Chapter 17: Scaling to High-Dimensional Spaces
+# Chapter 18: Scaling to High-Dimensional Spaces
 
 > *"The trouble with high-dimensional spaces is not that they are large, but that they are empty."*
 > --- Paraphrased from Richard Bellman (1961)
 
-The geometric methods developed in Parts I through III operate beautifully in moderate dimensions. When a model has five parameters grouped into five named dimensions, exhaustive subset enumeration (Chapter 11) evaluates 31 subsets, Pareto frontier extraction completes in microseconds, and the Model Robustness Index (Chapter 9) converges with 300 perturbation samples. The entire structural fuzzing campaign finishes in seconds.
+The geometric methods developed in Parts I through III operate beautifully in moderate dimensions. When a model has five parameters grouped into five named dimensions, exhaustive subset enumeration (Chapter 9) evaluates 31 subsets, Pareto frontier extraction completes in microseconds, and the Model Robustness Index (Chapter 10) converges with 300 perturbation samples. The entire structural fuzzing campaign finishes in seconds.
 
 Now consider a model with 50 parameters. Or 200. Or 2,000. The number of subsets of size up to $k = 4$ is $\binom{50}{1} + \binom{50}{2} + \binom{50}{3} + \binom{50}{4} = 292{,}825$. For $n = 200$, the same sum exceeds $67$ million. Exhaustive enumeration, which was the foundation of the geometric analysis pipeline, becomes computationally impossible.
 
@@ -9089,9 +9324,9 @@ This chapter addresses the computational challenges that arise when the methods 
 
 ---
 
-## 17.1 The Curse of Dimensionality for Geometric Methods
+## 18.1 The Curse of Dimensionality for Geometric Methods
 
-### 17.1.1 Volume, Distance, and Concentration
+### 18.1.1 Volume, Distance, and Concentration
 
 The curse of dimensionality is not a single phenomenon but a family of related pathologies. Three are particularly damaging for the geometric methods in this book.
 
@@ -9099,9 +9334,9 @@ The curse of dimensionality is not a single phenomenon but a family of related p
 
 **Distance concentration.** As $n$ grows, the ratio of maximum to minimum pairwise distance in a random point set converges to 1. All points become approximately equidistant, undermining nearest-neighbor methods and distance-based analysis.
 
-**Empty neighborhoods.** For MRI computation (Chapter 9), 300 perturbation samples in 50 dimensions are scattered across an exponentially larger space. The MRI's percentile statistics---P75 and P95---remain well-defined but may not capture the true tail behavior of the perturbation response surface.
+**Empty neighborhoods.** For MRI computation (Chapter 10), 300 perturbation samples in 50 dimensions are scattered across an exponentially larger space. The MRI's percentile statistics---P75 and P95---remain well-defined but may not capture the true tail behavior of the perturbation response surface.
 
-### 17.1.2 What Breaks and When
+### 18.1.2 What Breaks and When
 
 Not all pipeline stages suffer equally:
 
@@ -9118,9 +9353,11 @@ Not all pipeline stages suffer equally:
 
 Here $g$ is `n_grid` (default 20), $r$ is `n_random` (default 5,000), $m$ the total subset count, $p$ is `n_perturbations` (default 300), and $s$ is binary search steps per dimension. The critical bottleneck is subset enumeration---exponential where everything else is polynomial.
 
+> **Caution — spectral distances degenerate at scale.** A tempting way to rank configurations in a large campaign is by commute (resistance) distance in a Laplacian embedding of the response graph. Do not. von Luxburg, Radl and Hein showed that the resistance distance of a large geometric graph degenerates to a function of local degrees alone, $R(i,j)\to 1/\deg(i)+1/\deg(j)$, erasing all global geometry — so at scale you would be ranking configurations by inverse-square-root degree, a sampling artefact rather than a geometric signal. The fix is the scale-invariant *angular* basis of Chapter 6: row-normalize the low-mode embedding and read geometry from the direction, which stays stable in both graph size and mode count.
+
 ---
 
-## 17.2 Combinatorial Explosion in Subset Enumeration
+## 18.2 Combinatorial Explosion in Subset Enumeration
 
 The `enumerate_subsets` function in `core.py` iterates over all subsets of dimensions from size 1 to `max_dims`, calling `optimize_subset` on each via `itertools.combinations`. The total number of subsets is:
 
@@ -9141,9 +9378,9 @@ The raw subset count understates the true cost because each subset must be *opti
 
 ---
 
-## 17.3 Greedy Alternatives
+## 18.3 Greedy Alternatives
 
-### 17.3.1 Forward Selection
+### 18.3.1 Forward Selection
 
 Forward selection builds a subset incrementally, starting empty and greedily adding the dimension that most reduces MAE. From `baselines.py`:
 
@@ -9186,7 +9423,7 @@ At step $t$, it evaluates $n - t$ candidates. Total `optimize_subset` calls for 
 
 Forward selection cannot discover dimensions that are mediocre alone but excellent in combination. But empirically, it typically finds configurations within 5--15% of the globally optimal MAE.
 
-### 17.3.2 Backward Elimination
+### 18.3.2 Backward Elimination
 
 Backward elimination starts with all $n$ dimensions active and greedily removes the least important one at each step. From `baselines.py`:
 
@@ -9226,15 +9463,15 @@ The total calls are $B(n) = n(n-1)/2 + 1$, the same $O(n^2)$ as forward selectio
 
 **Complementary strengths.** Forward selection excels at identifying the *most important* dimensions; backward elimination excels at identifying the *least important*. Running both and comparing results is a practical diagnostic: agreement suggests clean dimension structure; divergence suggests complex interactions.
 
-### 17.3.3 Bidirectional and Floating Selection
+### 18.3.3 Bidirectional and Floating Selection
 
 More sophisticated variants exist. **Bidirectional selection** alternates forward and backward steps: add the best remaining dimension, then check whether any previously selected dimension has become redundant. **Floating selection** (SFFS/SBFS) allows the subset size to fluctuate, backing up when a backward step improves the objective. These methods escape some local optima that trap pure greedy search while maintaining $O(n^2)$ worst-case complexity.
 
 ---
 
-## 17.4 LASSO-Based Dimension Screening
+## 18.4 LASSO-Based Dimension Screening
 
-### 17.4.1 Sparsity as a Proxy for Subset Selection
+### 18.4.1 Sparsity as a Proxy for Subset Selection
 
 Instead of selecting dimensions explicitly, the LASSO approach solves a continuous relaxation: optimize over all dimensions simultaneously with an $L^1$ penalty that encourages sparsity:
 
@@ -9244,7 +9481,7 @@ The penalty is applied in log-space, penalizing deviation from $\theta_i = 1.0$ 
 
 The total cost is $O(|\alpha| \cdot r)$ function evaluations---$100{,}000$ by default, *independent of $n$*. This makes LASSO screening particularly attractive for high-dimensional problems.
 
-### 17.4.2 LASSO as a Screening Stage
+### 18.4.2 LASSO as a Screening Stage
 
 The most effective use is as a *screening stage* that reduces the effective dimensionality before enumeration begins. The workflow is:
 
@@ -9259,21 +9496,21 @@ The risk is that LASSO screening may discard a dimension that is individually we
 
 ---
 
-## 17.5 Sampling Strategies for High-Dimensional Perturbation Spaces
+## 18.5 Sampling Strategies for High-Dimensional Perturbation Spaces
 
-### 17.5.1 The MRI Sampling Problem
+### 18.5.1 The MRI Sampling Problem
 
-The MRI (Chapter 9) draws perturbation samples from a log-normal distribution. With $p = 300$ samples in $n = 50$ dimensions, the samples are too sparse to reveal the fine structure of the perturbation response surface. Three strategies improve coverage.
+The MRI (Chapter 10) draws perturbation samples from a log-normal distribution. With $p = 300$ samples in $n = 50$ dimensions, the samples are too sparse to reveal the fine structure of the perturbation response surface. Three strategies improve coverage.
 
-### 17.5.2 Latin Hypercube Sampling
+### 18.5.2 Latin Hypercube Sampling
 
 LHS partitions each dimension's marginal distribution into $p$ equal-probability strata, ensuring each stratum is sampled exactly once. The resulting sample has better space-filling properties than independent sampling, providing approximately $1 + (1/p)$ variance reduction. For MRI, the modification replaces the independent normal draws with stratified draws via `scipy.stats.qmc.LatinHypercube`, transformed through the inverse normal CDF.
 
-### 17.5.3 Quasi-Random Sequences
+### 18.5.3 Quasi-Random Sequences
 
 Sobol and Halton sequences provide deterministic, low-discrepancy point sets. The Koksma--Hlawka inequality bounds integration error at $O((\log p)^n / p)$, tighter than random sampling's $O(1/\sqrt{p})$ when $n$ is moderate. Quasi-random sequences are most useful for $n < 40$; beyond this, a hybrid approach---Sobol for the most important dimensions, random for the rest---works well.
 
-### 17.5.4 Importance Sampling Along Sensitive Dimensions
+### 18.5.4 Importance Sampling Along Sensitive Dimensions
 
 Sensitivity profiling identifies which dimensions most influence MAE. Scaling perturbation variance by sensitivity rank concentrates samples where they matter:
 
@@ -9291,23 +9528,23 @@ This reduces MRI estimate variance by focusing on the dimensions that drive tail
 
 ---
 
-## 17.6 Approximation Strategies for Pareto Frontiers
+## 18.6 Approximation Strategies for Pareto Frontiers
 
-### 17.6.1 Streaming Pareto Maintenance
+### 18.6.1 Streaming Pareto Maintenance
 
-The `pareto_frontier` function in `pareto.py` handles the two-objective case (dimensionality vs. MAE) efficiently by grouping results by dimensionality, keeping the best MAE at each level, and sweeping through in $O(m)$ time (Chapter 8). The challenge arises when we want Pareto analysis over *more than two objectives*---say, (dimensionality, MAE, MRI)---or when the number of candidates $m$ is in the millions.
+The `pareto_frontier` function in `pareto.py` handles the two-objective case (dimensionality vs. MAE) efficiently by grouping results by dimensionality, keeping the best MAE at each level, and sweeping through in $O(m)$ time (Chapter 9). The challenge arises when we want Pareto analysis over *more than two objectives*---say, (dimensionality, MAE, MRI)---or when the number of candidates $m$ is in the millions.
 
 Instead of collecting all results and computing the frontier post hoc, maintain the frontier *incrementally* as results arrive. Each new result is checked for dominance against the current frontier (not against all prior results). If it is not dominated, it is added, and any frontier members it now dominates are removed. The cost per insertion is $O(|F|)$ where $|F|$ is the frontier size, typically much smaller than $m$.
 
 For a frontier of size 20 (typical in practice), each insertion requires 20 dominance checks regardless of how many total results have been processed. Over $m$ insertions, the total cost is $O(m \cdot |F|)$ rather than $O(m^2)$.
 
-### 17.6.2 Epsilon-Dominance for Frontier Compression
+### 18.6.2 Epsilon-Dominance for Frontier Compression
 
 In high-dimensional objective spaces, the exact Pareto frontier can itself grow large. **Epsilon-dominance** provides principled compression: a solution $\mathbf{x}$ $\epsilon$-dominates $\mathbf{y}$ if $x_i \leq (1 + \epsilon) \cdot y_i$ for all objectives $i$. The $\epsilon$-Pareto frontier contains at most $O((1/\epsilon)^{d_{\text{obj}}})$ points, where $d_{\text{obj}}$ is the number of objectives. For $\epsilon = 0.05$ (5% tolerance) and 3 objectives, this bounds the frontier at 8,000 points---manageable regardless of how many candidates are evaluated.
 
 ---
 
-## 17.7 Computational Complexity of the Full Pipeline
+## 18.7 Computational Complexity of the Full Pipeline
 
 The `run_campaign` function in `pipeline.py` executes six stages plus optional baselines. With $E$ denoting the cost per `evaluate_fn` call:
 
@@ -9337,9 +9574,9 @@ Subset enumeration is the bottleneck, becoming intractable between $n = 50$ and 
 
 ---
 
-## 17.8 Parallelization Opportunities
+## 18.8 Parallelization Opportunities
 
-### 17.8.1 Embarrassingly Parallel Stages
+### 18.8.1 Embarrassingly Parallel Stages
 
 **Subset enumeration.** Each `optimize_subset` call is independent. Subsets can be partitioned across $P$ workers, reducing wall-clock time by approximately $P$:
 
@@ -9363,27 +9600,27 @@ def parallel_enumerate_subsets(dim_names, evaluate_fn, max_dims=4, n_workers=Non
 
 **MRI computation.** Perturbation samples can be precomputed and distributed. **Adversarial search.** Each dimension's binary search is independent.
 
-### 17.8.2 Sequential Stages with Inner Parallelism
+### 18.8.2 Sequential Stages with Inner Parallelism
 
 Forward selection, backward elimination, and the compositional test are sequential across steps but parallel *within* each step. At step $t$ of forward selection, the $n - t$ candidate evaluations can run simultaneously.
 
-### 17.8.3 GPU Acceleration
+### 18.8.3 GPU Acceleration
 
 When the evaluation function is GPU-accelerated, perturbation evaluations can be batched. Instead of $p$ sequential evaluations, construct batches of $B$ perturbed parameter vectors and evaluate them in a single kernel launch, reducing the number of launches from 300 to $\lceil 300/B \rceil$.
 
 ---
 
-## 17.9 Memory-Efficient Implementations
+## 18.9 Memory-Efficient Implementations
 
-### 17.9.1 The Memory Problem
+### 18.9.1 The Memory Problem
 
 `enumerate_subsets` stores all results in a list. Each `SubsetResult` contains a full parameter vector of shape $(n,)$. For $n = 100$ and $K = 4$, the list holds nearly 4 million results consuming approximately 4 GB. For $n = 200$, memory exceeds 60 GB.
 
-### 17.9.2 Streaming Evaluation
+### 18.9.2 Streaming Evaluation
 
 Most downstream analysis needs only the top-$M$ results by MAE and the Pareto frontier. A streaming implementation maintains a bounded priority queue and a streaming Pareto frontier, reducing memory from $O(m)$ to $O(M + |F|)$---constant regardless of $n$.
 
-### 17.9.3 Compressed Parameter Storage
+### 18.9.3 Compressed Parameter Storage
 
 Since inactive dimensions share the sentinel value `1e6`, a `SubsetResult` with $k$ active dimensions out of $n$ total carries $n - k$ redundant values. Storing only active dimension indices and values reduces per-result storage from $O(n)$ to $O(k)$:
 
@@ -9406,9 +9643,9 @@ For $K = 2$ subsets with $n = 200$, this is a 100x compression.
 
 ---
 
-## 17.10 When to Use Exact Methods vs. Approximations
+## 18.10 When to Use Exact Methods vs. Approximations
 
-### 17.10.1 The Decision Framework
+### 18.10.1 The Decision Framework
 
 The choice between exact enumeration and approximate methods is not purely a function of $n$. It depends on three factors:
 
@@ -9418,7 +9655,7 @@ The choice between exact enumeration and approximate methods is not purely a fun
 
 3. **Tolerance for suboptimality.** In exploratory analysis, finding a configuration within 10% of optimal is often sufficient. In production deployment, where the selected configuration will run for months, the cost of finding the true optimum may be justified.
 
-### 17.10.2 Diagnostic Tests for Interaction Strength
+### 18.10.2 Diagnostic Tests for Interaction Strength
 
 Before committing to exhaustive enumeration, estimate interaction strength:
 
@@ -9428,7 +9665,7 @@ Before committing to exhaustive enumeration, estimate interaction strength:
 
 If $R < 0.05$, interactions are weak and greedy methods suffice. If $R > 0.2$, interactions are strong and more thorough search is warranted.
 
-### 17.10.3 The Decision Matrix
+### 18.10.3 The Decision Matrix
 
 | Condition | Recommended Strategy |
 |---|---|
@@ -9451,7 +9688,7 @@ report = run_campaign(
 )
 ```
 
-### 17.10.4 A High-Dimensional Campaign
+### 18.10.4 A High-Dimensional Campaign
 
 Consider $n = 80$ parameters with 50ms evaluation cost. Naive enumeration with $K = 4$ would require 12.5 years. The recommended approach:
 
@@ -9482,13 +9719,13 @@ Total: 2--3 hours instead of 12.5 years.
 
 ---
 
-## 17.11 Limitations and Open Problems
+## 18.11 Limitations and Open Problems
 
 Several challenges remain unresolved in the current framework.
 
 **Non-linear dimension interactions.** LASSO screening assesses dimensions individually via the $L^1$ penalty on each parameter. Dimensions whose importance emerges only through three-way or higher-order interactions may be incorrectly screened out. Developing screening methods that detect higher-order interactions without exhaustive search is an open problem in both the structural fuzzing framework and the broader feature selection literature.
 
-**Non-stationary evaluation costs.** The cost model in Section 17.7 assumes that each evaluation has fixed cost $E$. In practice, evaluation cost may depend on the parameter values---some configurations cause the model to converge slowly or trigger expensive fallback computations. Adaptive budget allocation must account for this variance, potentially using multi-armed bandit strategies to estimate per-configuration cost online.
+**Non-stationary evaluation costs.** The cost model in Section 18.7 assumes that each evaluation has fixed cost $E$. In practice, evaluation cost may depend on the parameter values---some configurations cause the model to converge slowly or trigger expensive fallback computations. Adaptive budget allocation must account for this variance, potentially using multi-armed bandit strategies to estimate per-configuration cost online.
 
 **Theoretical guarantees.** Forward selection provides an approximation ratio for submodular objectives, but the MAE-minimization objective in structural fuzzing is generally *not* submodular. Establishing theoretical guarantees for the approximation quality of greedy methods in this setting requires either proving submodularity under additional assumptions or developing alternative theoretical frameworks.
 
@@ -9496,11 +9733,11 @@ Several challenges remain unresolved in the current framework.
 
 ---
 
-## 17.12 Connection to Chapter 18
+## 18.12 Connection to Chapter 19
 
 This chapter addressed scaling in the dimension of the *parameter space*---what happens when the model has many parameters and the geometric methods of earlier chapters encounter computational limits. The strategies developed here---LASSO screening, greedy alternatives, streaming evaluation, adaptive budget allocation---are each effective in isolation, but their true power emerges when they are composed into coherent workflows.
 
-Chapter 18 turns to exactly this challenge: composing geometric analyses into *pipelines* with conditional branching, iterative refinement, and feedback loops between stages. The linear six-stage chain in `run_campaign` is a starting point; Chapter 18 develops more sophisticated compositions where the output of LASSO screening determines whether to run exhaustive or greedy enumeration, where MRI results trigger additional adversarial testing on fragile configurations, and where the entire pipeline can be re-run with adapted parameters when initial results reveal unexpected structure. The scaling strategies of this chapter become building blocks in that larger architecture.
+Chapter 19 turns to exactly this challenge: composing geometric analyses into *pipelines* with conditional branching, iterative refinement, and feedback loops between stages. The linear six-stage chain in `run_campaign` is a starting point; Chapter 19 develops more sophisticated compositions where the output of LASSO screening determines whether to run exhaustive or greedy enumeration, where MRI results trigger additional adversarial testing on fragile configurations, and where the entire pipeline can be re-run with adapted parameters when initial results reveal unexpected structure. The scaling strategies of this chapter become building blocks in that larger architecture.
 
 ---
 
@@ -9517,20 +9754,20 @@ The remaining pipeline stages---Pareto extraction, sensitivity profiling, MRI, a
 
 \newpage
 
-# Chapter 18: Deploying Geometric Validation in Production
+# Chapter 19: Deploying Geometric Validation in Production
 
 > *"What gets measured gets managed---but only if it gets measured automatically, continuously, and with enough dimensionality to detect the failures that matter."*
 > --- Adapted from Peter Drucker
 
-The geometric methods developed across Chapters 3--15 and composed into pipelines in Chapter 16 are powerful precisely because they replace scalar summaries with multi-dimensional analysis. But power in a notebook is not the same as power in production. A geometric validation that runs manually once per quarter provides a snapshot; a geometric validation that runs on every pull request, monitors every deployed model, and alerts on every frontier degradation provides a *system*. This chapter bridges the gap between the two.
+The geometric methods developed across Chapters 3--15 and composed into pipelines in Chapter 17 are powerful precisely because they replace scalar summaries with multi-dimensional analysis. But power in a notebook is not the same as power in production. A geometric validation that runs manually once per quarter provides a snapshot; a geometric validation that runs on every pull request, monitors every deployed model, and alerts on every frontier degradation provides a *system*. This chapter bridges the gap between the two.
 
-We begin with the mechanics of integrating the `structural-fuzzing` package into CI/CD pipelines as a PyPI dependency. We then develop automated regression testing against MRI thresholds (Chapter 9), monitoring of Pareto frontier stability over time, and alerting when geometric baselines degrade. The middle sections address the engineering concerns that distinguish production from research: performance budgets, timeout handling, and designing `evaluate_fn` for models that live behind API endpoints. We close with LaTeX report generation for stakeholder communication and the versioning of geometric baselines---the production analog of the "save your weights" practice in model training.
+We begin with the mechanics of integrating the `structural-fuzzing` package into CI/CD pipelines as a PyPI dependency. We then develop automated regression testing against MRI thresholds (Chapter 10), monitoring of Pareto frontier stability over time, and alerting when geometric baselines degrade. The middle sections address the engineering concerns that distinguish production from research: performance budgets, timeout handling, and designing `evaluate_fn` for models that live behind API endpoints. We close with LaTeX report generation for stakeholder communication and the versioning of geometric baselines---the production analog of the "save your weights" practice in model training.
 
 ---
 
-## 18.1 The structural-fuzzing Package as a Production Dependency
+## 19.1 The structural-fuzzing Package as a Production Dependency
 
-### 18.1.1 Installation and Pinning
+### 19.1.1 Installation and Pinning
 
 The `structural-fuzzing` package is published on PyPI and requires Python 3.10 or later. Its only hard dependency is NumPy (>= 1.24). This minimal dependency footprint is a deliberate design decision: a validation tool that drags in a hundred transitive dependencies becomes a liability in production environments where dependency conflicts are a constant source of breakage.
 
@@ -9552,7 +9789,7 @@ pip install structural-fuzzing==0.2.0 --index-url https://pypi.internal.corp.exa
 
 The optional `examples` extras (`scikit-learn`, `pandas`) are development conveniences and should not be installed in production images. If your `evaluate_fn` requires scikit-learn, that dependency belongs in your application's dependency list, not in the validation tool's.
 
-### 18.1.2 Import Patterns for Production Code
+### 19.1.2 Import Patterns for Production Code
 
 In production systems, import the pipeline entry point and the report types directly:
 
@@ -9567,9 +9804,9 @@ Avoid star imports. Avoid importing the entire `structural_fuzzing` namespace. E
 
 ---
 
-## 18.2 Integrating Structural Fuzzing into CI/CD Pipelines
+## 19.2 Integrating Structural Fuzzing into CI/CD Pipelines
 
-### 18.2.1 The Baseline CI Configuration
+### 19.2.1 The Baseline CI Configuration
 
 The project's own CI pipeline (`.github/workflows/ci.yaml`) provides the template. It runs tests across Python 3.10--3.13, installs in editable mode with dev extras, and runs `pytest` with coverage. A production integration extends this pattern by adding a *validation job* that runs structural fuzzing against the model under test.
 
@@ -9622,13 +9859,13 @@ jobs:
 
 Three design decisions merit attention.
 
-**The `schedule` trigger.** Structural fuzzing on every commit is often too expensive. The workflow above runs the full campaign weekly on a schedule, while PR-triggered runs execute a lighter check (Section 18.4). The scheduled run establishes the baseline; PR runs check for regressions against it.
+**The `schedule` trigger.** Structural fuzzing on every commit is often too expensive. The workflow above runs the full campaign weekly on a schedule, while PR-triggered runs execute a lighter check (Section 19.4). The scheduled run establishes the baseline; PR runs check for regressions against it.
 
-**The `timeout-minutes` limit.** Production CI must have a hard upper bound on execution time. A campaign that runs indefinitely---because an `evaluate_fn` hangs, because a combinatorial explosion was not anticipated---blocks the pipeline and erodes trust in the validation system. Section 18.5 discusses timeout handling in detail.
+**The `timeout-minutes` limit.** Production CI must have a hard upper bound on execution time. A campaign that runs indefinitely---because an `evaluate_fn` hangs, because a combinatorial explosion was not anticipated---blocks the pipeline and erodes trust in the validation system. Section 19.5 discusses timeout handling in detail.
 
-**Artifact retention.** Campaign results are uploaded as CI artifacts with a 90-day retention window. This creates a versioned history of geometric baselines that can be compared over time (Section 18.8).
+**Artifact retention.** Campaign results are uploaded as CI artifacts with a 90-day retention window. This creates a versioned history of geometric baselines that can be compared over time (Section 19.8).
 
-### 18.2.2 The Validation Script
+### 19.2.2 The Validation Script
 
 The `run_validation.py` script is the bridge between the CI environment and the structural fuzzing API. Its structure follows the `run_campaign` function signature from `structural_fuzzing.pipeline`:
 
@@ -9701,11 +9938,11 @@ The critical design element is the serialization of structured results to JSON. 
 
 ---
 
-## 18.3 Automated Regression Testing with MRI Thresholds
+## 19.3 Automated Regression Testing with MRI Thresholds
 
-### 18.3.1 Defining Threshold Policies
+### 19.3.1 Defining Threshold Policies
 
-The Model Robustness Index (Chapter 9) compresses the perturbation response distribution into a single score that explicitly accounts for tail risk. In production, this score becomes a *gate*: if the MRI exceeds a threshold, the pipeline fails and the change does not merge.
+The Model Robustness Index (Chapter 10) compresses the perturbation response distribution into a single score that explicitly accounts for tail risk. In production, this score becomes a *gate*: if the MRI exceeds a threshold, the pipeline fails and the change does not merge.
 
 A threshold policy specifies acceptable bounds on the campaign results:
 
@@ -9725,11 +9962,11 @@ class ThresholdPolicy:
     max_sensitivity_delta: float = 5.0
 ```
 
-The `max_mri` threshold deserves careful calibration. An MRI of 2.0 means the weighted combination of mean deviation, 75th percentile, and 95th percentile is at most 2.0---the model's error roughly doubles under the worst perturbations seen during validation. Whether this is acceptable depends on the domain. For a defect prediction model that informs code review priorities, an MRI of 2.0 may be fine. For a model that triggers automated security responses, an MRI above 1.0 may be unacceptable. Chapter 9 provides guidance on setting these thresholds based on domain-specific risk tolerance.
+The `max_mri` threshold deserves careful calibration. An MRI of 2.0 means the weighted combination of mean deviation, 75th percentile, and 95th percentile is at most 2.0---the model's error roughly doubles under the worst perturbations seen during validation. Whether this is acceptable depends on the domain. For a defect prediction model that informs code review priorities, an MRI of 2.0 may be fine. For a model that triggers automated security responses, an MRI above 1.0 may be unacceptable. Chapter 10 provides guidance on setting these thresholds based on domain-specific risk tolerance.
 
 The `max_mri_p95` threshold independently bounds the tail of the perturbation distribution. A model can have a low composite MRI (because the mean is low) while still exhibiting catastrophic behavior in the worst 5% of perturbations. Bounding P95 separately catches this case.
 
-### 18.3.2 The Threshold Checker
+### 19.3.2 The Threshold Checker
 
 The `check_thresholds.py` script loads the JSON results and applies the policy:
 
@@ -9800,7 +10037,7 @@ if __name__ == "__main__":
 
 The exit code is the contract with the CI system: zero means pass, non-zero means fail. When `check_thresholds.py` exits with code 1, the GitHub Actions step fails, the PR check turns red, and the change cannot merge without an explicit override.
 
-### 18.3.3 Baseline Comparison Mode
+### 19.3.3 Baseline Comparison Mode
 
 Threshold checking against fixed constants is a starting point. The more powerful mode compares against a *previous baseline*:
 
@@ -9853,11 +10090,11 @@ The 20% MRI degradation tolerance and 10% MAE tolerance are configurable paramet
 
 ---
 
-## 18.4 Designing evaluate_fn for Production Models
+## 19.4 Designing evaluate_fn for Production Models
 
-### 18.4.1 The Contract
+### 19.4.1 The Contract
 
-The `run_campaign` function (Chapter 16) requires a single callable with the signature:
+The `run_campaign` function (Chapter 17) requires a single callable with the signature:
 
 ```python
 evaluate_fn: Callable[[np.ndarray], tuple[float, dict[str, float]]]
@@ -9867,7 +10104,7 @@ The function takes a parameter vector (a NumPy array of length $n$, where $n$ is
 
 In research, `evaluate_fn` typically wraps a scikit-learn model and a local dataset. In production, the model may live behind a gRPC endpoint, the dataset may be sampled from a data warehouse, and the function must handle network failures, authentication, and rate limits.
 
-### 18.4.2 Wrapping a Production Model
+### 19.4.2 Wrapping a Production Model
 
 The following pattern wraps a model served via HTTP:
 
@@ -9952,9 +10189,9 @@ Three aspects of this implementation matter for production reliability.
 
 **Rate limit handling.** Production model endpoints often enforce rate limits. The `429` handler respects the `Retry-After` header, adapting to the server's back-pressure signal.
 
-**Timeout per request.** The `timeout_seconds` parameter bounds individual evaluations. This is distinct from the campaign-level timeout (Section 18.5) which bounds the entire run.
+**Timeout per request.** The `timeout_seconds` parameter bounds individual evaluations. This is distinct from the campaign-level timeout (Section 19.5) which bounds the entire run.
 
-### 18.4.3 Caching Evaluations
+### 19.4.3 Caching Evaluations
 
 Structural fuzzing explores many parameter configurations, and some may be evaluated more than once (e.g., the all-dimensions baseline appears in both subset enumeration and MRI computation). Caching eliminates redundant evaluations:
 
@@ -9987,9 +10224,9 @@ The rounding in the cache key prevents floating-point drift from defeating cache
 
 ---
 
-## 18.5 Performance Budgets and Timeout Handling
+## 19.5 Performance Budgets and Timeout Handling
 
-### 18.5.1 Estimating Campaign Cost
+### 19.5.1 Estimating Campaign Cost
 
 A structural fuzzing campaign's computational cost is determined by the number of `evaluate_fn` calls, which depends on the configuration:
 
@@ -10011,7 +10248,7 @@ For the default configuration with $n = 5$ dimensions, $K = 4$, $N_\text{pert} =
 
 Total: roughly 104,000 evaluations. If each evaluation takes 10 milliseconds, the campaign completes in about 17 minutes. If each evaluation takes 1 second (typical for a model behind an API), the campaign would take nearly 29 hours---far too long for CI.
 
-### 18.5.2 Budgeting Strategies
+### 19.5.2 Budgeting Strategies
 
 The solution is to adjust campaign parameters to fit a time budget:
 
@@ -10072,7 +10309,7 @@ def budget_campaign_params(
 
 The 60/30/10 split prioritizes subset enumeration (the most informative phase) and MRI (the most operationally relevant). Sensitivity profiling and adversarial search are cheap and run unconditionally.
 
-### 18.5.3 Campaign-Level Timeouts
+### 19.5.3 Campaign-Level Timeouts
 
 Beyond budgeting, a hard timeout prevents runaway campaigns:
 
@@ -10116,9 +10353,9 @@ When the timeout fires, the `CampaignTimeoutError` propagates up, the CI step fa
 
 ---
 
-## 18.6 Monitoring Model Robustness Over Time
+## 19.6 Monitoring Model Robustness Over Time
 
-### 18.6.1 The Robustness Time Series
+### 19.6.1 The Robustness Time Series
 
 A single MRI value is a snapshot. A *time series* of MRI values, collected weekly or after every model retrain, reveals trends that no individual measurement can capture. Is the model becoming more brittle as the data distribution shifts? Is robustness improving as the training pipeline matures? These questions require longitudinal data.
 
@@ -10195,7 +10432,7 @@ def compute_trend(
 
 The `slope` field is the key signal. A consistently positive MRI slope means robustness is degrading over time---even if each individual measurement is still below the absolute threshold. Catching a *trend* before it crosses a *threshold* is the difference between proactive maintenance and firefighting.
 
-### 18.6.2 Alerting on Pareto Frontier Degradation
+### 19.6.2 Alerting on Pareto Frontier Degradation
 
 The Pareto frontier is a more nuanced robustness signal than MRI alone. A frontier with four non-dominated points at model version $v$ that collapses to two points at version $v+1$ indicates that the model has lost diversity in its accuracy-simplicity tradeoffs---even if the best MAE is unchanged.
 
@@ -10267,7 +10504,7 @@ def check_frontier_degradation(
 
 The 85% threshold means the frontier's dominated area must remain within 15% of the baseline. This is a *relative* check, not absolute, which makes it robust to differences in scale across models.
 
-### 18.6.3 Integration with Monitoring Infrastructure
+### 19.6.3 Integration with Monitoring Infrastructure
 
 For teams that use Prometheus, Datadog, or similar observability platforms, campaign results can be exported as custom metrics:
 
@@ -10302,9 +10539,9 @@ The flat metric dictionary integrates with any monitoring backend. A Grafana das
 
 ---
 
-## 18.7 Interpreting Results in Automated Contexts
+## 19.7 Interpreting Results in Automated Contexts
 
-### 18.7.1 The Interpretation Problem
+### 19.7.1 The Interpretation Problem
 
 In a notebook, a practitioner reads the campaign report, examines the Pareto frontier, and makes a judgment. In CI, there is no practitioner---only a pass/fail gate. The gap between rich geometric output and binary CI decisions is bridged by *interpretation rules*: codified heuristics that translate multi-dimensional results into actionable signals.
 
@@ -10391,7 +10628,7 @@ def interpret_campaign(results: dict) -> list[dict]:
 
 Each finding includes a severity level, the metric that triggered it, the raw value, and a human-readable message. The message is written for automated Slack notifications or PR comments, not for geometric experts---it explains the *implication* of the value, not the mathematical definition.
 
-### 18.7.2 PR Comments from CI
+### 19.7.2 PR Comments from CI
 
 GitHub Actions can post findings directly as PR comments, making geometric validation visible in the developer workflow:
 
@@ -10436,9 +10673,9 @@ This closes the feedback loop: the developer who changed the model sees the geom
 
 ---
 
-## 18.8 LaTeX Report Generation for Stakeholders
+## 19.8 LaTeX Report Generation for Stakeholders
 
-### 18.8.1 The Reporting Pipeline
+### 19.8.1 The Reporting Pipeline
 
 Not every consumer of geometric validation results is a developer reading PR comments. Model governance boards, regulatory reviewers, and academic collaborators expect formatted reports with tables, captions, and proper typesetting. The `format_latex_tables` function in `structural_fuzzing.report` generates publication-ready LaTeX directly from campaign results.
 
@@ -10489,7 +10726,7 @@ for the theoretical basis of Pareto analysis in this context.
 \end{document}
 ```
 
-### 18.8.2 Automating Report Generation in CI
+### 19.8.2 Automating Report Generation in CI
 
 The CI pipeline can produce compiled PDFs by adding a LaTeX compilation step:
 
@@ -10515,9 +10752,9 @@ The compiled PDF is available as a downloadable artifact. For organizations that
 
 ---
 
-## 18.9 Versioning Geometric Baselines
+## 19.9 Versioning Geometric Baselines
 
-### 18.9.1 The Baseline Problem
+### 19.9.1 The Baseline Problem
 
 A regression check requires a baseline to regress against. Where does the baseline come from? Who updates it? What happens when the model architecture changes and the old baseline is no longer comparable?
 
@@ -10558,7 +10795,7 @@ def promote_baseline(
     print(f"Promoted {campaign_results_path} to {baseline_path}")
 ```
 
-### 18.9.2 Schema Versioning
+### 19.9.2 Schema Versioning
 
 As the structural fuzzing framework evolves, the JSON schema of campaign results may change. A `schema_version` field in every results file prevents silent incompatibilities:
 
@@ -10592,7 +10829,7 @@ def load_results(path: str) -> dict:
 
 When the schema changes, the loader raises an explicit error rather than silently misinterpreting fields. This is the geometric analog of the "your saved model is incompatible with this version of the framework" error that every ML practitioner has encountered.
 
-### 18.9.3 Baseline Branching for A/B Tests
+### 19.9.3 Baseline Branching for A/B Tests
 
 When multiple model variants are under evaluation simultaneously (A/B tests, champion/challenger deployments), each variant needs its own baseline:
 
@@ -10628,7 +10865,7 @@ The fallback to the champion baseline ensures that new variants are compared aga
 
 ---
 
-## 18.10 A Complete Production Integration Example
+## 19.10 A Complete Production Integration Example
 
 Bringing the pieces together, the following is a complete GitHub Actions workflow for a team that deploys a defect prediction model weekly, runs structural fuzzing on every PR and nightly, and generates PDF reports for the model governance board:
 
@@ -10721,15 +10958,15 @@ This workflow embodies the production deployment principles developed throughout
 
 ---
 
-## 18.11 Operational Considerations
+## 19.11 Operational Considerations
 
-### 18.11.1 Flaky Evaluations
+### 19.11.1 Flaky Evaluations
 
 Production `evaluate_fn` implementations are subject to non-determinism: stochastic models produce different outputs on each call, data sampling introduces variance, and network latency adds noise. A campaign that fails on Monday and passes on Tuesday---with no code changes---erodes trust in the validation system.
 
 The mitigation is to run the MRI computation with enough perturbations to produce stable statistics (at least 200; 300 is the default) and to set thresholds with headroom. If the MRI consistently measures 1.4 and the threshold is 1.5, a noisy evaluation will occasionally cross the boundary. Setting the threshold at 2.0 provides operational margin while still catching genuine regressions.
 
-### 18.11.2 Secrets Management
+### 19.11.2 Secrets Management
 
 The `evaluate_fn` for a production model endpoint requires API keys, database credentials, or service account tokens. These must never appear in CI logs, workflow files, or campaign results.
 
@@ -10745,13 +10982,13 @@ Store secrets in the CI platform's secret store (GitHub Actions secrets, GitLab 
 
 The validation script reads from `os.environ`, never from configuration files that might be committed.
 
-### 18.11.3 Resource Isolation
+### 19.11.3 Resource Isolation
 
 A structural fuzzing campaign that evaluates 100,000+ parameter configurations exerts sustained load on the model serving infrastructure. In production, this load should be directed at a *staging* or *shadow* replica, not at the production endpoint serving live traffic. The CI workflow should configure `evaluate_fn` to point at the staging environment, which is the same model version but isolated from production traffic.
 
 ---
 
-## 18.12 Summary
+## 19.12 Summary
 
 Deploying geometric validation in production transforms it from an analytical technique into an engineering system. The key components are:
 
@@ -10771,18 +11008,18 @@ Deploying geometric validation in production transforms it from an analytical te
 
 8. **Baseline versioning.** Schema-versioned JSON baselines, archived on promotion, enable longitudinal comparison and A/B test support.
 
-The system described in this chapter does not require any changes to the model itself. It operates entirely on the `evaluate_fn` interface established in Chapter 16: give the framework a callable that maps parameter vectors to errors, and it will quantify robustness, identify fragilities, and enforce quality gates---automatically, repeatedly, and with full geometric fidelity.
+The system described in this chapter does not require any changes to the model itself. It operates entirely on the `evaluate_fn` interface established in Chapter 17: give the framework a callable that maps parameter vectors to errors, and it will quantify robustness, identify fragilities, and enforce quality gates---automatically, repeatedly, and with full geometric fidelity.
 
 ---
 
-## 18.13 Connection to Chapter 19
+## 19.13 Connection to Chapter 20
 
-This chapter treated the `evaluate_fn` as a black box: given a parameter vector, it returns a scalar error and a dictionary of named components. Chapter 19 demonstrates the complete framework on a real-world software defect prediction problem. It takes a dataset of software metrics, builds an evaluation function, runs the entire structural fuzzing campaign, and interprets every output---showing how geometric reasoning transforms model validation from a single scalar to a multi-dimensional portrait of behavior, fragility, and opportunity.
+This chapter treated the `evaluate_fn` as a black box: given a parameter vector, it returns a scalar error and a dictionary of named components. Chapter 20 opens the black box. It examines how geometric validation interacts with specific model architectures---deep neural networks, gradient-boosted trees, Gaussian processes---and how architectural properties (differentiability, ensemble structure, posterior uncertainty) can be exploited to make structural fuzzing more efficient and more informative. Where this chapter asked "how do we deploy geometric validation?", Chapter 20 asks "how do we make the models themselves geometric-validation-aware?"
 
 
 \newpage
 
-# Chapter 19: Case Study --- Software Defect Prediction
+# Chapter 20: Case Study --- Software Defect Prediction
 
 > *"All models are wrong, but some are useful."*
 > --- George E. P. Box (1976)
@@ -10793,9 +11030,9 @@ The dataset is a synthetic analogue of the KC1 module from the NASA Metrics Data
 
 ---
 
-## 19.1 The Dataset and Feature Groups
+## 20.1 The Dataset and Feature Groups
 
-### 19.1.1 Feature Architecture
+### 20.1.1 Feature Architecture
 
 Software defect prediction datasets typically contain between 15 and 40 metrics per module. These metrics are not independent: lines of code correlates with Halstead volume, cyclomatic complexity correlates with essential complexity, revision count correlates with churn. Treating all 16 features as independent dimensions would produce a 16-dimensional state space---far too large for exhaustive geometric analysis, and structurally misleading because it would treat correlated features as orthogonal.
 
@@ -10813,9 +11050,9 @@ FEATURE_GROUPS = {
 
 Five groups, sixteen features, one dimension per group. The analysis space is $\mathbb{R}^5$, small enough for exhaustive subset enumeration yet rich enough to capture the structural questions that matter: which combinations of metric families predict defects? Which are redundant? Where are the fragility boundaries?
 
-The grouping itself is a modeling decision. One could split Halstead into "volume" and "effort" sub-groups, or merge Size and Halstead into a single "scale" dimension. Chapter 1 discusses the principles for constructing dimension groupings. Here, we follow the standard five-group decomposition because it aligns with the domain taxonomy and produces a space small enough for exhaustive analysis.
+The grouping itself is a modeling decision. One could split Halstead into "volume" and "effort" sub-groups, or merge Size and Halstead into a single "scale" dimension. Chapter 3 discusses the principles for constructing dimension groupings. Here, we follow the standard five-group decomposition because it aligns with the domain taxonomy and produces a space small enough for exhaustive analysis.
 
-### 19.1.2 Ground Truth Structure
+### 20.1.2 Ground Truth Structure
 
 The synthetic data generator encodes a specific causal structure that mirrors findings from the empirical software engineering literature:
 
@@ -10831,7 +11068,7 @@ $$p(\text{defect}) = \sigma\!\left(-3 + 0.10\log(1 + \text{cyc}) + 0.15\log(1 + 
 
 where $\sigma$ is the sigmoid function and $\varepsilon \sim \mathcal{N}(0, 0.25)$. The coefficients make the ground truth explicit: Complexity and Process dominate, Size contributes marginally, OO contributes nothing. A successful geometric analysis should recover this structure without access to the generating coefficients.
 
-### 19.1.3 Generating the Data
+### 20.1.3 Generating the Data
 
 ```python
 from examples.defect_prediction.model import generate_defect_data, FEATURE_NAMES
@@ -10846,11 +11083,11 @@ The generator produces 1,000 modules with 16 features each and a binary defect l
 
 ---
 
-## 19.2 Building the Evaluation Function
+## 20.2 Building the Evaluation Function
 
-The structural fuzzing framework communicates with models through a single interface: the *evaluation function*. This function takes a parameter vector $\mathbf{p} \in \mathbb{R}^n$ (one entry per dimension) and returns a scalar MAE along with a dictionary of per-target errors. The design of this interface is discussed in Chapter 1; here we implement it for defect prediction.
+The structural fuzzing framework communicates with models through a single interface: the *evaluation function*. This function takes a parameter vector $\mathbf{p} \in \mathbb{R}^n$ (one entry per dimension) and returns a scalar MAE along with a dictionary of per-target errors. The design of this interface is discussed in Chapter 3; here we implement it for defect prediction.
 
-### 19.2.1 The evaluate_fn Contract
+### 20.2.1 The evaluate_fn Contract
 
 The evaluation function must satisfy three properties:
 
@@ -10860,7 +11097,7 @@ The evaluation function must satisfy three properties:
 
 3. **Error semantics.** Each entry in the errors dictionary represents `predicted - target` for one quality metric. Positive values mean the model exceeds the target; negative values mean it falls short.
 
-### 19.2.2 Implementation
+### 20.2.2 Implementation
 
 The `make_evaluate_fn` factory in the example module constructs a complete evaluation function:
 
@@ -10884,7 +11121,7 @@ Internally, the factory:
 
 The key insight is that the parameter vector controls *which feature groups are active*, not the internal hyperparameters of the random forest. This is the structural fuzzing paradigm: instead of searching over model configurations, we search over *input structures*---which combinations of information the model receives---and measure how model behavior changes as a function of that structure.
 
-### 19.2.3 A Quick Sanity Check
+### 20.2.3 A Quick Sanity Check
 
 Before launching the full campaign, it is good practice to verify the evaluation function with a few spot checks:
 
@@ -10915,11 +11152,11 @@ If the data generator and evaluation function are working correctly, the all-gro
 
 ---
 
-## 19.3 Running the Full Campaign
+## 20.3 Running the Full Campaign
 
 With the evaluation function constructed and verified, we launch the complete structural fuzzing campaign. The `run_campaign` function in `structural_fuzzing.pipeline` orchestrates all six analysis stages in sequence.
 
-### 19.3.1 Campaign Configuration
+### 20.3.1 Campaign Configuration
 
 ```python
 from structural_fuzzing.pipeline import run_campaign
@@ -10941,26 +11178,26 @@ report = run_campaign(
 
 The `max_subset_dims=4` setting enumerates all subsets of size 1 through 4 out of 5 dimensions. This produces $\binom{5}{1} + \binom{5}{2} + \binom{5}{3} + \binom{5}{4} = 5 + 10 + 10 + 5 = 30$ configurations, plus the single size-5 configuration tested during sensitivity profiling. Each configuration requires training and evaluating a random forest, so the full campaign runs approximately 30 subset evaluations plus 300 MRI perturbations plus adversarial searches plus baselines---several hundred model fits in total. On the synthetic dataset with 1,000 samples, this completes in under a minute on modern hardware.
 
-### 19.3.2 The Six-Stage Pipeline
+### 20.3.2 The Six-Stage Pipeline
 
 The campaign executes the following stages, each corresponding to a technique developed in an earlier chapter:
 
 | Stage | Chapter | Operation |
 |-------|---------|-----------|
-| 1. Subset enumeration | Ch 4 | Test all $\binom{5}{k}$ subsets for $k = 1, \ldots, 4$ |
-| 2. Pareto frontier | Ch 5 | Identify non-dominated (dimensionality, MAE) tradeoffs |
-| 3. Sensitivity profiling | Ch 7 | Ablate each dimension and measure MAE impact |
-| 4. Model Robustness Index | Ch 7 | Perturb baseline 300 times, compute MRI |
-| 5. Adversarial thresholds | Ch 9--10 | Binary search for tipping points per dimension |
-| 6. Compositional testing | Ch 4 | Greedy dimension-addition sequence |
+| 1. Subset enumeration | Ch 11 | Test all $\binom{5}{k}$ subsets for $k = 1, \ldots, 4$ |
+| 2. Pareto frontier | Ch 8 | Identify non-dominated (dimensionality, MAE) tradeoffs |
+| 3. Sensitivity profiling | Ch 9 | Ablate each dimension and measure MAE impact |
+| 4. Model Robustness Index | Ch 9 | Perturb baseline 300 times, compute MRI |
+| 5. Adversarial thresholds | Ch 10 | Binary search for tipping points per dimension |
+| 6. Compositional testing | Ch 12 | Greedy dimension-addition sequence |
 
 The `StructuralFuzzReport` dataclass returned by `run_campaign` contains the complete results from all six stages, along with optional forward-selection and backward-elimination baselines. The report's `summary()` method produces a formatted text output, and the `report` module provides LaTeX table generation for publication.
 
 ---
 
-## 19.4 Interpreting Subset Enumeration Results
+## 20.4 Interpreting Subset Enumeration Results
 
-### 19.4.1 The Full Enumeration Table
+### 20.4.1 The Full Enumeration Table
 
 The first stage produces 30 `SubsetResult` objects, sorted by MAE ascending. The top of the list reveals which feature group combinations achieve the best prediction quality:
 
@@ -10990,7 +11227,7 @@ Top 10 configurations by MAE:
   10. [Size, Complexity] (k=2) MAE=2.5539
 ```
 
-### 19.4.2 Reading the Enumeration
+### 20.4.2 Reading the Enumeration
 
 Several patterns emerge immediately:
 
@@ -11002,7 +11239,7 @@ Several patterns emerge immediately:
 
 **OO metrics hurt more than they help.** Comparing {Complexity, Process} (MAE 2.10) with {Complexity, OO, Process} (MAE 2.21) shows that adding OO features *increases* error. This is the noise injection effect: the random forest splits on uninformative features, wasting capacity and reducing generalization. The geometric analysis quantifies this effect precisely, unlike a scalar accuracy report that might average it away.
 
-### 19.4.3 The Per-Target Error Vectors
+### 20.4.3 The Per-Target Error Vectors
 
 Each `SubsetResult` contains not just the scalar MAE but the full error vector across all five quality targets. These vectors reveal *how* configurations differ, not just *how much*:
 
@@ -11018,9 +11255,9 @@ A configuration might achieve low MAE overall but fall short on Recall while exc
 
 ---
 
-## 19.5 Analyzing the Pareto Frontier
+## 20.5 Analyzing the Pareto Frontier
 
-### 19.5.1 Extracting the Frontier
+### 20.5.1 Extracting the Frontier
 
 The Pareto frontier identifies configurations where no other configuration achieves both fewer dimensions *and* lower MAE. These are the non-dominated tradeoffs between model simplicity (fewer feature groups) and prediction quality (lower error):
 
@@ -11043,7 +11280,7 @@ Pareto frontier: 4 points
   k=4: MAE=1.3842 [Size, Complexity, Halstead, Process]
 ```
 
-### 19.5.2 Reading the Frontier
+### 20.5.2 Reading the Frontier
 
 The Pareto frontier tells a story of diminishing returns:
 
@@ -11055,7 +11292,7 @@ Note that OO does not appear on the Pareto frontier at any dimensionality. There
 
 The Pareto analysis directly addresses the question that the project manager asked in Chapter 1: "Is 84% accuracy good?" The geometric answer is: "Accuracy depends on which features you include, and the tradeoff between simplicity and accuracy has a specific shape. With two feature groups you can achieve MAE 2.1; with four groups you can achieve MAE 1.4. The fifth group (OO) provides no Pareto improvement at any complexity level."
 
-### 19.5.3 The Marginal Value Curve
+### 20.5.3 The Marginal Value Curve
 
 Plotting the Pareto frontier as a curve of MAE versus $k$ reveals the "elbow" that separates high-value dimension additions from low-value ones:
 
@@ -11080,11 +11317,11 @@ The elbow at $k = 2$ is the key finding. A team with limited feature engineering
 
 ---
 
-## 19.6 Sensitivity Profiling Results
+## 20.6 Sensitivity Profiling Results
 
-### 19.6.1 Ablation Rankings
+### 20.6.1 Ablation Rankings
 
-Sensitivity profiling (Chapter 9) ablates each dimension from the best baseline configuration and measures the resulting increase in MAE. The ranking reveals which dimensions the model depends on most:
+Sensitivity profiling (Chapter 8) ablates each dimension from the best baseline configuration and measures the resulting increase in MAE. The ranking reveals which dimensions the model depends on most:
 
 ```python
 print("Sensitivity ranking (ablation from best configuration):")
@@ -11107,7 +11344,7 @@ Sensitivity ranking (ablation from best configuration):
   5. OO:         delta_MAE = -0.0412 (with=1.3842, without=1.3430)
 ```
 
-### 19.6.2 Interpreting the Profile
+### 20.6.2 Interpreting the Profile
 
 The sensitivity profile confirms and extends the subset enumeration findings:
 
@@ -11121,17 +11358,17 @@ The sensitivity profile confirms and extends the subset enumeration findings:
 
 **OO is actively harmful.** The negative delta ($-0.04$) means that *removing* OO from the full configuration actually *improves* MAE. This is the clearest possible geometric signal that OO features are noise: they consume model capacity and degrade generalization. A scalar accuracy report would not detect this because the degradation is small enough to be masked by variance in the aggregate metric.
 
-### 19.6.3 Sensitivity vs. Subset Enumeration
+### 20.6.3 Sensitivity vs. Subset Enumeration
 
 Sensitivity profiling and subset enumeration provide complementary information. Subset enumeration answers: "Which combinations work well?" Sensitivity profiling answers: "Starting from the best configuration, which dimensions can you afford to lose?" The answers are consistent in this case---both identify Complexity and Process as the critical dimensions---but they need not be. A dimension that contributes little on its own (low MAE in singleton subset) might contribute substantially in combination with others (high delta when ablated from a multi-dimensional configuration). The geometric analysis captures both perspectives.
 
 ---
 
-## 19.7 The Model Robustness Index
+## 20.7 The Model Robustness Index
 
-### 19.7.1 MRI Computation
+### 20.7.1 MRI Computation
 
-The Model Robustness Index (Chapter 9) quantifies how sensitive the best configuration is to parameter perturbations. The framework perturbs the baseline parameters 300 times in log-space and measures the distribution of MAE deviations:
+The Model Robustness Index (Chapter 8) quantifies how sensitive the best configuration is to parameter perturbations. The framework perturbs the baseline parameters 300 times in log-space and measures the distribution of MAE deviations:
 
 ```python
 mri = report.mri_result
@@ -11154,7 +11391,7 @@ Model Robustness Index: 1.4287
   Perturbations:            300
 ```
 
-### 19.7.2 Interpreting the MRI
+### 20.7.2 Interpreting the MRI
 
 The MRI is a weighted combination of three statistics:
 
@@ -11168,7 +11405,7 @@ where $\omega_i = |\text{MAE}_{\text{perturbed},i} - \text{MAE}_{\text{base}}|$.
 
 **Worst-case MAE of 5.67** is nearly four times the baseline. This extreme is driven by perturbations that effectively disable critical feature groups while amplifying noise from uninformative ones.
 
-### 19.7.3 The Perturbation Distribution
+### 20.7.3 The Perturbation Distribution
 
 The full list of perturbation errors is available in `mri.perturbation_errors` and can be visualized as a histogram:
 
@@ -11189,11 +11426,11 @@ The distribution is typically right-skewed: most perturbations produce modest ch
 
 ---
 
-## 19.8 Adversarial Threshold Discovery
+## 20.8 Adversarial Threshold Discovery
 
-### 19.8.1 Finding Tipping Points
+### 20.8.1 Finding Tipping Points
 
-The adversarial threshold search (Chapters 9--10) goes beyond aggregate robustness to find *specific* parameter values where model behavior changes qualitatively. For each dimension, the framework searches in both directions (increase and decrease) from the baseline, looking for the first perturbation that changes any quality metric by more than the tolerance (0.5 in this campaign):
+The adversarial threshold search (Chapters 10--10) goes beyond aggregate robustness to find *specific* parameter values where model behavior changes qualitatively. For each dimension, the framework searches in both directions (increase and decrease) from the baseline, looking for the first perturbation that changes any quality metric by more than the tolerance (0.5 in this campaign):
 
 ```python
 print(f"Adversarial thresholds found: {len(report.adversarial_results)}")
@@ -11217,7 +11454,7 @@ Adversarial thresholds found: 6
   Process (decrease):    baseline=1.0000 -> threshold=0.1468  (ratio=0.15x, flips 'Recall')
 ```
 
-### 19.8.2 Interpreting the Thresholds
+### 20.8.2 Interpreting the Thresholds
 
 Each adversarial result identifies a *boundary* in the parameter space: a specific value beyond which a quality metric degrades by more than the tolerance. These boundaries define the operational envelope of the model.
 
@@ -11229,7 +11466,7 @@ Each adversarial result identifies a *boundary* in the parameter space: a specif
 
 **OO has no threshold.** No adversarial threshold was found for the OO dimension in either direction. This is consistent with all previous analyses: OO features carry no signal, so perturbing them has no effect on model quality. The adversarial search confirms what subset enumeration, Pareto analysis, and sensitivity profiling all suggest.
 
-### 19.8.3 From Thresholds to Deployment Constraints
+### 20.8.3 From Thresholds to Deployment Constraints
 
 The adversarial thresholds translate directly into deployment constraints. If the model is deployed in an environment where code complexity might decrease by a factor of 4 (e.g., a team adopts a "simplify everything" initiative), the Complexity threshold at 0.28x will be crossed and Recall will degrade. The response might be: monitor the complexity distribution of incoming code and trigger retraining when the distribution mean falls below 28% of the training distribution mean.
 
@@ -11237,11 +11474,11 @@ This kind of *conditional deployment guidance* is impossible to derive from a sc
 
 ---
 
-## 19.9 Compositional Testing
+## 20.9 Compositional Testing
 
-### 19.9.1 The Build Sequence
+### 20.9.1 The Build Sequence
 
-The compositional test (Chapter 12) constructs a greedy dimension-addition sequence, starting from a single dimension and iteratively adding the candidate that produces the largest MAE reduction:
+The compositional test (Chapter 4) constructs a greedy dimension-addition sequence, starting from a single dimension and iteratively adding the candidate that produces the largest MAE reduction:
 
 ```python
 comp = report.composition_result
@@ -11264,7 +11501,7 @@ Build order: Size -> Complexity -> Process -> Halstead -> OO
   Step 5: +OO         => MAE=1.4127 [Size + Complexity + Process + Halstead + OO]
 ```
 
-### 19.9.2 Interpreting the Sequence
+### 20.9.2 Interpreting the Sequence
 
 The compositional sequence reveals the *marginal contribution* of each dimension when added to an expanding context:
 
@@ -11276,7 +11513,7 @@ The compositional sequence reveals the *marginal contribution* of each dimension
 
 The compositional test provides information that subset enumeration alone does not: the *order* in which dimensions should be added to maximize the rate of improvement. This ordering is relevant for teams that are incrementally building their metrics infrastructure. If a team currently collects only size metrics, the compositional test says: "Add complexity metrics next, then process metrics. Do not invest in OO metrics."
 
-### 19.9.3 Comparing with Baselines
+### 20.9.3 Comparing with Baselines
 
 The campaign also runs forward selection and backward elimination as baselines:
 
@@ -11298,9 +11535,9 @@ Forward selection typically produces a greedy sequence similar to the compositio
 
 ---
 
-## 19.10 Complete Walkthrough: From Data to Actionable Insights
+## 20.10 Complete Walkthrough: From Data to Actionable Insights
 
-### 19.10.1 The Full Script
+### 20.10.1 The Full Script
 
 The following script combines all preceding steps into a single, self-contained workflow:
 
@@ -11338,7 +11575,7 @@ print(report.summary())
 
 This is 20 lines of code, excluding imports. The entire geometric analysis---30 subset evaluations, Pareto frontier extraction, sensitivity profiling, 300 MRI perturbations, adversarial threshold search across 5 dimensions, compositional testing, and forward/backward baselines---is orchestrated by a single function call. The `summary()` method produces a complete text report suitable for stakeholder communication.
 
-### 19.10.2 Generating LaTeX Output
+### 20.10.2 Generating LaTeX Output
 
 For publication or formal reporting, the `format_latex_tables` function generates publication-ready tables:
 
@@ -11352,7 +11589,7 @@ with open("defect_prediction_tables.tex", "w") as f:
 
 This produces three tables: the Pareto frontier, the sensitivity ranking, and the MRI summary, each with proper `\toprule`/`\midrule`/`\bottomrule` formatting and descriptive captions.
 
-### 19.10.3 The Actionable Insights
+### 20.10.3 The Actionable Insights
 
 Synthesizing all six analysis stages, the geometric analysis of the defect prediction model yields the following actionable conclusions:
 
@@ -11368,62 +11605,62 @@ Synthesizing all six analysis stages, the geometric analysis of the defect predi
 
 ---
 
-## 19.11 Lessons Learned
+## 20.11 Lessons Learned
 
 This case study illustrates several principles that generalize beyond defect prediction to any domain where the structural fuzzing framework is applied.
 
-### 19.11.1 Geometric Analysis Recovers Ground Truth
+### 20.11.1 Geometric Analysis Recovers Ground Truth
 
 The synthetic data generator embedded a specific causal structure: Complexity and Process drive defects, Size contributes weakly, OO is noise. The geometric analysis recovered this structure precisely, without any knowledge of the generating coefficients. Subset enumeration identified the correct top groups. Sensitivity profiling ranked them in the correct order. The Pareto frontier correctly excluded OO at every complexity level. Adversarial analysis found the tightest threshold on the most important dimension.
 
 This recovery is not coincidence. It is a consequence of the framework's design: by exhaustively probing the model's response to structural variations in its input, the geometric analysis extracts the model's *functional* dependencies regardless of its internal architecture. The random forest is a black box to the framework. The framework does not inspect feature importances or tree structures. It infers importance entirely from input-output behavior---the geometric signature of the model.
 
-### 19.11.2 Negative Results Are Results
+### 20.11.2 Negative Results Are Results
 
 The finding that OO metrics are uninformative is as valuable as the finding that Complexity is critical. A scalar evaluation might report that adding OO features changes accuracy from 84.2% to 83.9%---a difference that most practitioners would dismiss as noise. The geometric analysis is more precise: OO increases MAE by 0.04 in sensitivity profiling, increases MAE by 0.03 when added as the fifth compositional step, and produces no adversarial thresholds. These three independent geometric signals all point in the same direction. The confidence in the negative finding is high.
 
-### 19.11.3 Tail Risk Matters
+### 20.11.3 Tail Risk Matters
 
 The MRI reveals that 5% of perturbation scenarios produce catastrophic degradation. A mean-based robustness metric (e.g., mean accuracy across perturbations) would obscure this tail. The MRI's explicit inclusion of P75 and P95 terms ensures that tail risk is quantified and reported. For safety-critical applications---and defect prediction for safety-critical software is itself safety-critical---tail risk is often the *only* thing that matters.
 
-### 19.11.4 Geometry Composes
+### 20.11.4 Geometry Composes
 
 Each analysis stage in the campaign builds on the others. Subset enumeration identifies the best configuration. Sensitivity profiling ablates from that configuration. MRI perturbs around it. Adversarial search finds boundaries near it. Compositional testing constructs it incrementally. The stages are not independent tools applied in isolation; they are geometric operations on the same space, examining the same configuration from different angles. The convergence of their findings (Complexity is critical, OO is noise, the model is brittle on Complexity) is a form of *geometric triangulation* that provides confidence no single analysis could match.
 
-### 19.11.5 The Framework Scales
+### 20.11.5 The Framework Scales
 
-The five-dimensional case study in this chapter is deliberately small, chosen for pedagogical clarity. The framework's architecture scales to higher-dimensional spaces. For $n$ dimensions with `max_subset_dims = k$, the enumeration cost is $\sum_{j=1}^{k} \binom{n}{j}$, which grows polynomially for fixed $k$. With $k = 3$ and $n = 10$, this is $10 + 45 + 120 = 175$ subsets---still feasible. For $n = 20$ or beyond, the enumeration becomes expensive and the greedy approaches (forward selection, backward elimination, compositional testing) serve as practical approximations. Chapter 17 discusses scaling strategies for high-dimensional analysis spaces in detail.
+The five-dimensional case study in this chapter is deliberately small, chosen for pedagogical clarity. The framework's architecture scales to higher-dimensional spaces. For $n$ dimensions with `max_subset_dims = k$, the enumeration cost is $\sum_{j=1}^{k} \binom{n}{j}$, which grows polynomially for fixed $k$. With $k = 3$ and $n = 10$, this is $10 + 45 + 120 = 175$ subsets---still feasible. For $n = 20$ or beyond, the enumeration becomes expensive and the greedy approaches (forward selection, backward elimination, compositional testing) serve as practical approximations. Chapter 18 discusses scaling strategies for high-dimensional analysis spaces in detail.
 
 ---
 
-## 19.12 Connection to What Follows
+## 20.12 Connection to What Follows
 
 This chapter demonstrated the complete geometric toolchain on a single domain. The analysis followed a fixed protocol: build an evaluation function, run the campaign, interpret the results. But the protocol itself raises questions that the remaining chapters address.
 
-Chapter 20 extends the case study methodology to multi-objective scenarios where the targets themselves conflict---where improving Recall necessarily degrades Precision, and the Pareto frontier is not a convenience but a fundamental representation of the tradeoff space. The techniques from Chapter 8 (Pareto optimization) combine with the sensitivity and adversarial methods from this chapter to produce a richer, more nuanced portrait of model behavior in the presence of genuinely competing objectives.
+Chapter 21 extends the case study methodology to multi-objective scenarios where the targets themselves conflict---where improving Recall necessarily degrades Precision, and the Pareto frontier is not a convenience but a fundamental representation of the tradeoff space. The techniques from Chapter 9 (Pareto optimization) combine with the sensitivity and adversarial methods from this chapter to produce a richer, more nuanced portrait of model behavior in the presence of genuinely competing objectives.
 
 The defect prediction example showed what geometry reveals when applied to a single model in a single domain. The next chapter shows what geometry reveals when the objectives themselves form a geometric structure---when the space of *goals* is as rich and multi-dimensional as the space of *inputs*.
 
 
 \newpage
 
-# Chapter 20: Case Study --- Cetacean Bioacoustics
+# Chapter 21: Case Study --- Cetacean Bioacoustics
 
-*Structural Fuzzing: Geometric Methods for Adversarial Model Validation* --- Andrew H. Bond
+*Geometric Methods in Computational Modeling* --- Andrew H. Bond
 
 > *"There is no other species on earth whose social organization and communication system so closely parallels our own as the sperm whale."*
 > --- Hal Whitehead, *Sperm Whales: Social Evolution in the Ocean* (2003)
 
-This final chapter brings together the geometric methods developed across the preceding nineteen chapters in a single, complete worked example: the analysis and classification of sperm whale (*Physeter macrocephalus*) vocalizations. The domain is cetacean bioacoustics, but the purpose is broader. Every technique introduced in this book --- Mahalanobis distance (Chapter 2), hyperbolic embeddings (Chapter 3), SPD manifold analysis (Chapter 4), persistent homology (Chapter 5), adversarial robustness testing (Chapters 9--10), and structural fuzzing for model validation (throughout) --- converges here in a unified pipeline that processes raw acoustic recordings and produces validated, robust coda classifications. The chapter serves simultaneously as a tutorial on applying geometric methods to biological signal analysis and as a closing argument for the book's central thesis: that geometry is not a metaphor but a computational tool, and that the power of that tool is best demonstrated by composing multiple geometric methods into a coherent system.
+This final chapter brings together the geometric methods developed across the preceding nineteen chapters in a single, complete worked example: the analysis and classification of sperm whale (*Physeter macrocephalus*) vocalizations. The domain is cetacean bioacoustics, but the purpose is broader. Every technique introduced in this book --- Mahalanobis distance (Chapter 2), hyperbolic embeddings (Chapter 3), SPD manifold analysis (Chapter 4), persistent homology (Chapter 5), adversarial robustness testing (Chapters 10--10), and structural fuzzing for model validation (throughout) --- converges here in a unified pipeline that processes raw acoustic recordings and produces validated, robust coda classifications. The chapter serves simultaneously as a tutorial on applying geometric methods to biological signal analysis and as a closing argument for the book's central thesis: that geometry is not a metaphor but a computational tool, and that the power of that tool is best demonstrated by composing multiple geometric methods into a coherent system.
 
 ---
 
 
 ![Sperm whale coda spectrogram (left) and cetacean taxonomy on the Poincaré disk (right).](images/ch20-bioacoustics.png)
 
-## 20.1 The Domain: Sperm Whale Communication
+## 21.1 The Domain: Sperm Whale Communication
 
-### 20.1.1 Codas and Their Combinatorial Structure
+### 21.1.1 Codas and Their Combinatorial Structure
 
 Sperm whales communicate through stereotyped sequences of broadband clicks called *codas*. For decades, codas were analyzed primarily by counting clicks and measuring gross inter-click intervals (ICIs). This changed with the landmark study by Sharma et al. (*Nature Communications*, 2024), which demonstrated that sperm whale codas possess a *combinatorial phonetic system*. Four features combine hierarchically to produce the observed coda repertoire:
 
@@ -11440,7 +11677,7 @@ Subsequent work by Begus et al. (*Open Mind*, 2025) revealed a second layer of c
 
 The combinatorial hierarchy and spectral micro-structure together make cetacean bioacoustics an ideal proving ground for geometric methods. The hierarchy demands hyperbolic geometry (Chapter 3). The spectral covariance demands SPD manifold analysis (Chapter 4). The temporal dynamics demand topological data analysis (Chapter 5). And the need to validate any decoder built on these methods demands adversarial robustness testing and structural fuzzing.
 
-### 20.1.2 The Decoder Problem
+### 21.1.2 The Decoder Problem
 
 A *coda decoder* takes a raw acoustic recording (or a pre-segmented coda waveform) and outputs a coda type label. The fundamental question is not merely "how accurate is the decoder?" --- a question that Chapter 1 showed to be structurally inadequate --- but rather:
 
@@ -11453,11 +11690,11 @@ These are geometric questions. They concern distances in feature space, paths on
 
 ---
 
-## 20.2 SPD Manifold Analysis of Spectral Covariance
+## 21.2 SPD Manifold Analysis of Spectral Covariance
 
 The first geometric layer operates on the *spectral content* of individual clicks. Chapter 4 developed the theory of symmetric positive definite (SPD) matrices and the log-Euclidean metric. Here we apply that theory to extract frequency-band covariance features from whale click spectrograms.
 
-### 20.2.1 From Clicks to Covariance Matrices
+### 21.2.1 From Clicks to Covariance Matrices
 
 A mel spectrogram $\mathbf{X} \in \mathbb{R}^{n_\text{mels} \times n_\text{frames}}$ represents energy across frequency bands and time frames. Flat spectrogram features treat each time-frequency bin independently, discarding information about *how frequency bands co-vary*. As Chapter 4 established, this cross-band correlation structure --- encoded in the covariance matrix --- is precisely what distinguishes "vowel-like" spectral patterns from unstructured broadband noise.
 
@@ -11472,7 +11709,7 @@ cov = compute_covariance(spectrogram, n_bands=16, regularize=1e-4)
 
 The result is a $16 \times 16$ SPD matrix. Its diagonal elements encode per-band energy variance; its off-diagonal elements encode cross-band correlations. Two clicks with identical per-band energy but different correlation structure will have nearly identical flat spectrogram representations but very different covariance matrices.
 
-### 20.2.2 Log-Euclidean Feature Extraction
+### 21.2.2 Log-Euclidean Feature Extraction
 
 The covariance matrix lives on the SPD manifold $\text{SPD}(16)$, not in Euclidean space. As Chapter 4 demonstrated, the Frobenius distance between covariance matrices treats eigenvalue changes additively when the correct notion is multiplicative. The log-Euclidean metric corrects this:
 
@@ -11504,7 +11741,7 @@ def spd_features_from_spectrogram(
 
 The 136-dimensional feature vector encodes both per-band log-variance (16 diagonal elements) and all pairwise log-domain correlations (120 off-diagonal elements). This is the representation that captures the "vowel-like" formant structure discovered by Begus et al.
 
-### 20.2.3 Spectral Trajectories and the Geodesic Deviation
+### 21.2.3 Spectral Trajectories and the Geodesic Deviation
 
 A single covariance matrix summarizes the spectral structure of an entire click or short segment. But clicks within a coda evolve spectrally --- Begus et al. found evidence of "diphthong-like" transitions where the spectral pattern shifts smoothly from one vowel-like state to another during a single click. To capture this temporal evolution, Chapter 4 introduced the *spectral trajectory*: a sequence of SPD matrices computed from sliding windows across the spectrogram.
 
@@ -11534,17 +11771,17 @@ In the DSWP data, regular codas (e.g., "5R1") tend to produce low geodesic devia
 
 ---
 
-## 20.3 Persistent Homology of Click Dynamics
+## 21.3 Persistent Homology of Click Dynamics
 
 The second geometric layer operates on the *temporal organization* of click sequences. Chapter 5 developed persistent homology as a tool for extracting topological features --- connected components, loops, voids --- from point clouds. Here we apply it to the dynamical attractor reconstructed from inter-click interval (ICI) sequences.
 
-### 20.3.1 Takens' Embedding of ICI Sequences
+### 21.3.1 Takens' Embedding of ICI Sequences
 
 Given a coda with click onset times $t_1, t_2, \ldots, t_k$, the ICI sequence $\Delta_i = t_{i+1} - t_i$ is a short one-dimensional time series. Takens' theorem (Chapter 5, Section 5.2) guarantees that time-delay embedding reconstructs the topology of the underlying dynamical system, provided the embedding dimension $d \geq 2m + 1$ where $m$ is the attractor dimension. The `time_delay_embedding` function constructs delay vectors $\mathbf{v}(t) = [x(t), x(t+\tau), \ldots, x(t+(d-1)\tau)]$ from the scalar ICI sequence.
 
 For short ICI sequences (3--20 values for sperm whale codas), $d = 3$ and $\tau = 1$ (consecutive intervals) is the standard choice. The resulting point cloud in $\mathbb{R}^3$ captures the *shape* of the click production dynamics: a regular rhythm traces a tight cluster, a compound rhythm traces multiple clusters, and a rhythmic pattern with cyclic variation traces a loop.
 
-### 20.3.2 Persistent Homology and Feature Extraction
+### 21.3.2 Persistent Homology and Feature Extraction
 
 The full TDA pipeline --- embed, subsample, normalize, compute Vietoris-Rips persistence --- is encapsulated in `compute_persistence`:
 
@@ -11574,7 +11811,7 @@ The 16-dimensional feature vector concatenates eight summary statistics per homo
 
 As Chapter 5 demonstrated, the most discriminative features for coda classification are the $H_1$ max lifetime (persistence of the dominant cyclic pattern, reflecting rhythmic regularity) and the $H_0$ count (number of distinct interval clusters, distinguishing regular from compound codas).
 
-### 20.3.3 What Topology Captures That Spectra Miss
+### 21.3.3 What Topology Captures That Spectra Miss
 
 The power of the topological approach emerges from a specific invariance: persistent homology is invariant to continuous deformation of the point cloud. Stretching time uniformly (changing tempo) is a continuous deformation that preserves topology. This means two renditions of the same rhythmic pattern at different speeds produce the same topological features --- exactly the invariance needed for coda classification, where rhythm is the most fundamental structural feature and tempo is a secondary modifier.
 
@@ -11582,11 +11819,11 @@ Two codas with identical ICI histograms but different ordering --- say, accelera
 
 ---
 
-## 20.4 Hyperbolic Embeddings for Coda Taxonomies
+## 21.4 Hyperbolic Embeddings for Coda Taxonomies
 
 The third geometric layer operates on the *hierarchical structure* of the coda type system. Chapter 3 introduced the Poincare ball model of hyperbolic space, where trees embed with $O(\log n)$ distortion versus $O(n)$ in Euclidean space. The combinatorial coda taxonomy --- rhythm class, click count, variant --- is precisely such a tree.
 
-### 20.4.1 Taxonomic Distance and Poincare Embedding
+### 21.4.1 Taxonomic Distance and Poincare Embedding
 
 The `eris-ketos` library constructs a taxonomic distance matrix from shared features at each level of the hierarchy:
 
@@ -11621,7 +11858,7 @@ embeddings = embed_taxonomy_hyperbolic(
 
 The distance encoding assigns integer values reflecting hierarchical depth: 0 for same species, 1 for same finest-level group (variant), 2 for same click count, 3 for same rhythm class, 4 for different at all levels. The spectral decomposition of a Gaussian kernel over this distance matrix produces coordinates that are then scaled to fit inside the Poincare ball.
 
-### 20.4.2 Hyperbolic Classification
+### 21.4.2 Hyperbolic Classification
 
 The `HyperbolicMLR` classifier computes logits as negative scaled geodesic distances from input embeddings to learned prototype points on the Poincare ball:
 
@@ -11642,11 +11879,11 @@ The prototypes live in the tangent space at the origin and are mapped to the bal
 
 ---
 
-## 20.5 The Decoder Robustness Index
+## 21.5 The Decoder Robustness Index
 
-Having built a decoder from geometric features, we must now ask: *how robust is it?* Chapter 9 introduced adversarial robustness testing in general terms. Chapter 10 developed adversarial probing methods. The `eris-ketos` library instantiates these ideas for the bioacoustics domain through the *Decoder Robustness Index* (DRI), which is a direct adaptation of the Bond Index adversarial fuzzing framework.
+Having built a decoder from geometric features, we must now ask: *how robust is it?* Chapter 10 introduced adversarial robustness testing in general terms. Chapter 11 developed adversarial probing methods. The `eris-ketos` library instantiates these ideas for the bioacoustics domain through the *Decoder Robustness Index* (DRI), which is a direct adaptation of the Bond Index adversarial fuzzing framework.
 
-### 20.5.1 Parametric Acoustic Transforms
+### 21.5.1 Parametric Acoustic Transforms
 
 The DRI operates by applying parametric acoustic transforms to coda recordings and measuring how the decoder's output changes. Each transform has a controllable intensity parameter in $[0, 1]$, where intensity 0 leaves the signal unchanged and intensity 1 applies maximum realistic perturbation:
 
@@ -11664,7 +11901,7 @@ The DRI operates by applying parametric acoustic transforms to coda recordings a
 
 A correct decoder should be fully invariant to recording artifacts (amplitude, time shift, noise). It may legitimately change output under stress transforms that alter acoustic content (Doppler, dropout). The DRI scores these categories separately.
 
-### 20.5.2 Graduated Omega and Semantic Distance
+### 21.5.2 Graduated Omega and Semantic Distance
 
 The DRI does not use a binary correct/incorrect metric. Instead, it computes a *graduated omega* that weights misclassifications by their semantic severity using the coda feature hierarchy:
 
@@ -11686,11 +11923,11 @@ d2 = semantic.distance("5R1", "1+1+3") # different rhythm entirely
 # d2 > d1, reflecting the hierarchical severity
 ```
 
-This graduated scoring connects directly to the hyperbolic embedding (Section 20.4): the semantic distance between coda types is correlated with their geodesic distance on the Poincare ball. A decoder that confuses hyperbolicly nearby types incurs a small omega; one that confuses distant types incurs a large omega.
+This graduated scoring connects directly to the hyperbolic embedding (Section 21.4): the semantic distance between coda types is correlated with their geodesic distance on the Poincare ball. A decoder that confuses hyperbolicly nearby types incurs a small omega; one that confuses distant types incurs a large omega.
 
-### 20.5.3 The DRI Formula
+### 21.5.3 The DRI Formula
 
-The DRI aggregates omega values across all transforms, intensities, and test signals using the same weighted percentile formula as the Bond Index (Chapter 9):
+The DRI aggregates omega values across all transforms, intensities, and test signals using the same weighted percentile formula as the Bond Index (Chapter 10):
 
 $$\text{DRI} = 0.5 \cdot \bar{\omega} + 0.3 \cdot \omega_{75} + 0.2 \cdot \omega_{95}$$
 
@@ -11720,7 +11957,7 @@ print(f"DRI (stress):    {result.dri_stress:.4f}")
 
 The `DRIResult` also includes a per-transform sensitivity profile, compositional chain results, and adversarial thresholds --- the three diagnostic layers that move beyond the single-scalar DRI to a full geometric picture of decoder robustness.
 
-### 20.5.4 Adversarial Threshold Search
+### 21.5.4 Adversarial Threshold Search
 
 For each transform, binary search finds the minimal intensity that flips the decoder's output:
 
@@ -11735,9 +11972,9 @@ threshold = dri.find_adversarial_threshold(
 print(f"Flip intensity: {threshold:.3f}")
 ```
 
-A threshold near 0 indicates extreme fragility (the decoder changes its mind at negligible perturbation). A threshold of 1.0 means the decoder is fully robust to that transform at maximum intensity. For invariant transforms, any threshold below 1.0 represents a decoder defect. For stress transforms, the threshold locates the boundary between the decoder's region of correct operation and its failure region --- the exact tipping point that Chapter 10 formalized as a phase transition in the perturbation response surface.
+A threshold near 0 indicates extreme fragility (the decoder changes its mind at negligible perturbation). A threshold of 1.0 means the decoder is fully robust to that transform at maximum intensity. For invariant transforms, any threshold below 1.0 represents a decoder defect. For stress transforms, the threshold locates the boundary between the decoder's region of correct operation and its failure region --- the exact tipping point that Chapter 11 formalized as a phase transition in the perturbation response surface.
 
-### 20.5.5 Compositional Chain Testing
+### 21.5.5 Compositional Chain Testing
 
 Real underwater recordings contain compound distortions: background noise *and* Doppler shift *and* multipath echo simultaneously. The `TransformChain` class composes multiple transforms to test decoder behavior under realistic compound perturbations:
 
@@ -11759,9 +11996,9 @@ The DRI measurement includes chain results automatically, testing whether the de
 
 ---
 
-## 20.6 Gradient Reversal for Recording-Invariant Encoders
+## 21.6 Gradient Reversal for Recording-Invariant Encoders
 
-The adversarial testing framework *measures* recording-specific biases. Gradient reversal, the domain-adversarial technique introduced in Chapter 14, can *remove* them during training.
+The adversarial testing framework *measures* recording-specific biases. Gradient reversal, the domain-adversarial technique introduced in Chapter 15, can *remove* them during training.
 
 Coda recordings from different deployments differ in gain levels, noise floors, and frequency response --- artifacts unrelated to coda content. A naive decoder may overfit to these, clustering codas by recording condition rather than by coda type. The gradient reversal layer (GRL) from Ganin et al. (2016) enables training a feature encoder that is *maximally informative* about coda type while *maximally uninformative* about recording condition:
 
@@ -11794,23 +12031,23 @@ class RecordingInvariantEncoder(nn.Module):
         return coda_logits, domain_logits
 ```
 
-The combination of gradient reversal (recording invariance) with hyperbolic classification (taxonomy-aware similarity) produces a decoder whose features encode coda structure in a geometry that respects the biological hierarchy while being invariant to recording artifacts. The DRI framework (Section 20.5) can then verify that the recording-invariant encoder achieves lower omega on recording-specific transforms than a standard encoder.
+The combination of gradient reversal (recording invariance) with hyperbolic classification (taxonomy-aware similarity) produces a decoder whose features encode coda structure in a geometry that respects the biological hierarchy while being invariant to recording artifacts. The DRI framework (Section 21.5) can then verify that the recording-invariant encoder achieves lower omega on recording-specific transforms than a standard encoder.
 
 ---
 
-## 20.7 Structural Fuzzing for Model Validation
+## 21.7 Structural Fuzzing for Model Validation
 
-The final layer applies the structural fuzzing framework --- the through-line of this book --- to validate the complete geometric analysis pipeline. The pattern follows the integration demonstrated in Chapter 18, adapted from the geometric economics example.
+The final layer applies the structural fuzzing framework --- the through-line of this book --- to validate the complete geometric analysis pipeline. The pattern follows the integration demonstrated in Chapter 19, adapted from the geometric economics example.
 
-### 20.7.1 The Evaluation Function Pattern
+### 21.7.1 The Evaluation Function Pattern
 
 The structural fuzzing framework requires an evaluation function with signature `(params: ndarray) -> (loss: float, errors: dict)`. For the bioacoustics pipeline, the parameters control the relative weighting of five feature channels --- three geometric (SPD spectral, TDA topology, hyperbolic embedding) and two traditional (tempo features, ICI histogram):
 
 ```python
 DIM_NAMES = [
-    "SPD_spectral",       # SPD manifold features (Section 20.2)
-    "TDA_topology",       # Persistent homology features (Section 20.3)
-    "Hyperbolic_embed",   # Poincare ball embedding weight (Section 20.4)
+    "SPD_spectral",       # SPD manifold features (Section 21.2)
+    "TDA_topology",       # Persistent homology features (Section 21.3)
+    "Hyperbolic_embed",   # Poincare ball embedding weight (Section 21.4)
     "Tempo_features",     # Raw tempo/duration features
     "ICI_histogram",      # Traditional ICI distribution features
 ]
@@ -11839,13 +12076,13 @@ def make_bioacoustics_evaluate_fn(decoder, coda_signals, labels, sr=32000):
 
 This mirrors the `make_evaluate_fn` pattern from the geometric economics model, where parameters controlled inverse covariance weights in a 9-dimensional ethical-economic space. The geometric structure is identical: the Mahalanobis distance (Chapter 2) defines a metric tensor in feature space, and structural fuzzing explores which configurations produce robust decoders.
 
-### 20.7.2 Subset Enumeration
+### 21.7.2 Subset Enumeration
 
-Following the methodology of Chapter 7, we enumerate subsets of feature dimensions to determine which geometric methods are essential and which are redundant. Setting a dimension's parameter to the sentinel value ($10^6$) deactivates the corresponding feature channel.
+Following the methodology of Chapter 8, we enumerate subsets of feature dimensions to determine which geometric methods are essential and which are redundant. Setting a dimension's parameter to the sentinel value ($10^6$) deactivates the corresponding feature channel.
 
 The key structural question is: *does the full geometric pipeline outperform any subset?* If removing TDA features does not degrade the DRI, then the persistent homology computation (which is the most expensive step) can be omitted. If removing SPD features degrades accuracy but not robustness, that reveals a different kind of dependence than if it degrades both.
 
-The expected findings, based on the domain knowledge developed in Sections 20.2--20.4:
+The expected findings, based on the domain knowledge developed in Sections 21.2--20.4:
 
 | Subset | What It Tests | Expected Outcome |
 |--------|--------------|------------------|
@@ -11855,9 +12092,9 @@ The expected findings, based on the domain knowledge developed in Sections 20.2-
 | {SPD, TDA} | Without hyperbolic structure | More cross-class confusions |
 | {ICI_hist} alone | Traditional baseline | Worst robustness |
 
-### 20.7.3 Sensitivity Profiling and the MRI
+### 21.7.3 Sensitivity Profiling and the MRI
 
-The Model Robustness Index (Chapter 9) perturbs the decoder's feature weights and measures the distribution of DRI deviations:
+The Model Robustness Index (Chapter 8) perturbs the decoder's feature weights and measures the distribution of DRI deviations:
 
 $$\text{MRI} = 0.5 \cdot \bar{d} + 0.3 \cdot d_{75} + 0.2 \cdot d_{95}$$
 
@@ -11877,7 +12114,7 @@ These hypothetical values illustrate the pattern: the three geometric channels (
 
 ---
 
-## 20.8 Complete Workflow
+## 21.8 Complete Workflow
 
 We now assemble the individual geometric layers into a single end-to-end pipeline, referencing the specific chapter where each technique was introduced.
 
@@ -11885,9 +12122,9 @@ We now assemble the individual geometric layers into a single end-to-end pipelin
 2. **SPD Feature Extraction (Chapter 4).** Apply `spd_features_from_spectrogram` for 136-dimensional log-covariance features. Compute `compute_spectral_trajectory` for diphthong analysis; the geodesic deviation $\delta$ enters as an additional scalar feature.
 3. **TDA Feature Extraction (Chapter 5).** Apply `compute_persistence` to the ICI sequence ($d = 3$, $\tau = 1$). Extract the 16-dimensional TDA feature vector.
 4. **Hyperbolic Embedding (Chapter 3).** Map the combined feature vector to the Poincare ball via $\text{exp}_0$. Classify using `HyperbolicMLR` with taxonomy-initialized prototypes.
-5. **Recording Invariance (Chapter 14).** Train with gradient reversal to remove recording-specific bias. Verify via cross-deployment DRI comparison.
-6. **Robustness Testing (Chapters 9--10).** Apply the DRI framework: sweep all nine transforms, test compositional chains, compute adversarial thresholds.
-7. **Structural Fuzzing Validation (Chapters 6--8).** Enumerate feature subsets, compute the MRI, identify tipping points, verify Pareto-optimality.
+5. **Recording Invariance (Chapter 15).** Train with gradient reversal to remove recording-specific bias. Verify via cross-deployment DRI comparison.
+6. **Robustness Testing (Chapters 10--10).** Apply the DRI framework: sweep all nine transforms, test compositional chains, compute adversarial thresholds.
+7. **Structural Fuzzing Validation (Chapters 7--8).** Enumerate feature subsets, compute the MRI, identify tipping points, verify Pareto-optimality.
 
 ```python
 from eris_ketos import (
@@ -11923,11 +12160,11 @@ def validate_decoder(decoder, signals, sr=32000):
 
 ---
 
-## 20.9 Results and Interpretation
+## 21.9 Results and Interpretation
 
 We summarize the key findings from applying the complete geometric pipeline to the DSWP dataset (1,501 annotated sperm whale codas from Sharma et al., 2024). The results illustrate both the power of composing geometric methods and the specific contributions of each.
 
-### 20.9.1 Classification Performance
+### 21.9.1 Classification Performance
 
 | Method | Accuracy | Notes |
 |--------|----------|-------|
@@ -11941,7 +12178,7 @@ We summarize the key findings from applying the complete geometric pipeline to t
 
 The improvement from flat to geometric is not marginal. Each geometric layer contributes meaningfully, and the gains compound because the layers capture *different* kinds of structure: spectral covariance (SPD), temporal dynamics (TDA), and hierarchical similarity (hyperbolic). This is the central lesson of the book: geometry is not a single tool but a *toolkit*, and the tools compose.
 
-### 20.9.2 Robustness Profile
+### 21.9.2 Robustness Profile
 
 The DRI analysis reveals the failure modes that accuracy alone hides:
 
@@ -11954,7 +12191,7 @@ The DRI analysis reveals the failure modes that accuracy alone hides:
 
 The DRI (invariant) score for the full pipeline with gradient reversal is 0.03, meaning the decoder is nearly perfectly invariant to amplitude scaling, time shifting, and additive noise. Without gradient reversal, the invariant DRI is 0.06 --- still good, but the doubling of the score reveals residual recording-specific sensitivity. The DRI (stress) scores show that all decoders are more vulnerable to content-altering perturbations (Doppler, echo, dropout), as expected, but the geometric decoder degrades more gracefully than the baseline.
 
-### 20.9.3 Adversarial Thresholds
+### 21.9.3 Adversarial Thresholds
 
 | Transform | Baseline Threshold | Geometric Threshold |
 |-----------|-------------------|-------------------|
@@ -11968,7 +12205,7 @@ The baseline decoder flips on amplitude scaling at intensity 0.45 --- a gain cha
 
 ---
 
-## 20.10 Synthesis: The Book's Themes in One Pipeline
+## 21.10 Synthesis: The Book's Themes in One Pipeline
 
 This chapter has demonstrated, in a single end-to-end example, the central themes that have recurred across the preceding nineteen chapters. We close by making these connections explicit.
 
@@ -11978,11 +12215,11 @@ This chapter has demonstrated, in a single end-to-end example, the central theme
 
 **Different geometries for different structures.** No single geometric framework suffices. Spectral covariance lives on the SPD manifold (Chapter 4), where the log-Euclidean metric respects multiplicative eigenvalue structure. Taxonomic hierarchy lives in hyperbolic space (Chapter 3), where exponential volume growth matches exponential branching. Click dynamics live in the topology of the reconstructed attractor (Chapter 5), where persistent homology captures loops and clusters invisible to any metric. The correct geometry is determined by the *structure of the data*, not by computational convenience.
 
-**Adversarial testing finds what validation misses.** A decoder with 86% accuracy might seem adequate. The DRI reveals that it fails catastrophically under 1.2% click dropout. The adversarial threshold search (Chapter 10) locates the exact tipping point. The sensitivity profile identifies which transforms are dangerous. None of this information is available from the accuracy number.
+**Adversarial testing finds what validation misses.** A decoder with 86% accuracy might seem adequate. The DRI reveals that it fails catastrophically under 1.2% click dropout. The adversarial threshold search (Chapter 11) locates the exact tipping point. The sensitivity profile identifies which transforms are dangerous. None of this information is available from the accuracy number.
 
-**Structural fuzzing composes with domain methods.** The structural fuzzing framework operates on the evaluation function without knowing or caring that the underlying features come from SPD manifolds, persistent homology, or hyperbolic embeddings. It tests which feature channels matter (subset enumeration, Chapter 11), how stable the configuration is (MRI, Chapter 9), and where the pipeline breaks (adversarial threshold, Chapter 10). This compositionality --- geometric domain methods plugging into a geometric validation framework --- is the architectural contribution of the book.
+**Structural fuzzing composes with domain methods.** The structural fuzzing framework operates on the evaluation function without knowing or caring that the underlying features come from SPD manifolds, persistent homology, or hyperbolic embeddings. It tests which feature channels matter (subset enumeration, Chapter 8), how stable the configuration is (MRI, Chapter 8), and where the pipeline breaks (adversarial threshold, Chapter 11). This compositionality --- geometric domain methods plugging into a geometric validation framework --- is the architectural contribution of the book.
 
-**Invariance and sensitivity are two sides of the same coin.** The gradient reversal layer (Chapter 14) makes the encoder invariant to recording conditions. The DRI measures whether that invariance actually holds. The SPD manifold captures spectral structure that is *sensitive* to vowel-like patterns while being *invariant* to broadband noise. The TDA features are *invariant* to tempo changes while being *sensitive* to rhythmic organization. Every geometric choice in the pipeline is a choice about *what to be invariant to* and *what to be sensitive to*. Making these choices explicit, testable, and quantifiable is what geometric methods provide.
+**Invariance and sensitivity are two sides of the same coin.** The gradient reversal layer (Chapter 15) makes the encoder invariant to recording conditions. The DRI measures whether that invariance actually holds. The SPD manifold captures spectral structure that is *sensitive* to vowel-like patterns while being *invariant* to broadband noise. The TDA features are *invariant* to tempo changes while being *sensitive* to rhythmic organization. Every geometric choice in the pipeline is a choice about *what to be invariant to* and *what to be sensitive to*. Making these choices explicit, testable, and quantifiable is what geometric methods provide.
 
 The cetacean bioacoustics pipeline is one instantiation of a general pattern. The same geometric toolkit applies to medical signal analysis (EEG covariance on SPD manifolds, cardiac rhythm topology via TDA), financial modeling (hierarchical asset taxonomy in hyperbolic space, regime detection via persistent homology), and any domain where data has structure that flat Euclidean representations distort. The tools are ready. The geometry is precise. The validation framework composes. What remains is to apply them.
 
@@ -12000,7 +12237,7 @@ The cetacean bioacoustics pipeline is one instantiation of a general pattern. Th
 
 **20.5.** Run a full DRI measurement on a coda decoder of your choice. Which transform has the lowest adversarial threshold? Propose a domain-specific explanation for why that transform is most dangerous.
 
-**20.6.** Implement the structural fuzzing evaluation function (Section 20.7.1) and run subset enumeration with the five feature dimensions. Is the full pipeline Pareto-optimal? Are any dimensions truly redundant?
+**20.6.** Implement the structural fuzzing evaluation function (Section 21.7.1) and run subset enumeration with the five feature dimensions. Is the full pipeline Pareto-optimal? Are any dimensions truly redundant?
 
 **20.7.** Train two decoders: one with gradient reversal for recording invariance, one without. Compare their DRI (invariant) scores. Does gradient reversal improve robustness to amplitude scaling and noise transforms, as predicted?
 
@@ -12015,6 +12252,678 @@ Nickel, M. and Kiela, D., "Poincare embeddings for learning hierarchical represe
 
 \newpage
 
+# Chapter 22: Case Study --- Aesthetic Judgment from Embedding Geometry
+
+*Geometric Methods in Computational Modeling* --- Andrew H. Bond
+
+> *"It is the mark of an educated mind to be able to entertain a thought without accepting it."*
+> --- attributed to Aristotle
+
+The preceding two case studies applied geometric methods to domains where the objects of study --- software modules, whale clicks --- have an obvious, legible internal structure. A module has metrics. A coda has clicks and spectra. This chapter addresses a harder question: can geometric methods extract signal from a quantity that humans themselves struggle to define? Specifically, we ask whether the *shape* of a text or music embedding trajectory predicts how much humans like the work.
+
+This is not a casual framing. "Aesthetic rating" is usually treated as the domain of reception studies, literary criticism, and music psychology --- fields that are resistant to formalization for good reason. The signal is noisy, confounded with genre, author reputation, marketing, and cohort effects. Any claim that geometric structure predicts aesthetic rating deserves skepticism, and this chapter spends significant space showing *where our first claims were wrong* and how we caught them. The final results are modest but robust: genre-residualized Pearson R around 0.09 on books (6.5 sigma), 0.18 on music (28 sigma), and cross-lingual Spearman correlations near 0.70 on divergence features computed in 19 languages from 10 language families.
+
+For the book's thesis, these numbers matter less than the methodology. The pipeline is a clean worked example of composing the tools from Chapters 2--5 on a domain where the "right features" were not known in advance, and the diagnostics from Chapters 10--10 were indispensable for distinguishing real signal from confound.
+
+---
+
+## 22.1 The Problem and the Claim
+
+The operational question: given a text (a book) or audio clip (a track) encoded by a modern neural encoder, can we predict its aesthetic rating --- Goodreads stars for books, `log(1 + listens)` for Free Music Archive tracks --- using only the *geometric structure* of the encoder's output embeddings? No fine-tuning, no supervised head on the encoder itself, just statistics computed on the sequence of embedding vectors produced as we slide the encoder across the work.
+
+There are three reasons to care about this question beyond the domain itself:
+
+1. **Encoder evaluation.** If geometric structure of embeddings carries aesthetic signal, then aesthetic rating becomes a cheap external probe for embedding quality, complementary to intrinsic probes like STS or MTEB.
+2. **Confound diagnosis.** Aesthetic rating is heavily confounded with genre and author/artist identity. A pipeline that appears to predict aesthetic rating in-sample but fails after residualizing on genre has learned the confound, not the signal. This is a canonical structural-fuzzing diagnostic (Chapter 12).
+3. **Cross-modal generalization.** A feature that works on text should, in principle, work on music --- both are sequences of embeddings on a manifold. If it doesn't, or if the sign flips, we have learned something about the geometry of the two modalities that we could not have learned from either alone.
+
+The claim at the end of this chapter is narrower than "embedding geometry predicts aesthetic rating." It is: *after controlling for genre, embedding-geometry channels explain a small but reproducible fraction of aesthetic variance in both text and music, the same channels correlate with each other across 19 languages, and the sign of the signal flips between modalities in ways that reveal structural differences between text and music encoders.*
+
+---
+
+## 22.2 Data Pipeline
+
+### 22.2.1 Books: Gutenberg --- Goodreads Matching
+
+Project Gutenberg provides roughly 70,000 full-text public-domain books. Goodreads provides user ratings for several million titles. Matching the two is not trivial --- Gutenberg titles are often in archaic or variant spellings (*The Adventures of Huckleberry Finn* vs *Huckleberry Finn*), author name formats differ, and Gutenberg includes many minor works without Goodreads ratings.
+
+We used a two-stage fuzzy-match pipeline: (1) normalize titles and authors (lowercase, strip punctuation, remove "The/A/An"), (2) join on `(norm_author, norm_title)` and accept matches with Levenshtein ratio >= 0.90. After manual spot-checking of 200 random matches (99% precision on the spot check), this yielded 5,016 books with both a full text and a Goodreads average rating. Ratings are continuous in the range 2.5--4.8 with a long left tail.
+
+The split is **author-disjoint 5-fold cross-validation**. This is the load-bearing CV choice. A random book-level split leaks heavily because Dickens's twelve books in the dataset share vocabulary, style, and audience; training on nine of them and testing on three gives inflated R simply because the model has memorized "Dickens = 4.1". Author-disjoint CV forces every evaluation fold to be held-out authors --- if Dickens is in the training set, none of his books are in the test set. On this dataset it reduces apparent R by about 40% versus random CV.
+
+### 22.2.2 Music: FMA Medium + MERT-v1-330M
+
+Free Music Archive Medium is 25,000 30-second mp3 clips with metadata including genre, listens, and occasionally Echonest audio features (the eight Spotify-style hand features: danceability, energy, valence, etc., for a subset of tracks). We used `log(1 + listens)` as the target, following the convention in recommendation-system evaluation to compress the heavy tail.
+
+The encoder is **MERT-v1-330M** from m-a-p, a 330M-parameter masked-audio transformer that produces 1024-dimensional embeddings at roughly 75 Hz. We took one embedding per 200 ms, giving ~150 vectors per 30 s clip. Preprocessing: resample to 24 kHz (MERT's native rate), layer-13 mean pooling over the 75 Hz stream (following the paper's recommendation for genre-adjacent tasks), no further normalization.
+
+CV is **artist-disjoint 5-fold**. Same logic as author-disjoint for books: an artist releases several tracks with similar listen counts, so random CV leaks artist identity. Artist-disjoint matters: on the FMA subset we tested, moving from track-disjoint to artist-disjoint CV dropped R from 0.38 to 0.30 on the same features.
+
+### 22.2.3 Text Encoder: LaBSE
+
+For text we used **LaBSE** (Language-agnostic BERT Sentence Embedding), 768-dim, trained on 109 languages with a translation-pair objective. The alternative candidates were SBERT-multilingual and XLM-R-base. We picked LaBSE for two reasons: (1) its translation-aligned training means that the same sentence in English and Finnish projects to approximately the same vector, which is essential for the cross-lingual experiment in Section 22.5; (2) it's small enough to embed 5,000 full books in a few hours on a single GPU.
+
+**Tokenization at the paragraph level.** We split each book into paragraphs (double-newline delimited, median ~3 sentences), then embedded each paragraph as a single 768-d vector. The output is a sequence of paragraph embeddings per book. Median sequence length: 380 paragraphs; 10th/90th percentiles: 45 / 1,200. Books shorter than 30 paragraphs were dropped (18 books, mostly short stories).
+
+The 45-token lower cutoff later turned out to matter: see Section 22.7 on the Hellinger saturation bug.
+
+---
+
+## 22.3 Feature Engineering: Four Channels
+
+Given a sequence of embedding vectors $X = [x_1, x_2, \ldots, x_n] \in \mathbb{R}^{n \times d}$ for one work, we compute four families of geometric features. The design choices here mirror the SPD / TDA / hyperbolic decomposition from Chapter 21: each channel captures a *different* kind of structure, and we expect each to contribute independently.
+
+### 22.3.1 Channel A: Corpus-Gaussian Divergences
+
+Fit a corpus-level Gaussian $\mathcal{N}(\mu_C, \Sigma_C)$ on the pooled embeddings from the training corpus (all books in the training fold, concatenated). For each work, fit a per-work Gaussian $\mathcal{N}(\mu_W, \Sigma_W)$ on its own embeddings. Then compute the closed-form divergences between these two Gaussians. This channel captures "how unusual is this work's embedding distribution versus the corpus as a whole?"
+
+The closed-form for two Gaussians $P = \mathcal{N}(\mu_1, \Sigma_1)$, $Q = \mathcal{N}(\mu_2, \Sigma_2)$ in $\mathbb{R}^d$:
+
+$$D_{KL}(P \parallel Q) = \tfrac{1}{2}\left[\text{tr}(\Sigma_2^{-1}\Sigma_1) + (\mu_2 - \mu_1)^\top \Sigma_2^{-1} (\mu_2 - \mu_1) - d + \log\frac{\det \Sigma_2}{\det \Sigma_1}\right]$$
+
+The Bhattacharyya distance, which is better conditioned when the Gaussians have very different covariance scales:
+
+$$B(P, Q) = \tfrac{1}{8}(\mu_1 - \mu_2)^\top \bar{\Sigma}^{-1} (\mu_1 - \mu_2) + \tfrac{1}{2}\log\frac{\det \bar{\Sigma}}{\sqrt{\det \Sigma_1 \det \Sigma_2}}, \quad \bar{\Sigma} = \tfrac{1}{2}(\Sigma_1 + \Sigma_2)$$
+
+From $B$ we derive Hellinger $H = \sqrt{1 - e^{-B}}$ and, separately, Jensen-Shannon (Monte-Carlo), squared Mahalanobis $(\mu_W - \mu_C)^\top \Sigma_C^{-1} (\mu_W - \mu_C)$ (Chapter 2), and a Frobenius log-covariance distance $\|\log \Sigma_W - \log \Sigma_C\|_F$ (Chapter 4).
+
+To compute these reliably in 768 dimensions with only 380 tokens per book, we first project to a 128-dim PCA basis fit on the training corpus. This is the single most important numerical-stability decision in the pipeline; Section 22.7 documents what happens when you skip it.
+
+```python
+def channel_A_divergences(X_proj, mu_C, Sigma_C, Sigma_C_inv, logdet_C):
+    """Gaussian divergences between a work and the training corpus."""
+    mu_W = X_proj.mean(axis=0)
+    Sigma_W = np.cov(X_proj, rowvar=False) + 1e-4 * np.eye(X_proj.shape[1])
+    delta = mu_W - mu_C
+    d = len(mu_W)
+    # Mahalanobis (Chapter 2)
+    mahal = delta @ Sigma_C_inv @ delta
+    # KL (closed form)
+    sign, logdet_W = np.linalg.slogdet(Sigma_W)
+    kl = 0.5 * (np.trace(Sigma_C_inv @ Sigma_W) + mahal - d + logdet_C - logdet_W)
+    # Bhattacharyya + Hellinger
+    Sigma_avg = 0.5 * (Sigma_W + Sigma_C)
+    _, logdet_avg = np.linalg.slogdet(Sigma_avg)
+    bhat = 0.125 * delta @ np.linalg.solve(Sigma_avg, delta) \
+         + 0.5 * (logdet_avg - 0.5 * (logdet_W + logdet_C))
+    hell = np.sqrt(max(0.0, 1.0 - np.exp(-bhat)))
+    # Log-Euclidean Frobenius (Chapter 4)
+    log_W = scipy.linalg.logm(Sigma_W)
+    log_C = scipy.linalg.logm(Sigma_C)
+    frob_le = np.linalg.norm(log_W - log_C, "fro")
+    return dict(mahal=mahal, kl=kl, bhat=bhat, hell=hell, frob_le=frob_le)
+```
+
+### 22.3.2 Channel B: Internal Pair Similarity
+
+Sample pairs of embedding vectors from the same work and compute cosine similarity statistics. Mean pair similarity captures internal thematic cohesion; its variance captures how *evenly* cohesive the work is.
+
+```python
+def channel_B_cohesion(X_proj, n_pairs=5000, rng=None):
+    rng = rng or np.random.default_rng(0)
+    n = X_proj.shape[0]
+    i, j = rng.integers(0, n, size=(2, n_pairs))
+    mask = i != j
+    Xn = X_proj / np.linalg.norm(X_proj, axis=1, keepdims=True)
+    sims = np.einsum("ij,ij->i", Xn[i[mask]], Xn[j[mask]])
+    return dict(pair_sim_mean=sims.mean(), pair_sim_std=sims.std())
+```
+
+This is the cheapest channel and turned out to be the most interpretable: `pair_sim_mean` has the largest univariate effect in books (8.4 sigma) and, crucially, **flips sign on music** (discussed in Section 22.8).
+
+### 22.3.3 Channel C: Trajectory Geometry
+
+Treat $X$ as a trajectory in $\mathbb{R}^d$ indexed by reading/listening time. Step statistics, recurrence (how often does the trajectory return to a region it previously visited), autocorrelation at various lags, and discrete curvature (angle between consecutive step vectors). This is the channel most analogous to the spectral-trajectory analysis in Chapter 21; we are reading the work as a path on the embedding manifold.
+
+```python
+def channel_C_trajectory(X_proj, lags=(1, 4, 16, 64)):
+    steps = np.diff(X_proj, axis=0)
+    step_len = np.linalg.norm(steps, axis=1)
+    # Curvature: angle between consecutive steps
+    s_n = steps / (np.linalg.norm(steps, axis=1, keepdims=True) + 1e-10)
+    cos_turn = np.einsum("ij,ij->i", s_n[:-1], s_n[1:])
+    feats = dict(step_mean=step_len.mean(), step_std=step_len.std(),
+                 curvature_mean=np.arccos(np.clip(cos_turn, -1, 1)).mean())
+    # Recurrence: fraction of embedding pairs within threshold
+    D = scipy.spatial.distance.squareform(
+            scipy.spatial.distance.pdist(X_proj, "euclidean"))
+    thr = np.median(D[np.triu_indices_from(D, k=1)]) * 0.25
+    feats["recurrence"] = float((D < thr).mean())
+    # Autocorrelation at several lags (centered cosine)
+    Xc = X_proj - X_proj.mean(axis=0)
+    for L in lags:
+        if Xc.shape[0] > L:
+            a = np.einsum("ij,ij->i", Xc[:-L], Xc[L:])
+            feats[f"autocorr_{L}"] = a.mean() / (np.var(Xc) + 1e-10)
+    return feats
+```
+
+### 22.3.4 Channel D: Lasso on the 128-Dim PCA Spectrum
+
+The previous three channels are hand-designed. Channel D lets the data pick: mean-pool each work's embedding sequence into a single 128-d vector (after the same PCA projection), and regress the target on that vector using Lasso with group-aware CV. This is a sanity check --- if hand features beat Lasso, we have chosen good features; if Lasso beats hand features, the hand features are leaving information on the table.
+
+In practice Lasso and hand features contribute roughly equally in books, and Lasso dominates in music (where we had less musicological prior for the hand features).
+
+The final feature vector per work is the concatenation of all four channels: ~20 hand features from A+B+C, plus up to 128 dims selected by Lasso in D. These feed a standard Ridge regressor for the final rating prediction.
+
+---
+
+## 22.4 Books: Discovery and the Genre Confound
+
+### 22.4.1 Phase 1 --- Discovery (n = 4,998)
+
+With author-disjoint 5-fold CV and the full Ridge+Lasso ensemble on all four channels, we got:
+
+$$R = 0.241, \quad R^2 = 0.058, \quad z = 17\sigma$$
+
+Per-channel univariate correlations (out-of-fold, Fisher-z aggregated):
+
+| Feature | Pearson R | Sigma |
+|---------|----------:|------:|
+| `pair_sim_mean` | +0.126 | 8.4 |
+| `mahal` | +0.115 | 7.7 |
+| `bhat` | +0.119 | 8.0 |
+| `kl` | +0.108 | 7.2 |
+| `step_mean` | -0.096 | 6.4 |
+| `recurrence` | +0.083 | 5.5 |
+| Lasso-128 | (71 nonzero dims, combined R=0.181) | --- |
+
+The signs are interpretable: books whose embedding distribution is far from the corpus centroid (high Mahalanobis, KL, Bhattacharyya) and which are internally cohesive (high pair-sim, low step-mean) tend to be rated higher. This matches a naive-but-plausible reception hypothesis: readers prefer books that are distinctive and internally coherent.
+
+This would be a nice story. It is also mostly wrong, because of the next phase.
+
+### 22.4.2 Phase 2 --- Within-Genre Residualization
+
+Goodreads attaches a shelf (genre) to every rated book. Genres have very different average ratings: *Classics* averages 3.9, *Romance* averages 4.1, *Philosophy* averages 4.0, *Young Adult* averages 4.2. Genres *also* have very different embedding-geometry statistics, because a philosophy treatise is lexically and structurally different from a romance novel.
+
+If our features predict rating *because* they predict genre, and genre predicts rating, we have not discovered anything about aesthetic judgment. We have rediscovered that philosophy books have lower average ratings and longer sentences.
+
+The diagnostic is **within-genre residualization**. Take the 12 genres with the largest counts. For each feature $f$ and each target $y$, fit $f \sim \text{genre}$ and $y \sim \text{genre}$, then compute correlations between the residuals. If the residualized correlation is zero, the original signal was entirely a genre confound. If it survives, there's genuine within-genre aesthetic signal.
+
+After residualization:
+
+$$R_{\text{resid}} = 0.093, \quad R^2 = 0.009, \quad z = 6.5\sigma$$
+
+In other words, **85% of the observed R^2 was genre confound**. We still have statistically significant within-genre signal (6.5 sigma is not small at n ~ 5000), but the headline number dropped from "moderate" to "barely-detectable." A fiction-only restriction (n = 2,250) gave intra-genre R = 0.131, z = 6.2; non-fiction alone was null.
+
+This is the single most important finding in the books pipeline, and it is a negative one: without the residualization control, we would have reported an effect almost four times the true size. The structural-fuzzing diagnostic (which dimension of the input space is carrying the signal?) is exactly the Chapter 12 subset-enumeration idea, applied here not to features-of-a-model but to covariates-of-the-target.
+
+**Always run residualization on every categorical metadata column before reporting predictive results on subjective targets.**
+
+---
+
+## 22.5 Cross-Lingual Invariance
+
+If the signal we're capturing is real aesthetic structure rather than English-specific surface lexical statistics, it should transfer across languages. Because LaBSE is translation-aligned, we can compute the same four-channel features in any of the 19 non-English languages present in Gutenberg, and check whether the *ranking* of works by each feature correlates with the English ranking of the same works (or of comparable works by the same author).
+
+Dataset: 4,683 non-English books across 19 languages spanning 10 language families (Germanic, Romance, Finno-Ugric, Slavic, Hellenic, Celtic, Indo-Iranian, Semitic, Turkic, Japonic). We projected each language's embeddings into the *English* PCA basis before computing divergences, so that "distance from the corpus" is measured in a shared geometric frame.
+
+The key metric is the mean pairwise Spearman correlation of feature rankings across language pairs:
+
+| Feature | Mean pairwise Spearman $\rho$ |
+|---------|-----------------------------:|
+| `pair_sim_mean` | 0.712 |
+| `mahal` | 0.710 |
+| `hellinger` | 0.675 |
+| `kl` | 0.658 |
+| `step_mean` | 0.441 |
+| `recurrence` | 0.218 |
+
+The top four features produce rankings that agree across arbitrary language pairs with Spearman $\rho$ around 0.70. The tightest pair was English-Finnish Hellinger, $\rho = 0.77$ at $n = 288$, $p = 8 \times 10^{-57}$. English-French was $\rho = 0.78$ at $n = 227$. Finnish and English are in entirely different language families (Finno-Ugric vs Germanic) with unrelated morphology; getting $\rho = 0.77$ on a rank statistic is strong evidence that the divergence and cohesion channels are measuring something genuinely language-invariant in the LaBSE embedding space.
+
+A complementary analysis fit Ridge on English data and evaluated on the pooled non-English set. Transfer R = 0.07 at n = 940, p = 0.033. Smaller than in-language, but nonzero and in the right direction.
+
+We attempted to add Chinese as a 20th language and discovered that Gutenberg's Chinese collection is almost entirely *classical Chinese originals* --- the Zuo Zhuan, Dream of the Red Chamber --- not translations of Western works. We had implicitly assumed parallel text coverage. Classical Chinese projected into an English-trained PCA basis produces essentially random geometry because the embedding distribution barely overlaps the training corpus. This is the "know your dataset before you design your pipeline" lesson and it cost us three days. A brief exploratory histogram of `mean Mahalanobis distance to English corpus, by language` would have caught it in an hour.
+
+---
+
+## 22.6 Music: FMA + MERT
+
+The music pipeline is structurally identical to the book pipeline --- four channels, Lasso on PCA'd embeddings, artist-disjoint CV --- with different numerical scales. n = 24,801 tracks, target = log(1 + listens), encoder = MERT-v1-330M layer 13.
+
+### 22.6.1 Raw and Residualized Results
+
+| Configuration | R | sigma |
+|---------------|--:|------:|
+| Lasso-128 (no residualization) | 0.302 | 49.8 |
+| Lasso-128 genre-residualized | 0.177 | 28.3 |
+| Hand features only (residualized) | 0.098 | 15.4 |
+| Within-genre, Rock (n = 7,088) | 0.139 | 11.7 |
+| Within-genre, Classical (n = 1,413) | -0.013 | (null) |
+
+The 91% drop in R^2 from genre residualization is even more dramatic than books. FMA genre is a very strong predictor of listens on its own (Hip-Hop and Electronic dominate the upper tail), so failing to control for it would have produced a headline R of 0.30 that was 90% attributable to "is this track hip-hop-like?"
+
+The **Classical null** is instructive: classical-music listen counts are not a reliable proxy for aesthetic preference in the way that Rock listen counts are. Classical listeners on FMA are a small, heavily curated audience; their behavior does not match the broader listens distribution. This is a domain fact, not a pipeline bug, and it showed up as soon as we split by genre.
+
+### 22.6.2 Head-to-Head with Spotify's Eight Hand Features
+
+A subset of FMA Medium (5,233 tracks) has Echonest-derived features matching Spotify's public audio-features endpoint: danceability, energy, valence, tempo, acousticness, instrumentalness, liveness, speechiness. These were carefully engineered by audio engineers over several years. If our geometric-channel features beat them on the same tracks with the same target, that's nontrivial.
+
+On the shared 5,233-track subset, genre-residualized, same CV:
+
+| Feature set | R | n parameters |
+|-------------|--:|-------------:|
+| Spotify-8 hand features | 0.103 | 8 |
+| MERT Lasso-128 | 0.151 - 0.225 (seed range) | ~80 nonzero |
+| MERT hand features (our Channels A+B+C) | 0.168 | ~12 |
+
+The MERT-Lasso range across five seeds was 0.151 to 0.225. A paired bootstrap on the same tracks gave $p = 0.001$ for MERT-Lasso > Spotify-8. Our hand features alone (no Lasso) also beat Spotify-8. The win is reproducible, but the win margin has real seed variance and should be reported as a range rather than a point estimate.
+
+---
+
+## 22.7 Pitfalls and Dead Ends
+
+This section is tactical. Each item below cost us a day or more and would have been caught by a different diagnostic plot.
+
+### 22.7.1 The Hellinger Saturation Bug
+
+Symptom: Hellinger values for all books clumped at exactly 1.0, with `std < 1e-6` across the whole corpus. The feature showed R = 0 in CV --- a dead feature.
+
+Diagnosis: Hellinger is computed as $H = \sqrt{1 - e^{-B}}$ where $B$ is Bhattacharyya. For a 128-dim Gaussian fit on $n = 45$ tokens (the shortest books in our dataset), the per-work covariance $\Sigma_W$ is rank-deficient and ill-conditioned after regularization. $B$ saturates in the range 50--500. Then $e^{-B} \approx 0$ underflows, and $H = \sqrt{1 - 0} = 1.0$ for every track.
+
+The bug was invisible in the aggregate: mean Hellinger across the corpus was 0.9998, std was $3 \times 10^{-7}$. The per-track histogram was a single spike at 1.0. A one-line diagnostic --- `plt.hist(hellinger_per_book)` --- would have flagged it immediately.
+
+Fixes (we used the second):
+
+1. Increase the token-count floor so $n \gg d$. At $n = 500$ tokens in 128 dim, Hellinger had a healthy distribution with std $\approx 0.08$.
+2. Drop Hellinger, use Bhattacharyya directly. $B$ has a well-behaved distribution in the saturated regime; it's just the exponentiation that breaks.
+3. Reduce $d$ (PCA to 32 or 64) so the $n/d$ ratio is healthier. We ultimately used $d = 128$ because of cross-lingual considerations, and added the rule that any book with fewer than $3d$ paragraph embeddings gets flagged for review.
+
+General rule: whenever a feature involves $e^{-x}$ or $\log(1 - p)$, plot its raw distribution before trusting any aggregate statistic.
+
+### 22.7.2 Genre Confound
+
+Covered at length in Section 22.4 and 21.6. Summary:
+
+- Books: 85% of R^2 was genre confound. Residualized R dropped from 0.241 to 0.093.
+- Music: 91% of R^2 was genre confound. Residualized R dropped from 0.302 to 0.177.
+
+Protocol going forward: run `y ~ genre` and `f ~ genre` regressions *before* any predictive modeling, and report both raw and residualized R. If the raw R exceeds the residualized R by more than 2x, the genre confound is load-bearing and any story told from the raw R is wrong.
+
+### 22.7.3 CV Grouping
+
+Three grouping regimes give three different R values for the same features:
+
+| CV regime | R (books) | R (music) |
+|-----------|----------:|----------:|
+| Random row-level | 0.38 | 0.41 |
+| Track-disjoint (music only) | --- | 0.38 |
+| Artist/author-disjoint | 0.241 | 0.302 |
+
+Track-disjoint music CV is still leaky because an artist's multiple tracks travel together. Author-disjoint books CV and artist-disjoint music CV are the minimum defensible regime. Reporting random-CV numbers on recommendation-adjacent targets is a form of noble lie.
+
+### 22.7.4 Chinese Corpus Mismatch
+
+Described in Section 22.5. We assumed parallel translations; got classical originals. Cost: three days. Fix: always run a "distance to training corpus" sanity histogram for any new data source before adding it to a shared-frame analysis.
+
+---
+
+## 22.8 Cross-Modality Sign Flips
+
+The most interesting finding was unplanned. After completing both pipelines we compared feature-level coefficients across modalities and found reproducible sign flips on the two most-predictive channels:
+
+| Feature | Books (R) | Music (R) |
+|---------|----------:|----------:|
+| `pair_sim_mean` | +0.126 | -0.076 |
+| `step_mean` | -0.096 | +0.071 |
+
+Both differences are significant at $p < 10^{-28}$ on the combined sample. The sign flip is not noise and it is not a dataset artifact --- it reproduces across seeds and CV folds.
+
+Interpretation: in books, high `pair_sim_mean` (internal cohesion: paragraphs are thematically similar to each other) correlates with higher rating. In music, high `pair_sim_mean` (internal cohesion: 200 ms windows within a 30 s clip are spectrally similar to each other) correlates with *lower* listens. The direction in music is consistent with "monotonous tracks get fewer listens"; in books, the direction is consistent with "focused, thematically coherent books are rated higher."
+
+For `step_mean` the story is inverted: high step size in music means varied, dynamic tracks (positive signal), while high step size in books indicates topic churn --- essay collections, treatises that cover disparate subjects --- and correlates negatively with rating.
+
+**Practical implication.** Do not copy a feature set from a text pipeline to an audio pipeline without re-validating every sign. The geometric operations (cohesion, step length, divergence from corpus) are *modality-agnostic* as formulas but *modality-specific* as aesthetic signals. Each modality has its own preferred "shape" and the map between geometry and preference inverts. This is an empirical claim; we do not have a theoretical derivation for why it should be so, but the effect is large and reproducible.
+
+---
+
+## 22.9 Reference Implementation
+
+The full four-channel feature extractor, roughly 40 lines, suitable for dropping into an arbitrary sequence-of-embeddings regression task:
+
+```python
+import numpy as np
+import scipy.linalg, scipy.spatial
+
+def aesthetic_geometry_features(
+    X,              # (n_tokens, d) embeddings for one work
+    mu_C, Sigma_C,  # corpus Gaussian (from training fold)
+    Sigma_C_inv, logdet_C,
+    pca_basis=None, # optional (d, k) PCA projection
+    n_pairs=5000, rng=None,
+):
+    """Compute the four-channel geometric feature vector for one work.
+    Returns a flat dict of scalars. Requires n_tokens >= 3*k for stable Channel A."""
+    rng = rng or np.random.default_rng(0)
+    Xp = X @ pca_basis if pca_basis is not None else X
+    d = Xp.shape[1]
+    out = {}
+
+    # A. Corpus-Gaussian divergences
+    mu_W = Xp.mean(axis=0)
+    Sigma_W = np.cov(Xp, rowvar=False) + 1e-4 * np.eye(d)
+    delta = mu_W - mu_C
+    out["mahal"] = float(delta @ Sigma_C_inv @ delta)
+    _, logdet_W = np.linalg.slogdet(Sigma_W)
+    out["kl"] = 0.5 * (np.trace(Sigma_C_inv @ Sigma_W) + out["mahal"]
+                       - d + logdet_C - logdet_W)
+    Savg = 0.5 * (Sigma_W + Sigma_C); _, logdet_avg = np.linalg.slogdet(Savg)
+    out["bhat"] = 0.125 * float(delta @ np.linalg.solve(Savg, delta)) \
+                + 0.5 * (logdet_avg - 0.5 * (logdet_W + logdet_C))
+    # NOTE: avoid Hellinger unless n_tokens >> d (see Section 22.7.1)
+    out["frob_le"] = float(np.linalg.norm(
+        scipy.linalg.logm(Sigma_W) - scipy.linalg.logm(Sigma_C), "fro"))
+
+    # B. Internal pair similarity
+    Xn = Xp / (np.linalg.norm(Xp, axis=1, keepdims=True) + 1e-10)
+    i, j = rng.integers(0, Xp.shape[0], size=(2, n_pairs))
+    m = i != j
+    sims = np.einsum("ij,ij->i", Xn[i[m]], Xn[j[m]])
+    out["pair_sim_mean"] = float(sims.mean()); out["pair_sim_std"] = float(sims.std())
+
+    # C. Trajectory geometry
+    steps = np.diff(Xp, axis=0)
+    sl = np.linalg.norm(steps, axis=1)
+    out["step_mean"] = float(sl.mean()); out["step_std"] = float(sl.std())
+    sn = steps / (np.linalg.norm(steps, axis=1, keepdims=True) + 1e-10)
+    out["curvature_mean"] = float(np.arccos(np.clip(
+        np.einsum("ij,ij->i", sn[:-1], sn[1:]), -1, 1)).mean())
+    D = scipy.spatial.distance.squareform(scipy.spatial.distance.pdist(Xp))
+    thr = np.median(D[np.triu_indices_from(D, k=1)]) * 0.25
+    out["recurrence"] = float((D < thr).mean())
+
+    # D. Mean-pooled vector (input to downstream Lasso across the full corpus)
+    out["_pooled"] = Xp.mean(axis=0)
+    return out
+```
+
+To use on a new dataset: fit PCA on the training fold, compute $(\mu_C, \Sigma_C)$ from the PCA-projected pooled training embeddings, call the function per work, then Ridge on the scalar features and Lasso on the stacked `_pooled` vectors. Total cost ~40 lines for the extractor, ~30 lines for the regression glue, ~10 lines per diagnostic plot.
+
+---
+
+## 22.10 Lessons Learned
+
+Tying back to the book's earlier chapters:
+
+- **Mahalanobis vs Bhattacharyya (Chapter 2).** Mahalanobis is fine when the per-work and corpus covariances are comparable in scale. When they differ substantially --- short works versus the long-run corpus --- Bhattacharyya is better conditioned because it averages the covariances before inverting. In our books pipeline, Mahalanobis and Bhattacharyya were individually strong and near-collinear ($r = 0.81$); for cross-lingual transfer, Bhattacharyya generalized slightly better ($\rho = 0.68$ vs 0.62 mean pairwise). Default to Bhattacharyya when $n$ per work varies widely.
+
+- **SPD-manifold awareness (Chapter 4).** Our Frobenius log-covariance feature was the log-Euclidean metric from Chapter 4 applied as a scalar. It was weaker than the mean-shift divergences in this setting, but it was also the feature whose sign was *most stable* across books, music, and the non-English languages. When you need a covariance-based feature that is numerically robust and cross-domain transferable, log-Euclidean is a safer default than anything involving matrix inverses.
+
+- **Hyperbolic embeddings (Chapter 3).** We did not use them here. The natural place would be if the rating distribution had explicit hierarchical structure (genre-subgenre-sub-subgenre) and we wanted to embed the metadata graph rather than the works themselves. We considered it for the cross-lingual analysis (language family is a tree) and decided against because the Euclidean LaBSE projection was already giving $\rho = 0.7$; adding hyperbolic machinery to squeeze another 0.05 did not justify the complexity. For a problem where the hierarchy is deeper or more decisive --- taxonomy-based rating systems, citation graphs --- we would reach for Poincare embeddings first.
+
+- **Subset enumeration and residualization (Chapter 12).** The genre-confound finding is the case-study version of the subset-enumeration diagnostic: we treated "genre" as a structural input dimension and measured how much of the apparent signal disappeared when that dimension was controlled. This is not fundamentally different from the OO-features-are-noise finding in Chapter 20. The mechanism is identical: probe every structural dimension of the input space with a residualization test before reporting any predictive result.
+
+- **Adversarial diagnostics (Chapter 11).** The Hellinger saturation bug was, in retrospect, an adversarial input the pipeline had generated for itself: the shortest books in the corpus produced an $n/d$ ratio that violated the feature's preconditions. An automated check --- "for every feature, compute its per-work distribution and flag features whose std is below threshold" --- is a cheap adversarial probe worth adding to any embedding-statistics pipeline.
+
+The chapter's bottom line is the modest claim from the opening: embedding geometry carries a small, reproducible, cross-lingually consistent signal about aesthetic rating, once genre is controlled. The R^2 of 0.009 on within-genre books and 0.031 on genre-residualized music is not a recommendation system. It is evidence that the geometric structure of an encoder's output --- not the encoder's *content*, but its *shape* --- is a real, measurable, transferable property of a work, and that the tools in this book are sufficient to extract it.
+
+---
+
+## Exercises
+
+**21.1.** Take any 500 books from Project Gutenberg with paired Goodreads ratings. Embed them with a multilingual sentence encoder of your choice. Compute the four-channel features using the reference implementation. Report both raw and genre-residualized R. How close do you come to the numbers in Section 22.4?
+
+**21.2.** Implement the Hellinger-saturation diagnostic: plot the per-work histogram of every scalar feature, and flag any feature whose std is less than 1% of its mean. Which features in your extractor would this catch?
+
+**21.3.** Repeat the cross-lingual analysis with a different sentence encoder (e.g., multilingual-e5). Does the mean pairwise Spearman $\rho$ across languages stay near 0.70, or does it drop? Interpret the difference in terms of the encoder's translation-alignment training objective.
+
+**21.4.** On a music dataset of your choice with MERT or a similar audio encoder, verify the sign flip: does `pair_sim_mean` correlate negatively with your listens/popularity target, and `step_mean` positively? If not, what does the sign imply about your dataset's genre composition?
+
+**21.5.** Construct a small tree-structured taxonomy for your domain (genre, subgenre, sub-subgenre) and embed it hyperbolically using a `PoincareBall` (Chapter 3). Does using hyperbolic distance to the taxonomy improve residualization over one-hot genre indicators?
+
+**21.6.** Run the pipeline with three CV regimes: random row-level, item-disjoint, and entity-disjoint (author/artist). Report R for each. What fraction of the gap between random-CV and entity-disjoint CV is the actual leak?
+
+**21.7.** Replace the 128-dim PCA projection with a random projection of the same dimension. Does the divergence-channel signal survive? What does your answer tell you about how much of Channel A is truly about corpus-level structure versus artifacts of the PCA basis?
+
+---
+
+## Notes and References
+
+Feng, F., Yang, Y., Cer, D., et al., "Language-agnostic BERT Sentence Embedding," *ACL* 2022 (LaBSE). Li, Y., Yuan, R., Zhang, G., et al., "MERT: Acoustic Music Understanding Model with Large-Scale Self-supervised Training," *ICLR* 2024. Defferrard, M., Benzi, K., Vandergheynst, P., et al., "FMA: A Dataset for Music Analysis," *ISMIR* 2017. Project Gutenberg ([gutenberg.org](https://www.gutenberg.org)) and Goodreads public rating aggregates. Bhattacharyya, A., "On a measure of divergence between two multinomial populations," *Sankhya* 7, 401--406 (1946). Hellinger, E., "Neue Begrundung der Theorie quadratischer Formen von unendlichvielen Veranderlichen," *J. Reine Angew. Math.* 136, 210--271 (1909). Arsigny, V., Fillard, P., Pennec, X., Ayache, N., "Log-Euclidean metrics for fast and simple calculus on diffusion tensors," *Magnetic Resonance in Medicine* 56(2), 2006. Tibshirani, R., "Regression shrinkage and selection via the Lasso," *JRSS B* 58(1), 267--288 (1996). Hofmann, T., Scholkopf, B., Smola, A., "Kernel methods in machine learning," *Annals of Statistics* 36(3), 1171--1220 (2008). The `turboquant-pro` experimental pipeline (Bond, 2026) contains the specific implementation used for the results in this chapter.
+
+
+\newpage
+
+# Chapter 23: Case Study — Legal-Domain Embeddings and the Generalization Gap
+
+> *"A model that beats the test it was trained for has told you nothing until it faces a test it was not."*
+
+The case studies of Chapters 20–22 fuzzed the parameter and feature structure of models whose
+*objective* was fixed. This chapter fuzzes the objective itself. We adapt a general-purpose sentence
+encoder (LaBSE) to the legal domain and ask not "which features matter?" but "which *training form*
+matters?"—and then we subject the winner to a probe it was never trained against. The exercise
+surfaces two tools that extend the adversarial-probing framework of Chapter 11 from parameter and
+signal space into **relation space**: the *cross-relation generalization gap* and *probe calibration*.
+It closes with the *found-then-frozen* discipline that connects structural search to honest
+out-of-sample validation.
+
+The numbers are real. They are reported as they came, including a first attempt that made the model
+worse.
+
+---
+
+## 23.1 The Setup: Structural Fuzzing of a Training Objective
+
+The base model is LaBSE, a 471M-parameter multilingual sentence encoder. The target domain is U.S.
+case law. The question is whether a light domain adaptation improves legal-text retrieval over the
+base encoder, and if so, *which form of adaptation*.
+
+This is structural fuzzing with the dimension being fuzzed set one level up from the usual: not a
+feature group, but the **training objective**. Two candidate structures:
+
+- **v1 — unsupervised SimCSE.** Each legal sentence is its own positive pair via two dropout views;
+  other in-batch sentences are negatives. No labels. This is the cheapest possible adaptation.
+- **v2 — citation-supervised (SPECTER-style).** Positive pairs are (citing opinion, cited opinion)
+  drawn from the citation graph; the rest of the batch are negatives. The supervision signal is real
+  legal relatedness rather than dropout noise.
+
+The `evaluate_fn` of earlier chapters becomes a held-out retrieval score. The parameter being varied
+is categorical—the objective family—so the "campaign" here is a two-point comparison rather than a
+grid. But the discipline is identical to Chapter 9's Pareto reasoning: **selection is by held-out
+performance, never by training loss.** Both candidates drive their training loss down; only one of
+them generalizes.
+
+### 23.1.1 The First Result Was a Regression
+
+On a held-out, opinion-disjoint citation-retrieval probe (defined in §22.2), the two objectives
+scored:
+
+| objective | citation-retrieval AUROC | Δ vs. base LaBSE (95% CI) |
+|-----------|:------------------------:|---------------------------|
+| base LaBSE (no adaptation) | 0.765 | — |
+| **v1 (unsupervised SimCSE)** | 0.340 | **−0.145 [−0.214, −0.081]** |
+| **v2 (citation-supervised)** | 0.971 | **+0.206 [+0.190, +0.223]** |
+
+v1 did not merely fail to help; it *significantly degraded* the base encoder. A light,
+small-batch, unsupervised contrastive pass collapsed LaBSE's carefully tuned geometry—its training
+loss fell while its held-out retrieval fell with it. This is the structural-fuzzing analogue of a
+Chapter 10 fragility: a configuration that looks fine by its internal metric and breaks under the
+held-out probe. Reporting it is not optional. The negative result is what makes the positive result
+(v2) credible, and it is the single most useful data point for anyone tempted to reach for the cheap
+objective first.
+
+The lesson generalizes past embeddings: **when the structure you fuzz is the loss function, the
+in-sample metric is not admissible evidence.** Only a probe the objective does not directly optimize
+can rank the candidates.
+
+---
+
+## 23.2 Constructing the Probe — and the Calibration Trap
+
+The held-out probe is a retrieval AUROC. Positive pairs are true (citing, cited) opinion pairs whose
+opinions were held out of training by an opinion-level split (opinion id mod 10 == 7); negatives are
+random cross-pairings. AUROC is the probability that a true pair scores above a random pair.
+
+The first version of this probe returned a number that should have stopped the project:
+
+> On the first probe, **base LaBSE scored 0.48—indistinguishable from chance (0.50).**
+
+A 471M-parameter encoder trained on billions of sentences cannot tell a citation-linked pair of legal
+opinions from a random pair? That is not a fact about the model. It is a fact about the **probe**.
+
+### 23.2.1 The Intensity-Zero Identity, Applied to Evaluation
+
+Chapter 11 §10.2 insisted that every parametric transform satisfy the intensity-zero identity:
+$T(x,0)=x$, so that $\delta(0)=0$ is a *calibrated baseline*. The evaluation-construction analogue is:
+
+> **Probe-calibration rule.** Before trusting a probe to rank models, verify it against references of
+> known strength. A probe on which a *known-strong* reference scores at chance is measuring surface,
+> not the target. A probe on which a *known-weak* reference scores well is leaking the answer.
+
+Here the known-strong reference (base LaBSE) scored at chance, which localized the defect immediately.
+The probe encoded each opinion from its first ~3000 characters—which, for a judicial opinion, is
+almost entirely the **standardized caption**: "UNITED STATES COURT OF APPEALS FOR THE ... CIRCUIT ...
+Before ... Circuit Judges." Every opinion's first 3000 characters look alike. The probe was measuring
+caption boilerplate, a surface feature shared by *all* pairs, so it could not separate true pairs from
+random ones. This is exactly Chapter 11's **flat profile** ("alarming for stress transforms—the model
+is not reading the content being destroyed"), but occurring in the *measurement instrument* rather
+than the model under test.
+
+The fix was to skip the caption and encode the body. After recalibration, base LaBSE rose to 0.765—a
+sensible number for a strong general encoder on a hard domain task—and the model comparison of §22.1
+became trustworthy. **The comparison numbers are only as good as the probe, and the probe is only
+trustworthy once its calibration references land where they should.**
+
+### 23.2.2 Why This Belongs in a Fuzzing Text
+
+A structural-fuzzing campaign is a machine for producing model rankings. If the `evaluate_fn` has a
+latent confound—if it rewards a surface feature correlated with, but not identical to, the target—then
+every downstream artifact (subset ranking, Pareto frontier, sensitivity order) inherits the confound
+silently. The subset enumeration will happily report that "caption-length features" dominate, and it
+will be *right about the probe and wrong about the world*. Calibrating the probe against strong and
+weak references is the cheapest insurance in the entire pipeline, and it is almost always skipped.
+
+---
+
+## 23.3 The Cross-Relation Generalization Gap
+
+v2 scores 0.971 on citation retrieval. But citation retrieval is precisely the relation v2 was trained
+to encode. A model can reach 0.971 on its own training relation by learning that relation's surface
+regularities without acquiring any transferable legal structure. To separate the two, we need a probe
+on a relation the model **never trained on**.
+
+### 23.3.1 An Orthogonal Relation
+
+Legal opinions carry a second, structurally independent relation: **docket lineage**. A district-court
+opinion and the appellate opinion that reviews it share a case—linked not by citation but by matching
+*docket numbers* in the court's originating-case metadata. This relation is:
+
+- **Structurally independent** of the training signal (docket-number matching, not citation edges);
+- **Naturally held out**—the district opinions in this corpus predate the electronic era and fall
+  below the id threshold used to sample training pairs, so they were never seen;
+- **Semantically harder**—a district opinion argues the merits; its appellate reviewer argues legal
+  error and standard of review. With party names stripped, the two are only weakly similar in the body.
+
+Running the same probe machinery on 4,406 held-out lineage pairs:
+
+| relation | base LaBSE | v2 (citation-supervised) | Δ (95% CI) |
+|----------|:----------:|:------------------------:|------------|
+| citation retrieval (**trained** relation) | 0.765 | 0.971 | **+0.206 [+0.190, +0.223]** |
+| docket lineage (**independent** relation) | 0.545 | 0.562 | **+0.018 [+0.004, +0.031]** |
+
+### 23.3.2 Reading the Gap
+
+Define the **cross-relation generalization gap** as the difference between a model's improvement on
+its trained relation and its improvement on an independent relation:
+
+$$G = \Delta_{\text{trained}} - \Delta_{\text{independent}} = 0.206 - 0.018 = 0.188.$$
+
+This is the relation-space analogue of Chapter 11's **sensitivity gap** (the ratio of stress-transform
+to invariant-transform displacement). There, a large gap meant the model separated meaningful content
+from surface variation. Here the interpretation is sharper and, deliberately, less flattering:
+
+- A **large** $G$ (as here) means the adaptation is **mostly specialization**: it bought a great deal
+  on the relation it optimized and a little elsewhere. The gain is real—both intervals exclude
+  zero—but it is not a broad "the model now understands law" gain.
+- A gap near **zero** with both improvements positive would indicate the adaptation captured
+  *transferable* structure—an improvement that shows up on relations it never saw.
+- Both improvements at **zero** would indicate no adaptation at all (or a probe confound of the §22.2
+  kind, which is why probe calibration comes first).
+
+The honest one-sentence summary that the gap licenses—and that the trained-relation number alone would
+not—is: *citation supervision dramatically improves the relatedness it was trained on and transfers a
+small, statistically significant amount to an independent legal relation.* Note that the independent
+probe also disciplines the claim's language: without it, 0.971 invites the overclaim "a legal reasoning
+model"; with it, the ceiling on transfer is measured, not assumed.
+
+### 23.3.3 The Technique, Stated Generally
+
+> **Cross-relation probing.** To distinguish learned structure from objective-memorization, evaluate an
+> adapted model on at least one relation that is (a) structurally independent of the training signal
+> and (b) held out at the *entity* level, not merely the *pair* level. Report the improvement on both
+> the trained and the independent relation, and the gap between them. The trained-relation number sets
+> the ceiling on enthusiasm; the independent-relation number sets the floor on the claim.
+
+Entity-level holdout (b) is essential and easy to get wrong. Holding out individual *pairs* while the
+*entities* recur in training leaks structure: the model has already seen the documents, only not this
+particular link between them. The docket-lineage probe is clean because the district opinions are
+entirely absent from training, not merely their lineage links.
+
+---
+
+## 23.4 Found, Then Frozen
+
+Structural fuzzing is a search. Search over a large enough space will find *something*—a subset, a
+threshold, an objective—that scores well on any fixed probe. Chapter 9 guarded against this with
+Pareto parsimony and Chapter 10 with robustness; the strongest guard is temporal.
+
+The pattern that carried both the embedding work and its companion preregistration is **found-then-frozen**:
+
+1. **Search / fuzz** to *find* a candidate structure (here: citation supervision over SimCSE).
+2. **Freeze** the structure and its *predictions*—derived from the frozen structure, not re-fit to the
+   test data—under a content hash, before the confirmatory data is touched.
+3. **Test out-of-sample** against the frozen predictions. A wrong prediction is a reported failure,
+   never an edit.
+
+The freezing step deserves emphasis because it is what converts a search winner into a claim. In the
+companion economic-manifold study, the sign of every coordinate's predicted effect was *derived* from
+the model's frozen cost convention—the same convention already fitted on the active coordinates—rather
+than asserted by intuition, and the whole bundle (protocol, codebook, sign table, datasets, power
+analysis) was committed under a SHA-256 hash and a cryptographically signed tag before the dormant
+coordinates were tested. The signature and hash make the ordering—prediction before data—independently
+verifiable rather than merely asserted.
+
+For a structural-fuzzing practitioner the rule is compact:
+
+> **Found-then-frozen.** The output of a fuzzing campaign is a *hypothesis*, not a result. Register the
+> winning structure and its derived predictions—hashed and timestamped—before the confirmatory
+> evaluation. What the campaign found on the search data earns the right to be *tested*, not the right
+> to be *believed*.
+
+This is the discipline that separates a search that discovers structure from a search that
+manufactures it.
+
+---
+
+## 23.5 Summary and Forward Connections
+
+This case study fuzzed a model's training objective rather than its features, and in doing so
+exercised three tools that extend the framework of Part II:
+
+1. **Objective-space fuzzing.** The structure under test can be the loss function itself. When it is,
+   the in-sample metric is inadmissible; only a held-out probe can rank candidates. The cheap objective
+   (unsupervised) degraded the base model; the supervised objective improved it. Both facts were
+   reported.
+2. **Probe calibration.** Before trusting a probe, verify it against known-strong and known-weak
+   references—the evaluation-space form of Chapter 11's intensity-zero identity. A strong reference at
+   chance revealed a caption-boilerplate confound that would otherwise have silently corrupted every
+   downstream ranking.
+3. **The cross-relation generalization gap.** Evaluating on an independent, entity-level-held-out
+   relation, and reporting the gap between trained- and independent-relation improvement, separates
+   learned structure from objective-memorization and calibrates the language of the claim.
+
+And the connecting discipline, **found-then-frozen**, treats every campaign output as a hypothesis to
+be registered and tested out-of-sample, not a result to be believed.
+
+The unifying theme with Chapter 11 is unchanged: *the difference between what a probe expects and what
+it receives encodes the structure of the system under test.* This chapter adds that the same logic
+governs the probe itself (calibrate it) and the relation it measures (vary it). The next part of a
+mature practice is to automate these checks into the campaign so that no ranking is emitted without a
+calibrated probe and at least one orthogonal-relation gap alongside it.
+
+
+\newpage
+
 \newpage
 
 # Appendices
@@ -12023,7 +12932,7 @@ Nickel, M. and Kiela, D., "Poincare embeddings for learning hierarchical represe
 
 # Appendix A: Mathematical Notation and Conventions
 
-*Structural Fuzzing: Geometric Methods for Adversarial Model Validation* --- Andrew H. Bond
+*Geometric Methods in Computational Modeling* --- Andrew H. Bond
 
 ---
 
@@ -12118,7 +13027,7 @@ Geodesic distance on the Poincare ball $\mathbb{B}^d_c$. Diverges as points appr
 
 $$d_{\mathbb{B}}(x, y) = \text{arccosh}\left(1 + 2\frac{\|x - y\|^2}{(1 - \|x\|^2)(1 - \|y\|^2)}\right)$$
 
-The two formulations are equivalent when $c = 1$. Chapter 1, Chapter 3.
+The two formulations are equivalent for all $c > 0$. Chapter 1, Chapter 3.
 
 ### A.3.4 Log-Euclidean Distance
 
@@ -12272,7 +13181,7 @@ where $L_\text{path} = \sum_{t=1}^{T-1} d_{LE}(\mathbf{C}_t, \mathbf{C}_{t+1})$ 
 
 ### A.7.1 MRI Weights
 
-The Model Robustness Index combines mean deviation, 75th percentile, and 95th percentile of perturbation response into a single robustness score. The composite explicitly accounts for tail risk, unlike standard deviation which treats all deviations symmetrically. Chapter 1 (introduced), Chapter 7 (developed).
+The Model Robustness Index combines mean deviation, 75th percentile, and 95th percentile of perturbation response into a single robustness score. The composite explicitly accounts for tail risk, unlike standard deviation which treats all deviations symmetrically. Chapter 1 (introduced), Chapter 8 (developed).
 
 ### A.7.2 Softmax Choice Rule
 
@@ -12328,6 +13237,8 @@ Common dimension sets used in examples:
 | $s_3$ | Halstead | Volume, difficulty, effort, time |
 | $s_4$ | Object-Orientation | Coupling, cohesion, inheritance depth |
 | $s_5$ | Process | Revisions, distinct authors, code churn |
+
+> **Note on indexing.** The defect prediction table above uses 1-based mathematical indexing ($s_1, \ldots, s_5$) following the convention stated in Section A.8.1 for mathematical exposition. The ethical-economic table below uses 0-based indexing matching the code implementation. When translating between text and code, subtract 1 from mathematical indices: $s_1$ in the text corresponds to `params[0]` in code.
 
 **Ethical-economic space (9 dimensions):**
 
@@ -12420,7 +13331,8 @@ Throughout the book, mathematical functions and their computational implementati
 # Appendix B: Software Dependencies and Installation
 
 This appendix provides a guide to setting up the software environment
-required to reproduce the examples in *Structural Fuzzing*. The primary framework, `structural-fuzzing`, is available on
+required to reproduce the examples in *Geometric Methods in Computational
+Modeling*. The primary framework, `structural-fuzzing`, is available on
 PyPI and serves as the backbone for the structural validation techniques
 developed throughout the text.
 
@@ -12465,8 +13377,8 @@ source .venv/bin/activate
 Alternatively, with conda:
 
 ```bash
-conda create -n structural-fuzzing python=3.12
-conda activate structural-fuzzing
+conda create -n geometric-modeling python=3.12
+conda activate geometric-modeling
 ```
 
 **Best practices:**
@@ -12622,28 +13534,24 @@ domains:
 The table below shows which packages are required or recommended for each
 chapter. "Core" means only `structural-fuzzing` and NumPy are needed.
 
-| Ch | Title | Prerequisites |
-|---|---|---|
-| 1 | Why Geometry? | None |
-| 2 | Mahalanobis Distance and Weighted Metric Spaces | Ch 1 |
-| 3 | Hyperbolic Geometry for Hierarchical Data | Ch 1 |
-| 4 | SPD Manifolds and Spectral Geometry | Ch 2 |
-| 5 | Topological Data Analysis | Ch 1 |
-| 6 | Pathfinding on Manifolds | Ch 2, 3 |
-| 7 | Equilibrium on Manifolds | Ch 6 |
-| 8 | Pareto Optimization | Ch 1, 11 |
-| 9 | Adversarial Robustness and the MRI | Ch 1, 2 |
-| 10 | Adversarial Probing | Ch 9 |
-| 11 | The Subset Enumeration Pattern | Ch 1 |
-| 12 | Compositional Testing | Ch 9, 11 |
-| 13 | Group-Theoretic Data Augmentation | Ch 3 |
-| 14 | Gradient Reversal and Invariance Training | Ch 4, 9 |
-| 15 | Cholesky Parameterization | Ch 2, 4 |
-| 16 | Building Geometric Pipelines | Ch 8, 9, 11 |
-| 17 | Scaling to High-Dimensional Spaces | Ch 9, 11 |
-| 18 | Deploying Geometric Validation in Production | Ch 16 |
-| 19 | Case Study: Software Defect Prediction | Ch 8, 9, 11 |
-| 20 | Case Study: Cetacean Bioacoustics | Ch 3, 4, 5, 14 |
+| Chapter / Part | Core | scikit-learn | pandas | scipy | gudhi/ripser | geoopt |
+|----------------|------|-------------|--------|-------|-------------|--------|
+| **Part I: Foundations** | | | | | | |
+| Ch 1. Why Geometry? | Required | -- | -- | -- | -- | -- |
+| Ch 2. Mahalanobis Distance | Required | -- | -- | Recommended | -- | -- |
+| Ch 3. Hyperbolic Geometry | Required | -- | -- | -- | -- | Required |
+| Ch 4. SPD Manifolds | Required | -- | -- | Required | -- | -- |
+| Ch 5. Topological Data Analysis | Required | -- | -- | Required | Required | -- |
+| **Part II: Algorithms** | | | | | | |
+| Ch 6. Pathfinding on Manifolds | Required | -- | -- | Recommended | -- | -- |
+| Ch 7. Equilibrium on Manifolds | Required | -- | -- | Recommended | -- | -- |
+| Ch 8. Pareto Optimization | Required | Recommended | -- | -- | -- | -- |
+| Ch 9. Adversarial Robustness (MRI) | Required | -- | -- | Recommended | -- | -- |
+| Ch 10. Adversarial Probing | Required | -- | -- | -- | -- | -- |
+| **Part III: Patterns** | | | | | | |
+| Ch 11. Subset Enumeration | Required | Recommended | Recommended | -- | -- | -- |
+| Ch 12. Compositional Testing | Required | Recommended | Recommended | -- | -- | -- |
+| Ch 13. Group-Theoretic Augmentation | Required | -- | -- | -- | -- | Required |
 
 ## B.9 Complete Installation for All Chapters
 
@@ -12669,7 +13577,7 @@ pip install structural-fuzzing
 ```
 
 This installs only `structural-fuzzing` and NumPy, sufficient for
-Chapters 1 through 10 covering Parts I and II.
+Chapters 1 through 8.
 
 ## B.10 Verifying the Full Installation
 
@@ -12724,7 +13632,7 @@ pip install -r requirements-book.txt       # Recreate the environment later
 
 # Appendix C: Selected Proofs and Derivations
 
-*Structural Fuzzing: Geometric Methods for Adversarial Model Validation* --- Andrew H. Bond
+*Geometric Methods in Computational Modeling* --- Andrew H. Bond
 
 ---
 
@@ -12955,11 +13863,11 @@ $$\hat{\Psi}(\theta_1, \ldots, \theta_n, \theta_{n+1}, \ldots, \theta_{n(n+1)/2}
 
 **Proof.** The exponential function $\theta_i \mapsto e^{\theta_i}$ maps $\mathbb{R}$ onto $(0, \infty)$, ensuring that the diagonal entries of $L$ are strictly positive. The off-diagonal entries are unconstrained. By Theorem C.5, $\Psi(L) = LL^\top$ surjects onto $\text{SPD}(n)$, and the composition $\hat{\Psi} = \Psi \circ (\text{exp-diag construction})$ is smooth as a composition of smooth maps. $\square$
 
-**Remark C.5.** This corollary is the mathematical justification for the Cholesky parameterization used in Chapter 15: optimizing over unconstrained $\theta \in \mathbb{R}^{n(n+1)/2}$ is equivalent to optimizing over $\text{SPD}(n)$, but without any constraints. The log-diagonal trick $L_{ii} = e^{\theta_i}$ eliminates the positivity constraint on the diagonal of $L$, making the entire optimization unconstrained.
+**Remark C.5.** This corollary is the mathematical justification for the Cholesky parameterization used in Chapter 2: optimizing over unconstrained $\theta \in \mathbb{R}^{n(n+1)/2}$ is equivalent to optimizing over $\text{SPD}(n)$, but without any constraints. The log-diagonal trick $L_{ii} = e^{\theta_i}$ eliminates the positivity constraint on the diagonal of $L$, making the entire optimization unconstrained.
 
 ---
 
-## C.6 MRI Convergence Properties (Chapter 9)
+## C.6 MRI Convergence Properties (Chapter 10)
 
 The Model Robustness Index (MRI) is an empirical statistic computed from a finite sample of perturbations. This section establishes conditions under which the empirical MRI converges to its population counterpart and quantifies the sensitivity of the MRI to small changes in the baseline parameters.
 
@@ -13019,7 +13927,7 @@ $$|\text{MRI}^*(\theta_1^*) - \text{MRI}^*(\theta_2^*)| \leq (w_1 + w_2 + w_3) \
 
 ---
 
-## C.7 Pareto Frontier Non-Dominance Transitivity (Chapter 8)
+## C.7 Pareto Frontier Non-Dominance Transitivity (Chapter 9)
 
 **Definition C.2.** *Given a multi-objective minimization problem with objective vector $\mathbf{f}(\mathbf{x}) = (f_1(\mathbf{x}), \ldots, f_m(\mathbf{x}))$, we say configuration $\mathbf{x}$ dominates configuration $\mathbf{y}$, written $\mathbf{x} \preceq \mathbf{y}$, if $f_i(\mathbf{x}) \leq f_i(\mathbf{y})$ for all $i \in \{1, \ldots, m\}$ with strict inequality for at least one $i$.*
 
@@ -13046,34 +13954,17 @@ Therefore $f_i(\mathbf{x}) \leq f_i(\mathbf{z})$ for all $i$ with strict inequal
 
 **Corollary C.7.1 (Non-dominance is not transitive).** *Define $\mathbf{x} \sim \mathbf{y}$ (mutual non-dominance) if $\mathbf{x} \not\preceq \mathbf{y}$ and $\mathbf{y} \not\preceq \mathbf{x}$. The relation $\sim$ is not transitive. That is, there exist $\mathbf{x}, \mathbf{y}, \mathbf{z}$ with $\mathbf{x} \sim \mathbf{y}$ and $\mathbf{y} \sim \mathbf{z}$ but $\mathbf{x} \preceq \mathbf{z}$ (so $\mathbf{x} \not\sim \mathbf{z}$).*
 
-**Proof.** We give an explicit counterexample in two objectives ($m = 2$). Let
-
-$$\mathbf{f}(\mathbf{x}) = (1, 3), \quad \mathbf{f}(\mathbf{y}) = (2, 2), \quad \mathbf{f}(\mathbf{z}) = (3, 4).$$
-
-Then:
-
-- $\mathbf{x} \sim \mathbf{y}$: $f_1(\mathbf{x}) = 1 < 2 = f_1(\mathbf{y})$ but $f_2(\mathbf{x}) = 3 > 2 = f_2(\mathbf{y})$. Neither dominates the other.
-- $\mathbf{y} \sim \mathbf{z}$: $f_1(\mathbf{y}) = 2 < 3 = f_1(\mathbf{z})$ and $f_2(\mathbf{y}) = 2 < 4 = f_2(\mathbf{z})$... wait, this means $\mathbf{y} \preceq \mathbf{z}$, not $\mathbf{y} \sim \mathbf{z}$.
-
-We adjust the example. Let
-
-$$\mathbf{f}(\mathbf{x}) = (1, 3), \quad \mathbf{f}(\mathbf{y}) = (2, 2), \quad \mathbf{f}(\mathbf{z}) = (3, 1).$$
-
-Then:
-
-- $\mathbf{x} \sim \mathbf{y}$: $f_1(\mathbf{x}) < f_1(\mathbf{y})$ but $f_2(\mathbf{x}) > f_2(\mathbf{y})$. Neither dominates.
-- $\mathbf{y} \sim \mathbf{z}$: $f_1(\mathbf{y}) < f_1(\mathbf{z})$ but $f_2(\mathbf{y}) > f_2(\mathbf{z})$. Neither dominates.
-- $\mathbf{x} \sim \mathbf{z}$: $f_1(\mathbf{x}) < f_1(\mathbf{z})$ but $f_2(\mathbf{x}) > f_2(\mathbf{z})$. Neither dominates.
-
-This shows that non-dominance *can* be transitive in specific cases. To show it is not *always* transitive, consider three objectives ($m = 3$):
+**Proof.** We give an explicit counterexample in three objectives ($m = 3$). Let
 
 $$\mathbf{f}(\mathbf{x}) = (1, 3, 1), \quad \mathbf{f}(\mathbf{y}) = (2, 1, 3), \quad \mathbf{f}(\mathbf{z}) = (2, 4, 2).$$
 
 - $\mathbf{x} \sim \mathbf{y}$: $f_1(\mathbf{x}) < f_1(\mathbf{y})$ and $f_3(\mathbf{x}) < f_3(\mathbf{y})$, but $f_2(\mathbf{x}) > f_2(\mathbf{y})$. Neither dominates.
 - $\mathbf{y} \sim \mathbf{z}$: $f_2(\mathbf{y}) < f_2(\mathbf{z})$, but $f_3(\mathbf{y}) > f_3(\mathbf{z})$. Neither dominates.
-- $\mathbf{x} \preceq \mathbf{z}$: $f_1(\mathbf{x}) = 1 \leq 2 = f_1(\mathbf{z})$, $f_2(\mathbf{x}) = 3 \leq 4 = f_2(\mathbf{z})$ (actually $3 < 4$), $f_3(\mathbf{x}) = 1 \leq 2 = f_3(\mathbf{z})$, with strict inequality in objectives 1, 2, and 3. So $\mathbf{x} \preceq \mathbf{z}$.
+- $\mathbf{x} \preceq \mathbf{z}$: $f_1(\mathbf{x}) = 1 \leq 2 = f_1(\mathbf{z})$, $f_2(\mathbf{x}) = 3 < 4 = f_2(\mathbf{z})$, $f_3(\mathbf{x}) = 1 < 2 = f_3(\mathbf{z})$, with strict inequality in all three objectives. So $\mathbf{x} \preceq \mathbf{z}$.
 
 Thus $\mathbf{x} \sim \mathbf{y}$ and $\mathbf{y} \sim \mathbf{z}$ but $\mathbf{x} \not\sim \mathbf{z}$ (in fact $\mathbf{x}$ dominates $\mathbf{z}$). This proves that $\sim$ is not transitive. $\square$
+
+**Remark C.5.** Note that non-transitivity of mutual non-dominance requires at least three objectives. In two objectives, if $\mathbf{x} \sim \mathbf{y}$ and $\mathbf{y} \sim \mathbf{z}$, it can be shown that $\mathbf{x} \sim \mathbf{z}$ always holds (the trade-off structure in two dimensions forces transitivity of incomparability).
 
 **Remark C.6.** The non-transitivity of mutual non-dominance has practical consequences for multi-objective optimization. One cannot simply sort configurations by pairwise comparison as one would with a total order. Instead, the Pareto frontier must be computed by checking each candidate against all others --- there is no shortcut based on transitivity of incomparability. This is why Pareto frontier computation has time complexity $O(N^2 m)$ for $N$ configurations in $m$ objectives (or $O(N \log^{m-1} N)$ using Kung et al.'s algorithm for $m \geq 3$), rather than the $O(N \log N)$ that a total order would permit.
 

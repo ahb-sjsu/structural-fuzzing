@@ -8,7 +8,7 @@ This appendix collects rigorous proofs of the main theorems and propositions sta
 
 ---
 
-## C.1 The Scalar Irrecoverability Theorem (Chapter 1)
+## C.1 The Scalar Irrecoverability Theorem (Chapter {{ch:why-geometry}})
 
 **Theorem C.1 (Scalar Irrecoverability).** *Let $n \geq 2$ and let $\phi : \mathbb{R}^n \to \mathbb{R}$ be any linear functional $\phi(\mathbf{v}) = \mathbf{w}^\top \mathbf{v}$ with $\mathbf{w} \neq \mathbf{0}$. Then:*
 
@@ -48,7 +48,7 @@ More precisely, by Sard's theorem, the set of critical values of $\psi$ has Lebe
 
 ---
 
-## C.2 Mahalanobis Distance Is a Valid Metric (Chapter 2)
+## C.2 Mahalanobis Distance Is a Valid Metric (Chapter {{ch:mahalanobis-distance}})
 
 **Theorem C.2.** *Let $\Sigma \in \text{SPD}(n)$ be a symmetric positive definite matrix. Then the Mahalanobis distance*
 
@@ -88,7 +88,7 @@ $$d_M(\mathbf{a}, \mathbf{c}) = \|L\mathbf{a} - L\mathbf{c}\|_2 \leq \|L\mathbf{
 
 ---
 
-## C.3 The Poincare Ball Distance Is a Valid Metric (Chapter 3)
+## C.3 The Poincare Ball Distance Is a Valid Metric (Chapter {{ch:hyperbolic-geometry}})
 
 **Theorem C.3.** *For curvature parameter $c > 0$, the geodesic distance on the Poincare ball $\mathbb{B}_c^d = \{x \in \mathbb{R}^d : c\|x\|^2 < 1\}$,*
 
@@ -144,7 +144,7 @@ which is proved by writing $\operatorname{arccosh}(z) = \ln(z + \sqrt{z^2 - 1})$
 
 ---
 
-## C.4 The Log-Euclidean Metric on SPD(n) Is a Complete Riemannian Metric (Chapter 4)
+## C.4 The Log-Euclidean Metric on SPD(n) Is a Complete Riemannian Metric (Chapter {{ch:spd-manifolds}})
 
 **Theorem C.4.** *The log-Euclidean distance*
 
@@ -193,7 +193,7 @@ Since $\Phi$ is a diffeomorphism, $D_S\Phi$ is an isomorphism at each $S$, so th
 
 ---
 
-## C.5 Cholesky Parameterization Surjects onto SPD(n) (Chapter 2)
+## C.5 Cholesky Parameterization Surjects onto SPD(n) (Chapter {{ch:mahalanobis-distance}})
 
 **Theorem C.5.** *Let $\mathcal{L}_n^+$ denote the set of $n \times n$ lower-triangular matrices with strictly positive diagonal entries. The map $\Psi : \mathcal{L}_n^+ \to \text{SPD}(n)$ defined by $\Psi(L) = LL^\top$ is a surjection. Moreover, it is a bijection: each $S \in \text{SPD}(n)$ has a unique Cholesky factor $L \in \mathcal{L}_n^+$.*
 
@@ -231,11 +231,11 @@ $$\hat{\Psi}(\theta_1, \ldots, \theta_n, \theta_{n+1}, \ldots, \theta_{n(n+1)/2}
 
 **Proof.** The exponential function $\theta_i \mapsto e^{\theta_i}$ maps $\mathbb{R}$ onto $(0, \infty)$, ensuring that the diagonal entries of $L$ are strictly positive. The off-diagonal entries are unconstrained. By Theorem C.5, $\Psi(L) = LL^\top$ surjects onto $\text{SPD}(n)$, and the composition $\hat{\Psi} = \Psi \circ (\text{exp-diag construction})$ is smooth as a composition of smooth maps. $\square$
 
-**Remark C.5.** This corollary is the mathematical justification for the Cholesky parameterization used in Chapter 2: optimizing over unconstrained $\theta \in \mathbb{R}^{n(n+1)/2}$ is equivalent to optimizing over $\text{SPD}(n)$, but without any constraints. The log-diagonal trick $L_{ii} = e^{\theta_i}$ eliminates the positivity constraint on the diagonal of $L$, making the entire optimization unconstrained.
+**Remark C.5.** This corollary is the mathematical justification for the Cholesky parameterization used in Chapter {{ch:mahalanobis-distance}}: optimizing over unconstrained $\theta \in \mathbb{R}^{n(n+1)/2}$ is equivalent to optimizing over $\text{SPD}(n)$, but without any constraints. The log-diagonal trick $L_{ii} = e^{\theta_i}$ eliminates the positivity constraint on the diagonal of $L$, making the entire optimization unconstrained.
 
 ---
 
-## C.6 MRI Convergence Properties (Chapter 9)
+## C.6 MRI Convergence Properties (Chapter {{ch:adversarial-robustness}})
 
 The Model Robustness Index (MRI) is an empirical statistic computed from a finite sample of perturbations. This section establishes conditions under which the empirical MRI converges to its population counterpart and quantifies the sensitivity of the MRI to small changes in the baseline parameters.
 
@@ -261,7 +261,7 @@ $$\widehat{\text{MRI}}_N = w_1 \bar{\Omega}_N + w_2 \hat{Q}_{0.75} + w_3 \hat{Q}
 
 **Proof.**
 
-*(i)* By the strong law of large numbers, $\bar{\Omega}_N \xrightarrow{a.s.} \mathbb{E}[\Omega]$. By the Glivenko-Cantelli theorem, the empirical distribution function $\hat{F}_N$ converges uniformly to $F_\Omega$ almost surely. Since $F_\Omega$ has a positive density at the quantile points $q_{0.75}$ and $q_{0.95}$, these quantiles are uniquely defined and the sample quantiles converge: $\hat{Q}_{p} \xrightarrow{a.s.} F_\Omega^{-1}(p)$ for $p \in \{0.75, 0.95\}$ (see, e.g., Serfling, *Approximation Theorems of Mathematical Statistics*, Theorem 2.3.1). The empirical MRI is a continuous (in fact, affine) function of these three convergent quantities, so by the continuous mapping theorem, $\widehat{\text{MRI}}_N \xrightarrow{a.s.} \text{MRI}^*$.
+*(i)* By the strong law of large numbers, $\bar{\Omega}_N \xrightarrow{a.s.} \mathbb{E}[\Omega]$. By the Glivenko-Cantelli theorem, the empirical distribution function $\hat{F}_N$ converges uniformly to $F_\Omega$ almost surely. Since $F_\Omega$ has a positive density at the quantile points $q_{0.75}$ and $q_{0.95}$, these quantiles are uniquely defined and the sample quantiles converge: $\hat{Q}_{p} \xrightarrow{a.s.} F_\Omega^{-1}(p)$ for $p \in \{0.75, 0.95\}$ (see, e.g., Serfling, *Approximation Theorems of Mathematical Statistics*, Theorem {{ch:mahalanobis-distance}}.3.1). The empirical MRI is a continuous (in fact, affine) function of these three convergent quantities, so by the continuous mapping theorem, $\widehat{\text{MRI}}_N \xrightarrow{a.s.} \text{MRI}^*$.
 
 *(ii)* The central limit theorem gives $\sqrt{N}(\bar{\Omega}_N - \mathbb{E}[\Omega]) \xrightarrow{d} \mathcal{N}(0, \text{Var}(\Omega))$. For sample quantiles, the Bahadur representation yields
 
@@ -295,7 +295,7 @@ $$|\text{MRI}^*(\theta_1^*) - \text{MRI}^*(\theta_2^*)| \leq (w_1 + w_2 + w_3) \
 
 ---
 
-## C.7 Pareto Frontier Non-Dominance Transitivity (Chapter 8)
+## C.7 Pareto Frontier Non-Dominance Transitivity (Chapter {{ch:pareto-optimization}})
 
 **Definition C.2.** *Given a multi-objective minimization problem with objective vector $\mathbf{f}(\mathbf{x}) = (f_1(\mathbf{x}), \ldots, f_m(\mathbf{x}))$, we say configuration $\mathbf{x}$ dominates configuration $\mathbf{y}$, written $\mathbf{x} \preceq \mathbf{y}$, if $f_i(\mathbf{x}) \leq f_i(\mathbf{y})$ for all $i \in \{1, \ldots, m\}$ with strict inequality for at least one $i$.*
 

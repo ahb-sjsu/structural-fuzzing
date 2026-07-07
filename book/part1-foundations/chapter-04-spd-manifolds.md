@@ -1,4 +1,4 @@
-# Chapter 4: SPD Manifolds and Spectral Geometry
+# Chapter {{ch:spd-manifolds}}: SPD Manifolds and Spectral Geometry
 
 *Geometric Methods in Computational Modeling* --- Andrew H. Bond
 
@@ -6,9 +6,9 @@
 
 In the preceding chapters, we established the vocabulary of manifolds, tangent spaces, and geodesics. We now turn to a specific manifold that arises naturally in signal processing, machine learning, and statistical modeling: the manifold of symmetric positive definite (SPD) matrices. This chapter develops the Riemannian geometry of SPD matrices from first principles, introduces the log-Euclidean metric as a computationally tractable distance function, and demonstrates how these ideas apply to spectral analysis of acoustic signals. The running example --- covariance analysis of cetacean vocalizations --- illustrates a broader pattern: whenever your data consists of second-order statistics (covariances, correlation matrices, diffusion tensors), flat Euclidean methods throw away geometric structure that the SPD manifold preserves.
 
-## 4.1 The Manifold of Positive Definite Matrices
+## {{ch:spd-manifolds}}.1 The Manifold of Positive Definite Matrices
 
-**Definition 4.1.** The set of *n x n* symmetric positive definite matrices is
+**Definition {{ch:spd-manifolds}}.1.** The set of *n x n* symmetric positive definite matrices is
 
 $$\text{SPD}(n) = \{S \in \mathbb{R}^{n \times n} : S = S^\top,\; x^\top S x > 0 \;\forall x \neq 0\}.$$
 
@@ -38,17 +38,17 @@ This motivates the use of Riemannian geometry. By equipping SPD(n) with a Rieman
 
 At any point $S \in \text{SPD}(n)$, the tangent space $T_S\text{SPD}(n)$ is the set of all *n x n* symmetric matrices --- there is no positive definiteness constraint on tangent vectors, only symmetry. This is a vector space of dimension *n(n+1)/2*. The Riemannian metric at each point defines an inner product on this tangent space, and different choices of inner product yield different Riemannian geometries on SPD(n).
 
-## 4.2 The Log-Euclidean Metric
+## {{ch:spd-manifolds}}.2 The Log-Euclidean Metric
 
 Among the several Riemannian metrics on SPD(n), the *log-Euclidean metric* offers the best balance of mathematical rigor and computational efficiency. It was introduced by Arsigny et al. (2006) and has since become a standard tool in diffusion tensor imaging, brain-computer interfaces, and covariance-based classification.
 
-**Definition 4.2.** The *log-Euclidean distance* between two SPD matrices $S_1, S_2 \in \text{SPD}(n)$ is
+**Definition {{ch:spd-manifolds}}.2.** The *log-Euclidean distance* between two SPD matrices $S_1, S_2 \in \text{SPD}(n)$ is
 
 $$d_{LE}(S_1, S_2) = \|\log(S_1) - \log(S_2)\|_F$$
 
 where $\log(\cdot)$ denotes the matrix logarithm and $\|\cdot\|_F$ is the Frobenius norm.
 
-**Proposition 4.1.** $d_{LE}$ is a proper metric on SPD(n). That is, it satisfies non-negativity, identity of indiscernibles, symmetry, and the triangle inequality.
+**Proposition {{ch:spd-manifolds}}.1.** $d_{LE}$ is a proper metric on SPD(n). That is, it satisfies non-negativity, identity of indiscernibles, symmetry, and the triangle inequality.
 
 *Proof sketch.* The matrix logarithm is a diffeomorphism from SPD(n) to the space Sym(n) of all *n x n* symmetric matrices. Since the Frobenius norm is a metric on Sym(n), composing with the diffeomorphism $\log$ yields a metric on SPD(n). $\square$
 
@@ -130,11 +130,11 @@ The Frobenius distance $d_F(S_2, S_3) = 9900$, which is $99\times$ larger than $
 
 The log-Euclidean distances tell a different story. We have $\log(\lambda)$ values of $\log(0.01) \approx -4.6$, $\log(100) \approx 4.6$, and $\log(10000) \approx 9.2$. So $d_{LE}(S_1, S_2) \approx |{-4.6} - 4.6| = 9.2$ and $d_{LE}(S_2, S_3) \approx |4.6 - 9.2| = 4.6$. The log-Euclidean metric correctly reports that the multiplicative change from $S_2$ to $S_3$ (a factor of 100) is smaller than the change from $S_1$ to $S_2$ (a factor of 10,000). This scale-sensitivity is essential when eigenvalues span many orders of magnitude, as they do in covariance matrices from real-world signals.
 
-## 4.3 The Fréchet Mean on SPD(n)
+## {{ch:spd-manifolds}}.3 The Fréchet Mean on SPD(n)
 
 Given a collection of SPD matrices $S_1, \ldots, S_k$, we often need their "average." The ordinary arithmetic mean $(S_1 + \cdots + S_k)/k$ is SPD (since SPD matrices are closed under addition and positive scalar multiplication), but it is not the correct notion of center on the Riemannian manifold. The arithmetic mean minimizes $\sum_i \|S_i - M\|_F^2$, which uses the flat Euclidean distance, not the manifold distance.
 
-**Definition 4.3.** The *Fréchet mean* (or *Karcher mean*) of SPD matrices $S_1, \ldots, S_k$ with weights $w_1, \ldots, w_k$ is
+**Definition {{ch:spd-manifolds}}.3.** The *Fréchet mean* (or *Karcher mean*) of SPD matrices $S_1, \ldots, S_k$ with weights $w_1, \ldots, w_k$ is
 
 $$\bar{S} = \arg\min_{M \in \text{SPD}(n)} \sum_{i=1}^{k} w_i \, d(S_i, M)^2$$
 
@@ -177,7 +177,7 @@ $$S_1 = \begin{pmatrix} 1 & 0.5 \\ 0.5 & 1 \end{pmatrix}, \quad S_2 = \begin{pma
 
 *The arithmetic mean is $\frac{1}{2}(S_1 + S_2) = \begin{pmatrix} 2.5 & 0.25 \\ 0.25 & 2.5 \end{pmatrix}$, which has eigenvalues $2.75$ and $2.25$. The log-Euclidean Fréchet mean $\exp(\frac{1}{2}(\log(S_1) + \log(S_2)))$ yields a different matrix --- one that better interpolates the geometric structure of the two covariances. The difference is most pronounced when the constituent matrices have eigenvalues spanning several orders of magnitude.*
 
-## 4.4 Frequency-Band Covariance Extraction
+## {{ch:spd-manifolds}}.4 Frequency-Band Covariance Extraction
 
 We now connect the abstract SPD machinery to concrete signal processing. Given a spectrogram --- a time-frequency representation of an audio signal --- we construct an SPD covariance matrix that encodes how frequency bands co-vary over time.
 
@@ -187,7 +187,7 @@ A mel spectrogram is a matrix $\mathbf{X} \in \mathbb{R}^{n_\text{mels} \times n
 
 Working with the full $128 \times 128$ covariance matrix is impractical: it has $128 \times 129 / 2 = 8{,}256$ free parameters, and eigendecomposition would be expensive at every step. Instead, we reduce dimensionality by grouping mel bins into $n_\text{bands}$ frequency bands.
 
-**Algorithm 4.1** (Frequency-band covariance extraction)**.**
+**Algorithm {{ch:spd-manifolds}}.1** (Frequency-band covariance extraction)**.**
 
 1. **Band averaging.** Partition the $n_\text{mels}$ mel bins into $n_\text{bands}$ contiguous groups of equal size. Average within each group to obtain a reduced representation $\mathbf{B} \in \mathbb{R}^{n_\text{bands} \times n_\text{frames}}$.
 
@@ -267,7 +267,7 @@ The feature vector consists of:
 
 The off-diagonal elements are precisely what makes SPD features more informative than per-band energy statistics. A flat spectrogram representation captures the energy in each band independently but discards information about *relationships* between bands. The covariance matrix retains this information, and the log map ensures that distances between covariance matrices respect the manifold geometry.
 
-## 4.5 Spectral Trajectory Analysis
+## {{ch:spd-manifolds}}.5 Spectral Trajectory Analysis
 
 The covariance extraction described above produces a single SPD matrix summarizing an entire signal. But many signals of interest have time-varying spectral structure. A spoken vowel transitions into a consonant; a musical note evolves from attack to sustain to decay; a whale vocalization may shift its spectral content within a single click or across a coda sequence. To capture this temporal evolution, we extend the single-covariance analysis to a *trajectory* on the SPD manifold.
 
@@ -275,7 +275,7 @@ The covariance extraction described above produces a single SPD matrix summarizi
 
 The idea is simple: slide a window across the spectrogram and compute a covariance matrix at each position. This produces a sequence of SPD matrices $\mathbf{C}_1, \mathbf{C}_2, \ldots, \mathbf{C}_T$, one per window position, which traces a path on the SPD manifold.
 
-**Definition 4.4.** A *spectral trajectory* is a sequence of SPD covariance matrices $(\mathbf{C}_t)_{t=1}^T$ computed from overlapping windows of a spectrogram, together with the associated timestamps.
+**Definition {{ch:spd-manifolds}}.4.** A *spectral trajectory* is a sequence of SPD covariance matrices $(\mathbf{C}_t)_{t=1}^T$ computed from overlapping windows of a spectrogram, together with the associated timestamps.
 
 The trajectory captures how the second-order spectral structure evolves over time. If the covariance is constant (the signal is stationary), the trajectory collapses to a single point. If the signal undergoes a smooth spectral transition, the trajectory traces a smooth curve on SPD(n). If the signal changes abruptly, the trajectory exhibits discontinuities.
 
@@ -335,13 +335,13 @@ def compute_spectral_trajectory(
     )
 ```
 
-The implementation iterates over the spectrogram with a sliding window of `window_frames` frames and a hop size of `hop_frames` frames. At each position, it computes the covariance matrix using the same `compute_covariance` function described in Section 4.4. Timestamps are computed from the center of each window using the sample rate and STFT hop length.
+The implementation iterates over the spectrogram with a sliding window of `window_frames` frames and a hop size of `hop_frames` frames. At each position, it computes the covariance matrix using the same `compute_covariance` function described in Section {{ch:spd-manifolds}}.4. Timestamps are computed from the center of each window using the sample rate and STFT hop length.
 
 ### The Geodesic Deviation Metric
 
 The most informative summary statistic of a spectral trajectory is its *geodesic deviation*: how much the actual path on the SPD manifold deviates from the shortest possible path (the geodesic) between its endpoints.
 
-**Definition 4.5.** Given a spectral trajectory $\mathbf{C}_1, \ldots, \mathbf{C}_T$, the *geodesic deviation* is
+**Definition {{ch:spd-manifolds}}.5.** Given a spectral trajectory $\mathbf{C}_1, \ldots, \mathbf{C}_T$, the *geodesic deviation* is
 
 $$\delta = \frac{L_\text{path} - d_\text{geo}}{d_\text{geo}}$$
 
@@ -360,7 +360,7 @@ $$\gamma(t) = \exp\!\left((1-t)\log(S_0) + t\log(S_1)\right), \quad t \in [0, 1]
 
 This is simply linear interpolation in log-space, followed by exponentiation back to SPD(n). The geodesic deviation measures how far the actual trajectory departs from this linear interpolation.
 
-## 4.6 Application: Acoustic Signal Analysis
+## {{ch:spd-manifolds}}.6 Application: Acoustic Signal Analysis
 
 To ground these abstractions in a concrete application, we examine how SPD manifold methods apply to the analysis of cetacean vocalizations, specifically sperm whale (*Physeter macrocephalus*) clicks and codas.
 
@@ -402,7 +402,7 @@ The main parameters governing the covariance extraction are:
 
 - **Window and hop sizes** (for trajectory analysis): The window must be large enough to estimate a reliable covariance matrix ($\geq 3 \cdot n_\text{bands}$ frames, as above) and small enough to capture temporal variation. The hop size controls temporal resolution versus computational cost.
 
-## 4.7 Connections and Extensions
+## {{ch:spd-manifolds}}.7 Connections and Extensions
 
 ### Relationship to Other SPD Metrics
 

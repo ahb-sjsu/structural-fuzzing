@@ -1,10 +1,10 @@
-# Chapter 5: Topological Data Analysis
+# Chapter {{ch:topological-data-analysis}}: Topological Data Analysis
 
 *Geometric Methods in Computational Modeling* — Andrew H. Bond
 
 ---
 
-## 5.1 Beyond Distance: Shape
+## {{ch:topological-data-analysis}}.1 Beyond Distance: Shape
 
 The preceding chapters built a toolkit around distance. We measured how far apart points lie in Euclidean space, computed geodesics on curved manifolds, and used metric structure to define neighborhoods, clusters, and decision boundaries. Distance is powerful, but it answers only one question: *how far?* There is a deeper question that distance alone cannot answer: *what shape?*
 
@@ -14,11 +14,11 @@ Topological data analysis (TDA) brings this perspective to finite point clouds. 
 
 This invariance is not merely aesthetic. In applications where the generative process produces structured geometry — oscillatory systems, recurrent dynamics, hierarchical organization — the topological features of the data encode the structure of the process itself. A periodic signal traces a loop. A quasiperiodic signal traces a torus. A chaotic attractor produces a characteristic tangle of components and cycles that distinguishes it from stochastic noise. TDA extracts these features in a principled, stable, and computable way.
 
-This chapter develops the TDA pipeline from first principles. We begin with a technique for lifting one-dimensional time series into higher-dimensional point clouds where topological structure becomes visible (Section 5.2). We then define persistent homology, the central algebraic tool that tracks topological features across scales (Section 5.3), and its standard visualization, the persistence diagram (Section 5.4). Section 5.5 addresses the practical problem of converting persistence diagrams into fixed-length feature vectors suitable for downstream machine learning. Finally, Section 5.6 applies the full pipeline to cetacean bioacoustics, where topological features of vocal dynamics distinguish social groups that are indistinguishable by spectral analysis alone.
+This chapter develops the TDA pipeline from first principles. We begin with a technique for lifting one-dimensional time series into higher-dimensional point clouds where topological structure becomes visible (Section {{ch:topological-data-analysis}}.2). We then define persistent homology, the central algebraic tool that tracks topological features across scales (Section {{ch:topological-data-analysis}}.3), and its standard visualization, the persistence diagram (Section {{ch:topological-data-analysis}}.4). Section {{ch:topological-data-analysis}}.5 addresses the practical problem of converting persistence diagrams into fixed-length feature vectors suitable for downstream machine learning. Finally, Section {{ch:topological-data-analysis}}.6 applies the full pipeline to cetacean bioacoustics, where topological features of vocal dynamics distinguish social groups that are indistinguishable by spectral analysis alone.
 
 ---
 
-## 5.2 Takens' Time-Delay Embedding
+## {{ch:topological-data-analysis}}.2 Takens' Time-Delay Embedding
 
 Many real-world systems are dynamical: they evolve in time according to deterministic or stochastic rules operating on a high-dimensional state space. We rarely observe the full state. A single sensor — a microphone, a temperature probe, a stock price — gives us a one-dimensional projection of a multi-dimensional trajectory. The question is whether we can recover the geometry of the underlying attractor from this single scalar time series.
 
@@ -96,11 +96,11 @@ This is justified by the stability of persistent homology: if the subsampled clo
 
 ---
 
-## 5.3 Persistent Homology
+## {{ch:topological-data-analysis}}.3 Persistent Homology
 
 We now have a point cloud in $\mathbb{R}^d$. We want to extract its topological features — but a finite set of discrete points has no interesting topology in itself. Every point is an isolated connected component; there are no loops or voids. The key idea of persistent homology is to *thicken* the points and observe how topology changes as the thickening grows.
 
-### 5.3.1 The Vietoris-Rips Complex
+### {{ch:topological-data-analysis}}.3.1 The Vietoris-Rips Complex
 
 Fix a distance threshold $\varepsilon \geq 0$. The **Vietoris-Rips complex** $\mathrm{VR}(X, \varepsilon)$ is the simplicial complex whose $k$-simplices are subsets of $k+1$ points that are pairwise within distance $\varepsilon$:
 
@@ -117,7 +117,7 @@ Persistent homology tracks the homology groups of these complexes across the fil
 
 $$\text{persistence} = \text{death} - \text{birth}$$
 
-### 5.3.2 Homology Dimensions
+### {{ch:topological-data-analysis}}.3.2 Homology Dimensions
 
 Homology decomposes into dimensions, each capturing a different type of topological feature:
 
@@ -129,7 +129,7 @@ Homology decomposes into dimensions, each capturing a different type of topologi
 
 Higher homology dimensions follow the same pattern, but computation becomes expensive and the features are rarely interpretable in data analysis contexts. For most applications, $H_0$ and $H_1$ suffice.
 
-### 5.3.3 Persistence as Signal vs. Noise
+### {{ch:topological-data-analysis}}.3.3 Persistence as Signal vs. Noise
 
 The fundamental heuristic of persistent homology is:
 
@@ -139,7 +139,7 @@ A feature that persists across a wide range of scales reflects real structure in
 
 ---
 
-## 5.4 Persistence Diagrams
+## {{ch:topological-data-analysis}}.4 Persistence Diagrams
 
 The standard visualization of persistent homology is the **persistence diagram**: a scatter plot in which each topological feature is represented as a point $(b, d)$ where $b$ is the birth time and $d$ is the death time. Since $d \geq b$ by definition, all points lie on or above the diagonal $d = b$.
 
@@ -153,7 +153,7 @@ The distance from a point to the diagonal is $\frac{d - b}{\sqrt{2}}$, proportio
 
 ---
 
-## 5.5 Feature Extraction from Persistence
+## {{ch:topological-data-analysis}}.5 Feature Extraction from Persistence
 
 Persistence diagrams are mathematically elegant but awkward as input to standard machine learning pipelines. They are multisets of variable cardinality — different point clouds produce diagrams with different numbers of points. We need a fixed-length vector representation.
 
@@ -255,7 +255,7 @@ With `max_homology_dim=1` (computing $H_0$ and $H_1$), this yields a 16-dimensio
 
 ---
 
-## 5.6 The Full Pipeline: From Signal to Topology
+## {{ch:topological-data-analysis}}.6 The Full Pipeline: From Signal to Topology
 
 The complete TDA pipeline chains the components developed in the preceding sections. Given a raw one-dimensional signal, we:
 
@@ -374,17 +374,17 @@ This example makes the Takens theorem concrete. A sine wave $x(t) = \sin(\omega 
 
 ---
 
-## 5.7 Application: Cetacean Click Dynamics
+## {{ch:topological-data-analysis}}.7 Application: Cetacean Click Dynamics
 
 We now apply the full TDA pipeline to a problem where topological analysis reveals structure invisible to conventional methods: the classification of sperm whale vocalizations.
 
-### 5.7.1 Background
+### {{ch:topological-data-analysis}}.7.1 Background
 
 Sperm whales (*Physeter macrocephalus*) communicate through stereotyped sequences of broadband clicks called *codas*. Recent research has revealed that these codas possess a combinatorial phonetic system with rhythm, tempo, rubato, and ornamentation combining hierarchically — far more structured than simple click counting would suggest (Sharma et al., *Nature Communications*, 2024). Different social units (clans) use distinct coda repertoires, and the temporal micro-structure of clicks within a coda carries clan-specific signatures.
 
 Standard approaches analyze codas through their spectral content (frequency-domain features) or inter-click interval (ICI) histograms. These methods capture *what* the whale produces (which frequencies, which intervals) but not *how* the production unfolds over time. Two codas with identical ICI histograms but different ordering — say, accelerating versus decelerating rhythm — are indistinguishable spectrally but dynamically distinct.
 
-### 5.7.2 Topological Approach
+### {{ch:topological-data-analysis}}.7.2 Topological Approach
 
 TDA captures the *dynamics* of click production by treating the ICI sequence as a time series and applying the Takens-persistence pipeline:
 
@@ -398,7 +398,7 @@ TDA captures the *dynamics* of click production by treating the ICI sequence as 
 
 4. **Extract features and classify.** The 16-dimensional TDA feature vector (8 per homology dimension) feeds into a standard classifier. Because the features are topological invariants, they are insensitive to the absolute timing scale of the clicks — a slow rendition and a fast rendition of the same rhythmic pattern produce the same topology — while remaining sensitive to the structural organization.
 
-### 5.7.3 What TDA Captures That Spectral Methods Miss
+### {{ch:topological-data-analysis}}.7.3 What TDA Captures That Spectral Methods Miss
 
 The power of the topological approach is best understood through contrast with spectral methods.
 
@@ -408,7 +408,7 @@ The power of the topological approach is best understood through contrast with s
 
 **TDA features** capture the *shape of the dynamical trajectory* in delay-coordinate space. This shape reflects the temporal organization — the ordering, the cyclicity, the clustering of intervals — in a way that is invariant to absolute tempo (stretching time uniformly is a continuous deformation that preserves topology) but sensitive to structural pattern. Two codas with different rhythmic organizations produce topologically distinct attractors even if their ICI histograms and spectral content are identical.
 
-### 5.7.4 Practical Pipeline
+### {{ch:topological-data-analysis}}.7.4 Practical Pipeline
 
 The complete pipeline for a batch of whale click recordings:
 
@@ -444,7 +444,7 @@ feature_matrix = np.stack([process_coda(ici) for ici in coda_icis])
 
 The resulting feature matrix can be passed to any classifier. The first 8 columns encode $H_0$ structure (cluster topology), and the last 8 encode $H_1$ structure (loop topology). In practice, the most discriminative features tend to be the $H_1$ max lifetime (feature index 11: the persistence of the most prominent loop, reflecting the strength of the dominant cyclic pattern) and the $H_0$ count (feature index 0: the number of distinct interval clusters).
 
-### 5.7.5 Interpretation of Results
+### {{ch:topological-data-analysis}}.7.5 Interpretation of Results
 
 When applied to the DSWP dataset (1,501 annotated sperm whale codas), TDA features reveal structure aligned with the known social organization:
 
@@ -456,7 +456,7 @@ When applied to the DSWP dataset (1,501 annotated sperm whale codas), TDA featur
 
 ---
 
-## 5.8 Summary
+## {{ch:topological-data-analysis}}.8 Summary
 
 Topological data analysis provides a principled framework for extracting shape-based features from data that complement and extend distance-based methods. The key ideas of this chapter are:
 
@@ -472,7 +472,7 @@ Topological data analysis provides a principled framework for extracting shape-b
 
 6. **Application to cetacean bioacoustics** demonstrates that topological features capture the dynamical shape of vocal patterns — cyclic structure, interval clustering, rhythmic regularity — in ways that are invariant to tempo and complementary to spectral analysis.
 
-The topological perspective will recur in later chapters. In Part II, we will see how persistent homology can detect phase transitions in adversarial parameter spaces (Chapter 9) and how topological features serve as robust invariants for structural fuzzing campaigns (Chapter 12). The key takeaway is that topology captures qualitative structure — the presence or absence of holes, loops, and clusters — that persists under the continuous deformations induced by noise, measurement error, and parameter perturbation, making it a natural complement to the metric and manifold methods developed in Chapters 2 through 4.
+The topological perspective will recur in later chapters. In Part II, we will see how persistent homology can detect phase transitions in adversarial parameter spaces (Chapter {{ch:adversarial-robustness}}) and how topological features serve as robust invariants for structural fuzzing campaigns (Chapter {{ch:compositional-testing}}). The key takeaway is that topology captures qualitative structure — the presence or absence of holes, loops, and clusters — that persists under the continuous deformations induced by noise, measurement error, and parameter perturbation, making it a natural complement to the metric and manifold methods developed in Chapters {{ch:mahalanobis-distance}} through {{ch:spd-manifolds}}.
 
 ---
 

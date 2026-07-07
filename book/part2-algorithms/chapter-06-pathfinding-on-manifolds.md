@@ -1,17 +1,17 @@
-# Chapter 6: Pathfinding on Manifolds
+# Chapter {{ch:pathfinding-on-manifolds}}: Pathfinding on Manifolds
 
 > *"The shortest distance between two points is not a straight line, but a geodesic --- and the geodesic knows things about the terrain that the straight line does not."*
 > --- Adapted from Bernhard Riemann, *On the Hypotheses Which Lie at the Foundations of Geometry* (1854)
 
-In Chapter 2, we introduced the Mahalanobis distance as the correct way to measure separation between two points in a space where dimensions have different scales and are correlated. In Chapter 3, we saw how hyperbolic geometry captures hierarchical structure that Euclidean space distorts. In Chapter 4, we developed the SPD manifold as the natural home for covariance data. Each of these chapters addressed a *static* problem: measuring the distance between two fixed points. But real decisions are not static. They are *sequential*: an agent at state $A$ must navigate through a series of intermediate states to reach a desired goal $B$, and the cost of the journey depends not just on the endpoints but on every step along the way. This chapter develops the algorithmic machinery for finding optimal paths on decision manifolds --- the **Bond Geodesic algorithm** --- which adapts A* search to non-Euclidean configuration spaces where standard pathfinding fails.
+In Chapter {{ch:mahalanobis-distance}}, we introduced the Mahalanobis distance as the correct way to measure separation between two points in a space where dimensions have different scales and are correlated. In Chapter {{ch:hyperbolic-geometry}}, we saw how hyperbolic geometry captures hierarchical structure that Euclidean space distorts. In Chapter {{ch:spd-manifolds}}, we developed the SPD manifold as the natural home for covariance data. Each of these chapters addressed a *static* problem: measuring the distance between two fixed points. But real decisions are not static. They are *sequential*: an agent at state $A$ must navigate through a series of intermediate states to reach a desired goal $B$, and the cost of the journey depends not just on the endpoints but on every step along the way. This chapter develops the algorithmic machinery for finding optimal paths on decision manifolds --- the **Bond Geodesic algorithm** --- which adapts A* search to non-Euclidean configuration spaces where standard pathfinding fails.
 
-We begin by establishing why classical A* with Euclidean heuristics produces suboptimal or inadmissible results on curved spaces (Section 6.1), develop the relationship between geodesic distance and Euclidean distance that makes this failure precise (Section 6.2), construct the Economic Decision Complex as the graph on which pathfinding operates (Section 6.3), formulate the Bond Geodesic as the minimum-friction path on this complex (Section 6.4), adapt A* with manifold-aware heuristics including a novel moral heuristic derived from dual-process cognitive theory (Section 6.5), work through concrete examples from the `eris-econ` game theory codebase (Section 6.6), establish formal properties of the resulting paths (Section 6.7), and connect forward to multi-agent equilibria in Chapter 7 (Section 6.8).
+We begin by establishing why classical A* with Euclidean heuristics produces suboptimal or inadmissible results on curved spaces (Section {{ch:pathfinding-on-manifolds}}.1), develop the relationship between geodesic distance and Euclidean distance that makes this failure precise (Section {{ch:pathfinding-on-manifolds}}.2), construct the Economic Decision Complex as the graph on which pathfinding operates (Section {{ch:pathfinding-on-manifolds}}.3), formulate the Bond Geodesic as the minimum-friction path on this complex (Section {{ch:pathfinding-on-manifolds}}.4), adapt A* with manifold-aware heuristics including a novel moral heuristic derived from dual-process cognitive theory (Section {{ch:pathfinding-on-manifolds}}.5), work through concrete examples from the `eris-econ` game theory codebase (Section {{ch:pathfinding-on-manifolds}}.6), establish formal properties of the resulting paths (Section {{ch:pathfinding-on-manifolds}}.7), and connect forward to multi-agent equilibria in Chapter {{ch:equilibrium-on-manifolds}} (Section {{ch:pathfinding-on-manifolds}}.8).
 
 ---
 
-## 6.1 Why Standard A* Fails on Curved Spaces
+## {{ch:pathfinding-on-manifolds}}.1 Why Standard A* Fails on Curved Spaces
 
-### 6.1.1 The Admissibility Problem
+### {{ch:pathfinding-on-manifolds}}.1.1 The Admissibility Problem
 
 A* search guarantees optimal paths under one condition: the heuristic function $h(n)$ must be *admissible* --- it must never overestimate the true cost from $n$ to the goal. In Euclidean space, the straight-line distance $\|n - g\|_2$ is always a lower bound on any path from $n$ to $g$, because the straight line is the shortest path. The Euclidean heuristic is therefore admissible by construction, and A* with this heuristic finds provably optimal paths.
 
@@ -19,19 +19,19 @@ On a curved space, the straight-line distance is no longer the shortest path. Th
 
 - **Positive curvature** (e.g., the surface of a sphere): geodesics converge. The geodesic distance between two points is *less than* the Euclidean distance through the ambient space, but *greater than* the chord length. The Euclidean heuristic (using chord length) underestimates and remains admissible, but may be loose.
 
-- **Negative curvature** (e.g., hyperbolic space, as developed in Chapter 3): geodesics diverge. Two points that appear close in the ambient Euclidean coordinates can be far apart in geodesic distance, because the metric is stretched near the boundary of the Poincare ball. The Euclidean distance *underestimates* the geodesic distance, which means the Euclidean heuristic remains admissible but becomes increasingly uninformative --- approaching the zero heuristic in the worst case.
+- **Negative curvature** (e.g., hyperbolic space, as developed in Chapter {{ch:hyperbolic-geometry}}): geodesics diverge. Two points that appear close in the ambient Euclidean coordinates can be far apart in geodesic distance, because the metric is stretched near the boundary of the Poincare ball. The Euclidean distance *underestimates* the geodesic distance, which means the Euclidean heuristic remains admissible but becomes increasingly uninformative --- approaching the zero heuristic in the worst case.
 
-- **Non-uniform curvature** (e.g., the SPD manifold from Chapter 4, or a decision space with a Mahalanobis metric): the relationship between Euclidean and geodesic distance varies from point to point. In some regions the Euclidean heuristic is tight; in others it is arbitrarily loose. Worse, when the metric tensor $\Sigma^{-1}$ has large eigenvalues in some directions and small eigenvalues in others, the Euclidean heuristic can *overestimate* the Mahalanobis distance along low-precision directions while *underestimating* it along high-precision directions.
+- **Non-uniform curvature** (e.g., the SPD manifold from Chapter {{ch:spd-manifolds}}, or a decision space with a Mahalanobis metric): the relationship between Euclidean and geodesic distance varies from point to point. In some regions the Euclidean heuristic is tight; in others it is arbitrarily loose. Worse, when the metric tensor $\Sigma^{-1}$ has large eigenvalues in some directions and small eigenvalues in others, the Euclidean heuristic can *overestimate* the Mahalanobis distance along low-precision directions while *underestimating* it along high-precision directions.
 
 The last case is the one that matters for this book. The 9-dimensional economic decision space of the `eris-econ` model has a covariance matrix $\Sigma$ with eigenvalues ranging from 0.25 (the Fairness dimension, tightly constrained) to 25.0 (the Consequences dimension, loosely constrained). A 1-unit Euclidean displacement along the Fairness axis corresponds to a Mahalanobis distance of $1/\sqrt{0.25} = 2.0$, while the same displacement along the Consequences axis corresponds to $1/\sqrt{25.0} = 0.2$. The Euclidean distance treats both displacements identically --- a 10x error in relative weighting.
 
-### 6.1.2 The Boundary Discontinuity Problem
+### {{ch:pathfinding-on-manifolds}}.1.2 The Boundary Discontinuity Problem
 
-Even if the curvature problem could be resolved by rescaling the heuristic, a deeper issue remains: the decision spaces we consider have *discontinuous* cost functions. Moral boundaries (Section 6.4) impose step-function penalties on certain transitions. A path that crosses a moral boundary incurs a finite or infinite additional cost that no smooth distance function can predict. The Euclidean heuristic, being smooth, has no mechanism to account for boundaries that may lie between the current state and the goal.
+Even if the curvature problem could be resolved by rescaling the heuristic, a deeper issue remains: the decision spaces we consider have *discontinuous* cost functions. Moral boundaries (Section {{ch:pathfinding-on-manifolds}}.4) impose step-function penalties on certain transitions. A path that crosses a moral boundary incurs a finite or infinite additional cost that no smooth distance function can predict. The Euclidean heuristic, being smooth, has no mechanism to account for boundaries that may lie between the current state and the goal.
 
-This means that even a perfectly calibrated Euclidean heuristic --- one that exactly matches the Mahalanobis distance --- would still be inadmissible in the presence of boundary penalties, because it would underestimate the true cost by ignoring the penalties. The fix requires a fundamentally different kind of heuristic: one that estimates not geometric distance but *behavioral friction*, including both the smooth metric component and the discontinuous moral component. This is the moral heuristic developed in Section 6.5.
+This means that even a perfectly calibrated Euclidean heuristic --- one that exactly matches the Mahalanobis distance --- would still be inadmissible in the presence of boundary penalties, because it would underestimate the true cost by ignoring the penalties. The fix requires a fundamentally different kind of heuristic: one that estimates not geometric distance but *behavioral friction*, including both the smooth metric component and the discontinuous moral component. This is the moral heuristic developed in Section {{ch:pathfinding-on-manifolds}}.5.
 
-### 6.1.3 Consequences for Pathfinding
+### {{ch:pathfinding-on-manifolds}}.1.3 Consequences for Pathfinding
 
 When A* operates with an inadmissible or uninformative heuristic on a decision manifold, three failure modes arise:
 
@@ -41,17 +41,17 @@ When A* operates with an inadmissible or uninformative heuristic on a decision m
 
 3. **Missed disconnections.** When sacred boundaries ($\beta = \infty$) disconnect the graph, a poor heuristic may lead the search to spend enormous effort exploring a disconnected component before concluding that no path exists. A boundary-aware heuristic can detect disconnection early.
 
-These failures motivate the development of manifold-specific heuristics in Section 6.5. But first, we need to make the relationship between geodesic and Euclidean distance precise.
+These failures motivate the development of manifold-specific heuristics in Section {{ch:pathfinding-on-manifolds}}.5. But first, we need to make the relationship between geodesic and Euclidean distance precise.
 
 ---
 
-## 6.2 Geodesic Distance vs. Euclidean Distance
+## {{ch:pathfinding-on-manifolds}}.2 Geodesic Distance vs. Euclidean Distance
 
 The core mathematical issue is the *distortion* between the Euclidean metric and the Riemannian metric induced by the precision matrix $\Sigma^{-1}$.
 
-### 6.2.1 The Mahalanobis Metric as a Riemannian Metric
+### {{ch:pathfinding-on-manifolds}}.2.1 The Mahalanobis Metric as a Riemannian Metric
 
-Recall from Chapter 2 that the Mahalanobis distance between two points $\mathbf{a}, \mathbf{b} \in \mathbb{R}^n$ is:
+Recall from Chapter {{ch:mahalanobis-distance}} that the Mahalanobis distance between two points $\mathbf{a}, \mathbf{b} \in \mathbb{R}^n$ is:
 
 $$d_M(\mathbf{a}, \mathbf{b}) = \sqrt{(\mathbf{b} - \mathbf{a})^\top \Sigma^{-1} (\mathbf{b} - \mathbf{a})}$$
 
@@ -61,13 +61,13 @@ The relationship between Mahalanobis and Euclidean distance is governed by the e
 
 $$\sqrt{\lambda_{\min}} \cdot \|\mathbf{b} - \mathbf{a}\|_2 \leq d_M(\mathbf{a}, \mathbf{b}) \leq \sqrt{\lambda_{\max}} \cdot \|\mathbf{b} - \mathbf{a}\|_2$$
 
-**Proposition 6.1.** The Euclidean distance $\|\mathbf{b} - \mathbf{a}\|_2$ is an admissible heuristic for A* with Mahalanobis edge weights if and only if $\lambda_{\min} \geq 1$ --- that is, if and only if every eigenvalue of $\Sigma^{-1}$ is at least 1.
+**Proposition {{ch:pathfinding-on-manifolds}}.1.** The Euclidean distance $\|\mathbf{b} - \mathbf{a}\|_2$ is an admissible heuristic for A* with Mahalanobis edge weights if and only if $\lambda_{\min} \geq 1$ --- that is, if and only if every eigenvalue of $\Sigma^{-1}$ is at least 1.
 
 *Proof.* The heuristic $h(n) = \|n - g\|_2$ is admissible when $h(n) \leq d_M(n, g)$ for all $n, g$. By the lower bound above, $d_M(n, g) \geq \sqrt{\lambda_{\min}} \cdot \|n - g\|_2$. Thus $\|n - g\|_2 \leq d_M(n, g)$ iff $\sqrt{\lambda_{\min}} \geq 1$, i.e., $\lambda_{\min} \geq 1$. $\square$
 
 For the `eris-econ` covariance matrix, $\Sigma$ has diagonal entries ranging from 0.25 to 25.0, so $\Sigma^{-1}$ has diagonal entries ranging from $1/25 = 0.04$ to $1/0.25 = 4.0$ (before accounting for off-diagonal corrections). Since $\lambda_{\min} < 1$, the Euclidean heuristic is *not* guaranteed admissible. In practice, it is admissible along most directions but can overestimate along the Consequences axis, where $\Sigma^{-1}$ assigns very low weight.
 
-### 6.2.2 Corrected Euclidean Heuristic
+### {{ch:pathfinding-on-manifolds}}.2.2 Corrected Euclidean Heuristic
 
 A simple fix is to scale the Euclidean heuristic by $\sqrt{\lambda_{\min}}$:
 
@@ -79,29 +79,29 @@ $$h_M(n) = d_M(n, g) = \sqrt{(g - n)^\top \Sigma^{-1} (g - n)}$$
 
 This is *exact* for the single-step case (when the goal is reachable in one edge) and provides a tight lower bound in the multi-step case, because the straight-line Mahalanobis distance is always less than or equal to the sum of edge weights along any path. However, it ignores boundary penalties, so it remains inadmissible in the presence of moral boundaries.
 
-### 6.2.3 The Hyperbolic and SPD Cases
+### {{ch:pathfinding-on-manifolds}}.2.3 The Hyperbolic and SPD Cases
 
 For completeness, we note the distortion bounds in the other geometric settings developed in this book.
 
-In hyperbolic space (Chapter 3), the geodesic distance on the Poincare ball is:
+In hyperbolic space (Chapter {{ch:hyperbolic-geometry}}), the geodesic distance on the Poincare ball is:
 
 $$d_c(x, y) = \frac{2}{\sqrt{c}} \operatorname{arctanh}\left(\sqrt{c}\|(-x) \oplus_c y\|\right)$$
 
 For points near the origin, $d_c(x, y) \approx 2\|x - y\|$ (the Euclidean distance scaled by 2). For points near the boundary, $d_c(x, y) \gg \|x - y\|$. The Euclidean distance is always an underestimate and hence admissible, but it becomes arbitrarily loose near the boundary --- exactly where the hierarchical structure places the most specific (leaf-level) nodes.
 
-On the SPD manifold (Chapter 4), the log-Euclidean distance $d_{LE}(S_1, S_2) = \|\log(S_1) - \log(S_2)\|_F$ has no simple relationship to $\|S_1 - S_2\|_F$ because the matrix logarithm is a nonlinear operation. A Euclidean heuristic on SPD matrices is neither reliably admissible nor reliably informative. Pathfinding on SPD manifolds requires computing distances in log-space, which is more expensive but correct.
+On the SPD manifold (Chapter {{ch:spd-manifolds}}), the log-Euclidean distance $d_{LE}(S_1, S_2) = \|\log(S_1) - \log(S_2)\|_F$ has no simple relationship to $\|S_1 - S_2\|_F$ because the matrix logarithm is a nonlinear operation. A Euclidean heuristic on SPD matrices is neither reliably admissible nor reliably informative. Pathfinding on SPD manifolds requires computing distances in log-space, which is more expensive but correct.
 
 ---
 
-## 6.3 The Economic Decision Complex
+## {{ch:pathfinding-on-manifolds}}.3 The Economic Decision Complex
 
 The fundamental data structure underlying the Bond Geodesic is a weighted directed graph that we call the *Economic Decision Complex*. It connects the abstract geometric notions of the preceding sections to the concrete implementation in the `eris-econ` codebase.
 
-### 6.3.1 Definition
+### {{ch:pathfinding-on-manifolds}}.3.1 Definition
 
-**Definition 6.1** (Economic Decision Complex). An *Economic Decision Complex* is a triple $\mathcal{E} = (V, E, w)$ where:
+**Definition {{ch:pathfinding-on-manifolds}}.1** (Economic Decision Complex). An *Economic Decision Complex* is a triple $\mathcal{E} = (V, E, w)$ where:
 
-- $V$ is a finite set of *vertices*, each labeled with a point $\mathbf{v} \in \mathbb{R}^9$ representing an economic state (the nine dimensions from Section 6.3.2).
+- $V$ is a finite set of *vertices*, each labeled with a point $\mathbf{v} \in \mathbb{R}^9$ representing an economic state (the nine dimensions from Section {{ch:pathfinding-on-manifolds}}.3.2).
 - $E \subseteq V \times V$ is a set of *directed edges*, each representing an available action or transaction.
 - $w : E \to \mathbb{R}_{\geq 0} \cup \{\infty\}$ is a *weight function* assigning a non-negative cost (possibly infinite) to each edge.
 
@@ -111,7 +111,7 @@ $$w(\mathbf{a} \to \mathbf{b}) = \underbrace{\sqrt{(\mathbf{b} - \mathbf{a})^\to
 
 The terminology "complex" is deliberate: this is a 1-dimensional simplicial complex (a graph) embedded in $\mathbb{R}^9$, where the embedding determines edge weights through the Mahalanobis metric. The non-Euclidean structure enters through the precision matrix $\Sigma^{-1}$ and the boundary penalties $\beta_k$.
 
-### 6.3.2 The Nine Dimensions
+### {{ch:pathfinding-on-manifolds}}.3.2 The Nine Dimensions
 
 Every vertex in the complex carries an `EconomicState` --- a frozen dataclass wrapping a 9-tuple of floats, one per dimension. The dimensions are defined in the `eris-econ` dimensions module:
 
@@ -129,9 +129,9 @@ class Dim(IntEnum):
     EPISTEMIC = 8      # d_9: information quality, confidence
 ```
 
-Dimensions $d_1$ through $d_4$ are *transferable* in bilateral exchange: when one agent gains, the other loses an equal amount ($\Delta d_k(A) + \Delta d_k(B) = 0$). Dimensions $d_5$ through $d_9$ are *evaluative* --- they are not conserved, allowing mutual gains from trade. This conservation structure has deep implications for equilibrium analysis (Chapter 7) but does not affect the pathfinding algorithm itself.
+Dimensions $d_1$ through $d_4$ are *transferable* in bilateral exchange: when one agent gains, the other loses an equal amount ($\Delta d_k(A) + \Delta d_k(B) = 0$). Dimensions $d_5$ through $d_9$ are *evaluative* --- they are not conserved, allowing mutual gains from trade. This conservation structure has deep implications for equilibrium analysis (Chapter {{ch:equilibrium-on-manifolds}}) but does not affect the pathfinding algorithm itself.
 
-### 6.3.3 Implementation
+### {{ch:pathfinding-on-manifolds}}.3.3 Implementation
 
 The `EconomicDecisionComplex` class in the `eris-econ` codebase provides the graph data structure. Its constructor takes a covariance matrix $\Sigma$ and optional boundary penalties:
 
@@ -155,7 +155,7 @@ class EconomicDecisionComplex:
         self._adjacency: Dict[str, List[Edge]] = {}
 ```
 
-Several design decisions deserve comment. The precision matrix $\Sigma^{-1}$ is precomputed once and cached, since it participates in every edge weight calculation. The regularization term $10^{-10}I$ prevents numerical singularity when $\Sigma$ has near-zero eigenvalues --- a concern highlighted in Chapter 2's discussion of Cholesky factorization. The adjacency structure uses a dictionary mapping vertex IDs to outgoing edge lists, providing $O(1)$ neighbor lookup during A* expansion.
+Several design decisions deserve comment. The precision matrix $\Sigma^{-1}$ is precomputed once and cached, since it participates in every edge weight calculation. The regularization term $10^{-10}I$ prevents numerical singularity when $\Sigma$ has near-zero eigenvalues --- a concern highlighted in Chapter {{ch:mahalanobis-distance}}'s discussion of Cholesky factorization. The adjacency structure uses a dictionary mapping vertex IDs to outgoing edge lists, providing $O(1)$ neighbor lookup during A* expansion.
 
 Vertices and edges are added incrementally. Once all structure is in place, calling `compute_weights()` evaluates the full edge weight --- Mahalanobis distance plus boundary penalties --- for every edge:
 
@@ -190,13 +190,13 @@ The `add_bidirectional` method is a convenience for symmetric actions (e.g., "bu
 
 ---
 
-## 6.4 The Bond Geodesic Formulation
+## {{ch:pathfinding-on-manifolds}}.4 The Bond Geodesic Formulation
 
-### 6.4.1 Definition
+### {{ch:pathfinding-on-manifolds}}.4.1 Definition
 
 We now have all the ingredients to state the central definition.
 
-**Definition 6.2** (Bond Geodesic). Given an Economic Decision Complex $\mathcal{E} = (V, E, w)$, a starting vertex $s \in V$, and a goal set $G \subset V$, the *Bond Geodesic* is the path $\gamma^* = (v_0, v_1, \ldots, v_T)$ with $v_0 = s$ and $v_T \in G$ that minimizes the total edge weight:
+**Definition {{ch:pathfinding-on-manifolds}}.2** (Bond Geodesic). Given an Economic Decision Complex $\mathcal{E} = (V, E, w)$, a starting vertex $s \in V$, and a goal set $G \subset V$, the *Bond Geodesic* is the path $\gamma^* = (v_0, v_1, \ldots, v_T)$ with $v_0 = s$ and $v_T \in G$ that minimizes the total edge weight:
 
 $$\gamma^* = \arg\min_{\gamma : s \rightsquigarrow G} \sum_{t=0}^{T-1} w(v_t \to v_{t+1})$$
 
@@ -206,13 +206,13 @@ $$F(\gamma^*) = \sum_{t=0}^{T-1} w(v_t \to v_{t+1})$$
 
 The term "geodesic" is imported from differential geometry, where it denotes the shortest path on a curved surface. The Bond Geodesic is the discrete analogue: the shortest path on a weighted graph embedded in $\mathbb{R}^9$, where the embedding determines edge weights through a non-Euclidean metric. The qualifier "Bond" distinguishes it from standard geodesics, which are defined by the Riemannian metric alone, without boundary penalties. The Bond Geodesic incorporates both the smooth metric structure (via Mahalanobis distance) and the discontinuous moral structure (via boundary penalties).
 
-### 6.4.2 Behavioral Friction as a Cost Functional
+### {{ch:pathfinding-on-manifolds}}.4.2 Behavioral Friction as a Cost Functional
 
 Behavioral friction $F(\gamma^*)$ is a *cost functional* on paths --- it assigns a scalar cost to each route through the decision complex. Unlike scalar utility, which collapses a multi-dimensional evaluation into a single number *at each state*, behavioral friction preserves the full dimensionality of the evaluation *along the entire path* and collapses to a scalar only at the end, after integrating over all steps.
 
-This distinction matters. Scalar utility at a single state discards $n - 1$ dimensions of information (the Scalar Irrecoverability Theorem from Chapter 1). Behavioral friction along a path preserves all $n$ dimensions in the edge weights and discards information only in the final summation. The information loss is therefore *deferred*: the full geometric structure participates in every step of the path computation, and the scalar collapse happens only after the optimal path has been identified.
+This distinction matters. Scalar utility at a single state discards $n - 1$ dimensions of information (the Scalar Irrecoverability Theorem from Chapter {{ch:why-geometry}}). Behavioral friction along a path preserves all $n$ dimensions in the edge weights and discards information only in the final summation. The information loss is therefore *deferred*: the full geometric structure participates in every step of the path computation, and the scalar collapse happens only after the optimal path has been identified.
 
-### 6.4.3 Boundary Penalties: Encoding Sacred Values
+### {{ch:pathfinding-on-manifolds}}.4.3 Boundary Penalties: Encoding Sacred Values
 
 The discontinuous component of the edge weight encodes moral rules, social norms, and legal constraints. The `boundary_penalty` function in the `eris-econ` metrics module checks six types of crossings:
 
@@ -268,9 +268,9 @@ When $\beta_k = \infty$ (a sacred boundary), the edge weight becomes infinite an
 
 ---
 
-## 6.5 A* Adaptation for Manifold Heuristics
+## {{ch:pathfinding-on-manifolds}}.5 A* Adaptation for Manifold Heuristics
 
-### 6.5.1 The Core Algorithm
+### {{ch:pathfinding-on-manifolds}}.5.1 The Core Algorithm
 
 The Bond Geodesic is computed by A* search on the decision complex. The implementation in `eris-econ` follows the classical A* structure with three adaptations: Mahalanobis edge weights, sacred-boundary pruning, and a pluggable heuristic interface.
 
@@ -360,7 +360,7 @@ def _reconstruct_path(came_from: Dict[str, str], current: str) -> List[str]:
 
 **Complexity.** With a binary heap, the worst-case time complexity is $O(|E| \log |V|)$. For the decision complexes in `eris-econ`, $|V|$ ranges from a handful (the ultimatum game with 7 vertices) to low thousands (multi-step negotiations), and A* terminates in milliseconds. The `max_explored` limit of 100,000 is a safety net for pathological graphs with dense connectivity and uninformative heuristics.
 
-### 6.5.2 The Dual-Process Interpretation
+### {{ch:pathfinding-on-manifolds}}.5.2 The Dual-Process Interpretation
 
 The A* decomposition $f(n) = g(n) + h(n)$ maps naturally onto dual-process theory from cognitive psychology (Kahneman, 2011). This is not a metaphor --- it is a structural correspondence between the algorithm and the cognitive model:
 
@@ -370,7 +370,7 @@ The A* decomposition $f(n) = g(n) + h(n)$ maps naturally onto dual-process theor
 
 The admissibility condition --- $h(n)$ must never overestimate --- has a direct cognitive interpretation: System 1 intuitions must not be *too optimistic*, or the agent will pursue paths that seem promising but lead to dead ends. When the heuristic is admissible, A* guarantees optimality: the first path found is the true Bond Geodesic. When the heuristic is inadmissible, A* becomes a greedy search that may find suboptimal paths --- the cognitive analogue of an agent whose intuitions lead them astray.
 
-### 6.5.3 Three Heuristic Functions
+### {{ch:pathfinding-on-manifolds}}.5.3 Three Heuristic Functions
 
 The `eris-econ` implementation provides three heuristics, each encoding a different System 1 model.
 
@@ -403,7 +403,7 @@ def euclidean_heuristic(goal_ids: Set[str]) -> Callable:
     return h
 ```
 
-This is a closure: it captures the goal set at construction time and returns a function. As established in Section 6.2, admissibility depends on $\lambda_{\min}(\Sigma^{-1}) \geq 1$. For the default `eris-econ` covariance matrix, this condition fails, and the Euclidean heuristic is not guaranteed admissible. In practice, it often works because the low-weight dimensions (Consequences) are also the dimensions with the largest state-space extent, and the overestimate along those dimensions is partially offset by the underestimate along high-weight dimensions.
+This is a closure: it captures the goal set at construction time and returns a function. As established in Section {{ch:pathfinding-on-manifolds}}.2, admissibility depends on $\lambda_{\min}(\Sigma^{-1}) \geq 1$. For the default `eris-econ` covariance matrix, this condition fails, and the Euclidean heuristic is not guaranteed admissible. In practice, it often works because the low-weight dimensions (Consequences) are also the dimensions with the largest state-space extent, and the overestimate along those dimensions is partially offset by the underestimate along high-weight dimensions.
 
 **The moral heuristic.** This is the distinctive contribution of the geometric framework:
 
@@ -431,7 +431,7 @@ def moral_heuristic(
 
 The moral heuristic computes $h_M(n) = \sum_k \beta_k \cdot P(\text{cross boundary } k \text{ from } n)$, where $\beta_k$ is the penalty for crossing moral boundary $k$ and $P(\cdot)$ is the estimated probability that any path from $n$ to the goal will cross that boundary. This is System 1 in its purest form: a fast, emotion-based estimate of the moral cost of proceeding.
 
-**Theorem 6.1** (Moral heuristic admissibility). *The moral heuristic $h_M$ is admissible when $\beta_k \leq \beta_k^*$ for all $k$, where $\beta_k^*$ is the true minimum boundary penalty along any optimal path from $n$ to the goal.*
+**Theorem {{ch:pathfinding-on-manifolds}}.1** (Moral heuristic admissibility). *The moral heuristic $h_M$ is admissible when $\beta_k \leq \beta_k^*$ for all $k$, where $\beta_k^*$ is the true minimum boundary penalty along any optimal path from $n$ to the goal.*
 
 The cognitive interpretation is that moral intuitions must not *exaggerate* the moral cost of continuing. Well-calibrated intuitions ($\beta_k \leq \beta_k^*$) produce optimal decisions. Overestimated moral costs --- moral hypervigilance --- produce cautious but suboptimal behavior: the agent avoids some acceptable paths, ending up on a more expensive route.
 
@@ -439,9 +439,9 @@ Note the asymmetry: infinite penalties (sacred values) are excluded from the heu
 
 ---
 
-## 6.6 Concrete Examples from the eris-econ Codebase
+## {{ch:pathfinding-on-manifolds}}.6 Concrete Examples from the eris-econ Codebase
 
-### 6.6.1 The Ultimatum Game
+### {{ch:pathfinding-on-manifolds}}.6.1 The Ultimatum Game
 
 The ultimatum game is the canonical test case for behavioral economics and the most illuminating example of the Bond Geodesic in action. Player 1 (proposer) receives \$10 and offers a split to Player 2 (responder), who can accept or reject. The Nash equilibrium: offer the minimum, accept anything. The empirical result: proposers offer 40--50%, and responders reject offers below about 20%.
 
@@ -513,7 +513,7 @@ For "offer 40%": fairness *improves* ($0.5 \to 0.74$), identity *improves* ($0.5
 
 The result: the 40% offer path has lower total behavioral friction than the 0% offer path. The Bond Geodesic terminates near the 40% vertex.
 
-### 6.6.2 The Prisoner's Dilemma
+### {{ch:pathfinding-on-manifolds}}.6.2 The Prisoner's Dilemma
 
 The prisoner's dilemma provides a complementary example where boundary penalties drive the qualitative prediction.
 
@@ -543,7 +543,7 @@ def prisoners_dilemma(sigma=None):
 
 The Nash equilibrium (projecting onto $d_1$ alone) predicts mutual defection: defecting yields \$5 vs. cooperating for \$3. But on the full 9D manifold, defection causes massive drops in fairness ($0.5 \to 0.1$), identity ($0.5 \to 0.2$), social impact ($0.0 \to -0.3$), and legitimacy ($0.5 \to 0.2$). The promise-breaking boundary ($\Delta d_8 = -0.3 < -0.5$? No --- $\Delta d_8 = 0.2 - 0.5 = -0.3$, which does not trigger at the $-0.5$ threshold) does not fire here, but the accumulated Mahalanobis cost across four moral dimensions makes defection more expensive than cooperation on the full manifold. The Bond Geodesic predicts cooperation --- consistent with empirical results showing significant cooperation rates in one-shot prisoner's dilemmas.
 
-### 6.6.3 The Public Goods Game
+### {{ch:pathfinding-on-manifolds}}.6.3 The Public Goods Game
 
 The public goods game illustrates multi-step reasoning. In a group of $n$ players, each decides how much of their endowment to contribute to a common pool, which is multiplied by a factor $m$ and divided equally. The Nash prediction: contribute nothing (free-ride). The empirical result: initial contributions are around 40--60%, declining over rounds but never reaching zero.
 
@@ -565,21 +565,21 @@ The Bond Geodesic on this complex predicts moderate contributions (approximately
 
 ---
 
-## 6.7 Formal Properties
+## {{ch:pathfinding-on-manifolds}}.7 Formal Properties
 
 Several formal properties of the Bond Geodesic follow from the A* optimality guarantee and the structure of the edge weight function.
 
-**Theorem 6.2** (Existence). *If the decision complex $\mathcal{E}$ is finite and there exists at least one path from $s$ to some $g \in G$ with finite total weight, then the Bond Geodesic exists and is found by A* with any admissible heuristic.*
+**Theorem {{ch:pathfinding-on-manifolds}}.2** (Existence). *If the decision complex $\mathcal{E}$ is finite and there exists at least one path from $s$ to some $g \in G$ with finite total weight, then the Bond Geodesic exists and is found by A* with any admissible heuristic.*
 
 *Proof sketch.* A* on a finite graph with non-negative edge weights and an admissible heuristic is complete and optimal (Hart, Nilsson, and Raphael, 1968). Edge weights are non-negative by construction. The graph is finite because $V$ is finite. $\square$
 
-**Theorem 6.3** (Uniqueness of cost). *The total behavioral friction $F(\gamma^*)$ is unique. The path itself may not be unique when multiple paths achieve the same minimum cost.*
+**Theorem {{ch:pathfinding-on-manifolds}}.3** (Uniqueness of cost). *The total behavioral friction $F(\gamma^*)$ is unique. The path itself may not be unique when multiple paths achieve the same minimum cost.*
 
-**Theorem 6.4** (Sacred boundary avoidance). *If boundary $k$ has penalty $\beta_k = \infty$ and the only paths from $s$ to $G$ cross boundary $k$, then the Bond Geodesic does not exist ($\texttt{found=False}$). The agent cannot reach the goal without violating the sacred value.*
+**Theorem {{ch:pathfinding-on-manifolds}}.4** (Sacred boundary avoidance). *If boundary $k$ has penalty $\beta_k = \infty$ and the only paths from $s$ to $G$ cross boundary $k$, then the Bond Geodesic does not exist ($\texttt{found=False}$). The agent cannot reach the goal without violating the sacred value.*
 
-This last theorem captures an important psychological reality: some goals are unreachable not because of physical impossibility but because of moral impossibility. The geometric framework represents this as a *topological* property of the decision complex --- sacred boundaries disconnect the graph, creating unreachable components. This connects directly to the topological analysis of Chapter 5: persistent homology could, in principle, detect the connected components created by sacred boundaries and quantify how "close" the agent is to a disconnected goal.
+This last theorem captures an important psychological reality: some goals are unreachable not because of physical impossibility but because of moral impossibility. The geometric framework represents this as a *topological* property of the decision complex --- sacred boundaries disconnect the graph, creating unreachable components. This connects directly to the topological analysis of Chapter {{ch:topological-data-analysis}}: persistent homology could, in principle, detect the connected components created by sacred boundaries and quantify how "close" the agent is to a disconnected goal.
 
-**Theorem 6.5** (Reduction to Dijkstra). *When $h(n) = 0$ for all $n$, A* reduces to Dijkstra's algorithm. The Bond Geodesic is still found optimally, but the search explores vertices uniformly in all directions from the start.*
+**Theorem {{ch:pathfinding-on-manifolds}}.5** (Reduction to Dijkstra). *When $h(n) = 0$ for all $n$, A* reduces to Dijkstra's algorithm. The Bond Geodesic is still found optimally, but the search explores vertices uniformly in all directions from the start.*
 
 **Behavioral friction as a decision metric.** The total cost $F(\gamma^*)$ serves as a *difficulty metric* for decisions. High friction means the decision is cognitively and emotionally costly, even when the optimal path is clear. This predicts:
 
@@ -591,23 +591,23 @@ These predictions are testable and have partial empirical support in the behavio
 
 ---
 
-## 6.8 From Pathfinding to Equilibrium
+## {{ch:pathfinding-on-manifolds}}.8 From Pathfinding to Equilibrium
 
 This chapter developed the complete pathfinding pipeline for decision manifolds:
 
-1. **Standard A* fails on curved spaces** because Euclidean heuristics are inadmissible when the metric tensor has eigenvalues below 1, and they are oblivious to boundary penalties that create discontinuous costs. Section 6.1 made these failure modes precise.
+1. **Standard A* fails on curved spaces** because Euclidean heuristics are inadmissible when the metric tensor has eigenvalues below 1, and they are oblivious to boundary penalties that create discontinuous costs. Section {{ch:pathfinding-on-manifolds}}.1 made these failure modes precise.
 
-2. **Geodesic distance vs. Euclidean distance** is governed by the eigenstructure of $\Sigma^{-1}$. The distortion bounds $\sqrt{\lambda_{\min}} \leq d_M / d_E \leq \sqrt{\lambda_{\max}}$ determine when the Euclidean heuristic is admissible. For the `eris-econ` covariance matrix, it is not. Section 6.2 developed corrected heuristics.
+2. **Geodesic distance vs. Euclidean distance** is governed by the eigenstructure of $\Sigma^{-1}$. The distortion bounds $\sqrt{\lambda_{\min}} \leq d_M / d_E \leq \sqrt{\lambda_{\max}}$ determine when the Euclidean heuristic is admissible. For the `eris-econ` covariance matrix, it is not. Section {{ch:pathfinding-on-manifolds}}.2 developed corrected heuristics.
 
-3. **The Economic Decision Complex** is a weighted directed graph whose edge weights combine smooth Mahalanobis distance with discontinuous boundary penalties. The nine dimensions span consequences, rights, fairness, autonomy, privacy/trust, social impact, virtue/identity, legitimacy, and epistemic status. Section 6.3 presented the data structures and implementation.
+3. **The Economic Decision Complex** is a weighted directed graph whose edge weights combine smooth Mahalanobis distance with discontinuous boundary penalties. The nine dimensions span consequences, rights, fairness, autonomy, privacy/trust, social impact, virtue/identity, legitimacy, and epistemic status. Section {{ch:pathfinding-on-manifolds}}.3 presented the data structures and implementation.
 
-4. **The Bond Geodesic** is the minimum-friction path from a current state to a goal set. Behavioral friction --- the total path cost --- measures the cognitive-emotional difficulty of the decision. Section 6.4 defined the formulation and established its relationship to scalar utility.
+4. **The Bond Geodesic** is the minimum-friction path from a current state to a goal set. Behavioral friction --- the total path cost --- measures the cognitive-emotional difficulty of the decision. Section {{ch:pathfinding-on-manifolds}}.4 defined the formulation and established its relationship to scalar utility.
 
-5. **A* with manifold heuristics** adapts the classical algorithm to non-Euclidean edge weights. Three heuristics --- zero (Dijkstra), Euclidean, and moral --- encode different System 1 models within the dual-process cognitive framework. The moral heuristic $h_M(n) = \sum_k \beta_k \cdot P(\text{cross boundary } k)$ is the distinctive contribution, encoding fast emotional judgment as an A* heuristic with a precise admissibility condition. Section 6.5 developed this machinery.
+5. **A* with manifold heuristics** adapts the classical algorithm to non-Euclidean edge weights. Three heuristics --- zero (Dijkstra), Euclidean, and moral --- encode different System 1 models within the dual-process cognitive framework. The moral heuristic $h_M(n) = \sum_k \beta_k \cdot P(\text{cross boundary } k)$ is the distinctive contribution, encoding fast emotional judgment as an A* heuristic with a precise admissibility condition. Section {{ch:pathfinding-on-manifolds}}.5 developed this machinery.
 
-6. **Concrete examples** from `eris-econ` demonstrated the framework's explanatory power. The ultimatum game prediction of ~40% offers, the prisoner's dilemma prediction of cooperation, and the public goods game prediction of moderate contributions all match empirical data and diverge from Nash equilibrium predictions. Section 6.6 traced the computations step by step.
+6. **Concrete examples** from `eris-econ` demonstrated the framework's explanatory power. The ultimatum game prediction of ~40% offers, the prisoner's dilemma prediction of cooperation, and the public goods game prediction of moderate contributions all match empirical data and diverge from Nash equilibrium predictions. Section {{ch:pathfinding-on-manifolds}}.6 traced the computations step by step.
 
-In Chapter 7, we extend from single-agent pathfinding to multi-agent interaction. When two or more decision complexes are coupled --- when each agent's edge weights depend on the other agents' chosen paths --- the Bond Geodesic becomes a fixed point of a coupled optimization. The result is the *Bond Geodesic Equilibrium* (BGE): a strategy profile in which each agent's path is optimal given the paths of all others. We will prove that Nash equilibrium emerges as a special case --- the projection of the BGE onto the $d_1$ (Consequences) axis alone. The geometric framework does not replace game theory; it *generalizes* it to the full decision manifold, recovering classical results as a degenerate case while explaining the behavioral anomalies that classical theory cannot.
+In Chapter {{ch:equilibrium-on-manifolds}}, we extend from single-agent pathfinding to multi-agent interaction. When two or more decision complexes are coupled --- when each agent's edge weights depend on the other agents' chosen paths --- the Bond Geodesic becomes a fixed point of a coupled optimization. The result is the *Bond Geodesic Equilibrium* (BGE): a strategy profile in which each agent's path is optimal given the paths of all others. We will prove that Nash equilibrium emerges as a special case --- the projection of the BGE onto the $d_1$ (Consequences) axis alone. The geometric framework does not replace game theory; it *generalizes* it to the full decision manifold, recovering classical results as a degenerate case while explaining the behavioral anomalies that classical theory cannot.
 
 ---
 
@@ -629,4 +629,4 @@ In Chapter 7, we extend from single-agent pathfinding to multi-agent interaction
 
 ### Bibliographic Notes
 
-The A* algorithm was introduced by Hart, Nilsson, and Raphael (1968). The dual-process model of cognition (System 1 / System 2) is developed in Kahneman, *Thinking, Fast and Slow* (2011). The use of Mahalanobis distance in behavioral modeling connects to the broader metric learning literature surveyed by Kulis (2013). The ultimatum game data referenced throughout this chapter comes from the cross-cultural studies of Henrich et al. (2001, 2005) and the meta-analysis of Oosterbeek et al. (2004). Stake-size effects are documented in Slonim and Roth (1998). The framing effects referenced in Section 6.6 are from Liberman, Samuels, and Ross (2004). The connection between sacred values and deontological constraints is developed by Tetlock et al. (2000). The Bond Geodesic formulation and its application to behavioral economics are introduced in Bond (2026).
+The A* algorithm was introduced by Hart, Nilsson, and Raphael (1968). The dual-process model of cognition (System 1 / System 2) is developed in Kahneman, *Thinking, Fast and Slow* (2011). The use of Mahalanobis distance in behavioral modeling connects to the broader metric learning literature surveyed by Kulis (2013). The ultimatum game data referenced throughout this chapter comes from the cross-cultural studies of Henrich et al. (2001, 2005) and the meta-analysis of Oosterbeek et al. (2004). Stake-size effects are documented in Slonim and Roth (1998). The framing effects referenced in Section {{ch:pathfinding-on-manifolds}}.6 are from Liberman, Samuels, and Ross (2004). The connection between sacred values and deontological constraints is developed by Tetlock et al. (2000). The Bond Geodesic formulation and its application to behavioral economics are introduced in Bond (2026).

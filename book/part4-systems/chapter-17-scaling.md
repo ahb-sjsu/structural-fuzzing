@@ -1,9 +1,9 @@
-# Chapter 17: Scaling to High-Dimensional Spaces
+# Chapter {{ch:scaling}}: Scaling to High-Dimensional Spaces
 
 > *"The trouble with high-dimensional spaces is not that they are large, but that they are empty."*
 > --- Paraphrased from Richard Bellman (1961)
 
-The geometric methods developed in Parts I through III operate beautifully in moderate dimensions. When a model has five parameters grouped into five named dimensions, exhaustive subset enumeration (Chapter 8) evaluates 31 subsets, Pareto frontier extraction completes in microseconds, and the Model Robustness Index (Chapter 9) converges with 300 perturbation samples. The entire structural fuzzing campaign finishes in seconds.
+The geometric methods developed in Parts I through III operate beautifully in moderate dimensions. When a model has five parameters grouped into five named dimensions, exhaustive subset enumeration (Chapter {{ch:pareto-optimization}}) evaluates 31 subsets, Pareto frontier extraction completes in microseconds, and the Model Robustness Index (Chapter {{ch:adversarial-robustness}}) converges with 300 perturbation samples. The entire structural fuzzing campaign finishes in seconds.
 
 Now consider a model with 50 parameters. Or 200. Or 2,000. The number of subsets of size up to $k = 4$ is $\binom{50}{1} + \binom{50}{2} + \binom{50}{3} + \binom{50}{4} = 292{,}825$. For $n = 200$, the same sum exceeds $67$ million. Exhaustive enumeration, which was the foundation of the geometric analysis pipeline, becomes computationally impossible.
 
@@ -11,9 +11,9 @@ This chapter addresses the computational challenges that arise when the methods 
 
 ---
 
-## 17.1 The Curse of Dimensionality for Geometric Methods
+## {{ch:scaling}}.1 The Curse of Dimensionality for Geometric Methods
 
-### 17.1.1 Volume, Distance, and Concentration
+### {{ch:scaling}}.1.1 Volume, Distance, and Concentration
 
 The curse of dimensionality is not a single phenomenon but a family of related pathologies. Three are particularly damaging for the geometric methods in this book.
 
@@ -21,9 +21,9 @@ The curse of dimensionality is not a single phenomenon but a family of related p
 
 **Distance concentration.** As $n$ grows, the ratio of maximum to minimum pairwise distance in a random point set converges to 1. All points become approximately equidistant, undermining nearest-neighbor methods and distance-based analysis.
 
-**Empty neighborhoods.** For MRI computation (Chapter 9), 300 perturbation samples in 50 dimensions are scattered across an exponentially larger space. The MRI's percentile statistics---P75 and P95---remain well-defined but may not capture the true tail behavior of the perturbation response surface.
+**Empty neighborhoods.** For MRI computation (Chapter {{ch:adversarial-robustness}}), 300 perturbation samples in 50 dimensions are scattered across an exponentially larger space. The MRI's percentile statistics---P75 and P95---remain well-defined but may not capture the true tail behavior of the perturbation response surface.
 
-### 17.1.2 What Breaks and When
+### {{ch:scaling}}.1.2 What Breaks and When
 
 Not all pipeline stages suffer equally:
 
@@ -40,9 +40,11 @@ Not all pipeline stages suffer equally:
 
 Here $g$ is `n_grid` (default 20), $r$ is `n_random` (default 5,000), $m$ the total subset count, $p$ is `n_perturbations` (default 300), and $s$ is binary search steps per dimension. The critical bottleneck is subset enumeration---exponential where everything else is polynomial.
 
+> **Caution — spectral distances degenerate at scale.** A tempting way to rank configurations in a large campaign is by commute (resistance) distance in a Laplacian embedding of the response graph. Do not. von Luxburg, Radl and Hein showed that the resistance distance of a large geometric graph degenerates to a function of local degrees alone, $R(i,j)\to 1/\deg(i)+1/\deg(j)$, erasing all global geometry — so at scale you would be ranking configurations by inverse-square-root degree, a sampling artefact rather than a geometric signal. The fix is the scale-invariant *angular* basis of Chapter {{ch:spectral-geometry-and-the-angular-basis}}: row-normalize the low-mode embedding and read geometry from the direction, which stays stable in both graph size and mode count.
+
 ---
 
-## 17.2 Combinatorial Explosion in Subset Enumeration
+## {{ch:scaling}}.2 Combinatorial Explosion in Subset Enumeration
 
 The `enumerate_subsets` function in `core.py` iterates over all subsets of dimensions from size 1 to `max_dims`, calling `optimize_subset` on each via `itertools.combinations`. The total number of subsets is:
 
@@ -63,9 +65,9 @@ The raw subset count understates the true cost because each subset must be *opti
 
 ---
 
-## 17.3 Greedy Alternatives
+## {{ch:scaling}}.3 Greedy Alternatives
 
-### 17.3.1 Forward Selection
+### {{ch:scaling}}.3.1 Forward Selection
 
 Forward selection builds a subset incrementally, starting empty and greedily adding the dimension that most reduces MAE. From `baselines.py`:
 
@@ -108,7 +110,7 @@ At step $t$, it evaluates $n - t$ candidates. Total `optimize_subset` calls for 
 
 Forward selection cannot discover dimensions that are mediocre alone but excellent in combination. But empirically, it typically finds configurations within 5--15% of the globally optimal MAE.
 
-### 17.3.2 Backward Elimination
+### {{ch:scaling}}.3.2 Backward Elimination
 
 Backward elimination starts with all $n$ dimensions active and greedily removes the least important one at each step. From `baselines.py`:
 
@@ -148,15 +150,15 @@ The total calls are $B(n) = n(n-1)/2 + 1$, the same $O(n^2)$ as forward selectio
 
 **Complementary strengths.** Forward selection excels at identifying the *most important* dimensions; backward elimination excels at identifying the *least important*. Running both and comparing results is a practical diagnostic: agreement suggests clean dimension structure; divergence suggests complex interactions.
 
-### 17.3.3 Bidirectional and Floating Selection
+### {{ch:scaling}}.3.3 Bidirectional and Floating Selection
 
 More sophisticated variants exist. **Bidirectional selection** alternates forward and backward steps: add the best remaining dimension, then check whether any previously selected dimension has become redundant. **Floating selection** (SFFS/SBFS) allows the subset size to fluctuate, backing up when a backward step improves the objective. These methods escape some local optima that trap pure greedy search while maintaining $O(n^2)$ worst-case complexity.
 
 ---
 
-## 17.4 LASSO-Based Dimension Screening
+## {{ch:scaling}}.4 LASSO-Based Dimension Screening
 
-### 17.4.1 Sparsity as a Proxy for Subset Selection
+### {{ch:scaling}}.4.1 Sparsity as a Proxy for Subset Selection
 
 Instead of selecting dimensions explicitly, the LASSO approach solves a continuous relaxation: optimize over all dimensions simultaneously with an $L^1$ penalty that encourages sparsity:
 
@@ -166,7 +168,7 @@ The penalty is applied in log-space, penalizing deviation from $\theta_i = 1.0$ 
 
 The total cost is $O(|\alpha| \cdot r)$ function evaluations---$100{,}000$ by default, *independent of $n$*. This makes LASSO screening particularly attractive for high-dimensional problems.
 
-### 17.4.2 LASSO as a Screening Stage
+### {{ch:scaling}}.4.2 LASSO as a Screening Stage
 
 The most effective use is as a *screening stage* that reduces the effective dimensionality before enumeration begins. The workflow is:
 
@@ -181,21 +183,21 @@ The risk is that LASSO screening may discard a dimension that is individually we
 
 ---
 
-## 17.5 Sampling Strategies for High-Dimensional Perturbation Spaces
+## {{ch:scaling}}.5 Sampling Strategies for High-Dimensional Perturbation Spaces
 
-### 17.5.1 The MRI Sampling Problem
+### {{ch:scaling}}.5.1 The MRI Sampling Problem
 
-The MRI (Chapter 9) draws perturbation samples from a log-normal distribution. With $p = 300$ samples in $n = 50$ dimensions, the samples are too sparse to reveal the fine structure of the perturbation response surface. Three strategies improve coverage.
+The MRI (Chapter {{ch:adversarial-robustness}}) draws perturbation samples from a log-normal distribution. With $p = 300$ samples in $n = 50$ dimensions, the samples are too sparse to reveal the fine structure of the perturbation response surface. Three strategies improve coverage.
 
-### 17.5.2 Latin Hypercube Sampling
+### {{ch:scaling}}.5.2 Latin Hypercube Sampling
 
 LHS partitions each dimension's marginal distribution into $p$ equal-probability strata, ensuring each stratum is sampled exactly once. The resulting sample has better space-filling properties than independent sampling, providing approximately $1 + (1/p)$ variance reduction. For MRI, the modification replaces the independent normal draws with stratified draws via `scipy.stats.qmc.LatinHypercube`, transformed through the inverse normal CDF.
 
-### 17.5.3 Quasi-Random Sequences
+### {{ch:scaling}}.5.3 Quasi-Random Sequences
 
 Sobol and Halton sequences provide deterministic, low-discrepancy point sets. The Koksma--Hlawka inequality bounds integration error at $O((\log p)^n / p)$, tighter than random sampling's $O(1/\sqrt{p})$ when $n$ is moderate. Quasi-random sequences are most useful for $n < 40$; beyond this, a hybrid approach---Sobol for the most important dimensions, random for the rest---works well.
 
-### 17.5.4 Importance Sampling Along Sensitive Dimensions
+### {{ch:scaling}}.5.4 Importance Sampling Along Sensitive Dimensions
 
 Sensitivity profiling identifies which dimensions most influence MAE. Scaling perturbation variance by sensitivity rank concentrates samples where they matter:
 
@@ -213,23 +215,23 @@ This reduces MRI estimate variance by focusing on the dimensions that drive tail
 
 ---
 
-## 17.6 Approximation Strategies for Pareto Frontiers
+## {{ch:scaling}}.6 Approximation Strategies for Pareto Frontiers
 
-### 17.6.1 Streaming Pareto Maintenance
+### {{ch:scaling}}.6.1 Streaming Pareto Maintenance
 
-The `pareto_frontier` function in `pareto.py` handles the two-objective case (dimensionality vs. MAE) efficiently by grouping results by dimensionality, keeping the best MAE at each level, and sweeping through in $O(m)$ time (Chapter 8). The challenge arises when we want Pareto analysis over *more than two objectives*---say, (dimensionality, MAE, MRI)---or when the number of candidates $m$ is in the millions.
+The `pareto_frontier` function in `pareto.py` handles the two-objective case (dimensionality vs. MAE) efficiently by grouping results by dimensionality, keeping the best MAE at each level, and sweeping through in $O(m)$ time (Chapter {{ch:pareto-optimization}}). The challenge arises when we want Pareto analysis over *more than two objectives*---say, (dimensionality, MAE, MRI)---or when the number of candidates $m$ is in the millions.
 
 Instead of collecting all results and computing the frontier post hoc, maintain the frontier *incrementally* as results arrive. Each new result is checked for dominance against the current frontier (not against all prior results). If it is not dominated, it is added, and any frontier members it now dominates are removed. The cost per insertion is $O(|F|)$ where $|F|$ is the frontier size, typically much smaller than $m$.
 
 For a frontier of size 20 (typical in practice), each insertion requires 20 dominance checks regardless of how many total results have been processed. Over $m$ insertions, the total cost is $O(m \cdot |F|)$ rather than $O(m^2)$.
 
-### 17.6.2 Epsilon-Dominance for Frontier Compression
+### {{ch:scaling}}.6.2 Epsilon-Dominance for Frontier Compression
 
 In high-dimensional objective spaces, the exact Pareto frontier can itself grow large. **Epsilon-dominance** provides principled compression: a solution $\mathbf{x}$ $\epsilon$-dominates $\mathbf{y}$ if $x_i \leq (1 + \epsilon) \cdot y_i$ for all objectives $i$. The $\epsilon$-Pareto frontier contains at most $O((1/\epsilon)^{d_{\text{obj}}})$ points, where $d_{\text{obj}}$ is the number of objectives. For $\epsilon = 0.05$ (5% tolerance) and 3 objectives, this bounds the frontier at 8,000 points---manageable regardless of how many candidates are evaluated.
 
 ---
 
-## 17.7 Computational Complexity of the Full Pipeline
+## {{ch:scaling}}.7 Computational Complexity of the Full Pipeline
 
 The `run_campaign` function in `pipeline.py` executes six stages plus optional baselines. With $E$ denoting the cost per `evaluate_fn` call:
 
@@ -259,9 +261,9 @@ Subset enumeration is the bottleneck, becoming intractable between $n = 50$ and 
 
 ---
 
-## 17.8 Parallelization Opportunities
+## {{ch:scaling}}.8 Parallelization Opportunities
 
-### 17.8.1 Embarrassingly Parallel Stages
+### {{ch:scaling}}.8.1 Embarrassingly Parallel Stages
 
 **Subset enumeration.** Each `optimize_subset` call is independent. Subsets can be partitioned across $P$ workers, reducing wall-clock time by approximately $P$:
 
@@ -285,27 +287,27 @@ def parallel_enumerate_subsets(dim_names, evaluate_fn, max_dims=4, n_workers=Non
 
 **MRI computation.** Perturbation samples can be precomputed and distributed. **Adversarial search.** Each dimension's binary search is independent.
 
-### 17.8.2 Sequential Stages with Inner Parallelism
+### {{ch:scaling}}.8.2 Sequential Stages with Inner Parallelism
 
 Forward selection, backward elimination, and the compositional test are sequential across steps but parallel *within* each step. At step $t$ of forward selection, the $n - t$ candidate evaluations can run simultaneously.
 
-### 17.8.3 GPU Acceleration
+### {{ch:scaling}}.8.3 GPU Acceleration
 
 When the evaluation function is GPU-accelerated, perturbation evaluations can be batched. Instead of $p$ sequential evaluations, construct batches of $B$ perturbed parameter vectors and evaluate them in a single kernel launch, reducing the number of launches from 300 to $\lceil 300/B \rceil$.
 
 ---
 
-## 17.9 Memory-Efficient Implementations
+## {{ch:scaling}}.9 Memory-Efficient Implementations
 
-### 17.9.1 The Memory Problem
+### {{ch:scaling}}.9.1 The Memory Problem
 
 `enumerate_subsets` stores all results in a list. Each `SubsetResult` contains a full parameter vector of shape $(n,)$. For $n = 100$ and $K = 4$, the list holds nearly 4 million results consuming approximately 4 GB. For $n = 200$, memory exceeds 60 GB.
 
-### 17.9.2 Streaming Evaluation
+### {{ch:scaling}}.9.2 Streaming Evaluation
 
 Most downstream analysis needs only the top-$M$ results by MAE and the Pareto frontier. A streaming implementation maintains a bounded priority queue and a streaming Pareto frontier, reducing memory from $O(m)$ to $O(M + |F|)$---constant regardless of $n$.
 
-### 17.9.3 Compressed Parameter Storage
+### {{ch:scaling}}.9.3 Compressed Parameter Storage
 
 Since inactive dimensions share the sentinel value `1e6`, a `SubsetResult` with $k$ active dimensions out of $n$ total carries $n - k$ redundant values. Storing only active dimension indices and values reduces per-result storage from $O(n)$ to $O(k)$:
 
@@ -328,9 +330,9 @@ For $K = 2$ subsets with $n = 200$, this is a 100x compression.
 
 ---
 
-## 17.10 When to Use Exact Methods vs. Approximations
+## {{ch:scaling}}.10 When to Use Exact Methods vs. Approximations
 
-### 17.10.1 The Decision Framework
+### {{ch:scaling}}.10.1 The Decision Framework
 
 The choice between exact enumeration and approximate methods is not purely a function of $n$. It depends on three factors:
 
@@ -340,7 +342,7 @@ The choice between exact enumeration and approximate methods is not purely a fun
 
 3. **Tolerance for suboptimality.** In exploratory analysis, finding a configuration within 10% of optimal is often sufficient. In production deployment, where the selected configuration will run for months, the cost of finding the true optimum may be justified.
 
-### 17.10.2 Diagnostic Tests for Interaction Strength
+### {{ch:scaling}}.10.2 Diagnostic Tests for Interaction Strength
 
 Before committing to exhaustive enumeration, estimate interaction strength:
 
@@ -350,7 +352,7 @@ Before committing to exhaustive enumeration, estimate interaction strength:
 
 If $R < 0.05$, interactions are weak and greedy methods suffice. If $R > 0.2$, interactions are strong and more thorough search is warranted.
 
-### 17.10.3 The Decision Matrix
+### {{ch:scaling}}.10.3 The Decision Matrix
 
 | Condition | Recommended Strategy |
 |---|---|
@@ -373,7 +375,7 @@ report = run_campaign(
 )
 ```
 
-### 17.10.4 A High-Dimensional Campaign
+### {{ch:scaling}}.10.4 A High-Dimensional Campaign
 
 Consider $n = 80$ parameters with 50ms evaluation cost. Naive enumeration with $K = 4$ would require 12.5 years. The recommended approach:
 
@@ -404,13 +406,13 @@ Total: 2--3 hours instead of 12.5 years.
 
 ---
 
-## 17.11 Limitations and Open Problems
+## {{ch:scaling}}.11 Limitations and Open Problems
 
 Several challenges remain unresolved in the current framework.
 
 **Non-linear dimension interactions.** LASSO screening assesses dimensions individually via the $L^1$ penalty on each parameter. Dimensions whose importance emerges only through three-way or higher-order interactions may be incorrectly screened out. Developing screening methods that detect higher-order interactions without exhaustive search is an open problem in both the structural fuzzing framework and the broader feature selection literature.
 
-**Non-stationary evaluation costs.** The cost model in Section 17.7 assumes that each evaluation has fixed cost $E$. In practice, evaluation cost may depend on the parameter values---some configurations cause the model to converge slowly or trigger expensive fallback computations. Adaptive budget allocation must account for this variance, potentially using multi-armed bandit strategies to estimate per-configuration cost online.
+**Non-stationary evaluation costs.** The cost model in Section {{ch:scaling}}.7 assumes that each evaluation has fixed cost $E$. In practice, evaluation cost may depend on the parameter values---some configurations cause the model to converge slowly or trigger expensive fallback computations. Adaptive budget allocation must account for this variance, potentially using multi-armed bandit strategies to estimate per-configuration cost online.
 
 **Theoretical guarantees.** Forward selection provides an approximation ratio for submodular objectives, but the MAE-minimization objective in structural fuzzing is generally *not* submodular. Establishing theoretical guarantees for the approximation quality of greedy methods in this setting requires either proving submodularity under additional assumptions or developing alternative theoretical frameworks.
 
@@ -418,11 +420,11 @@ Several challenges remain unresolved in the current framework.
 
 ---
 
-## 17.12 Connection to Chapter 18
+## {{ch:scaling}}.12 Connection to Chapter {{ch:production-deployment}}
 
 This chapter addressed scaling in the dimension of the *parameter space*---what happens when the model has many parameters and the geometric methods of earlier chapters encounter computational limits. The strategies developed here---LASSO screening, greedy alternatives, streaming evaluation, adaptive budget allocation---are each effective in isolation, but their true power emerges when they are composed into coherent workflows.
 
-Chapter 18 turns to exactly this challenge: composing geometric analyses into *pipelines* with conditional branching, iterative refinement, and feedback loops between stages. The linear six-stage chain in `run_campaign` is a starting point; Chapter 18 develops more sophisticated compositions where the output of LASSO screening determines whether to run exhaustive or greedy enumeration, where MRI results trigger additional adversarial testing on fragile configurations, and where the entire pipeline can be re-run with adapted parameters when initial results reveal unexpected structure. The scaling strategies of this chapter become building blocks in that larger architecture.
+Chapter {{ch:production-deployment}} turns to exactly this challenge: composing geometric analyses into *pipelines* with conditional branching, iterative refinement, and feedback loops between stages. The linear six-stage chain in `run_campaign` is a starting point; Chapter {{ch:production-deployment}} develops more sophisticated compositions where the output of LASSO screening determines whether to run exhaustive or greedy enumeration, where MRI results trigger additional adversarial testing on fragile configurations, and where the entire pipeline can be re-run with adapted parameters when initial results reveal unexpected structure. The scaling strategies of this chapter become building blocks in that larger architecture.
 
 ---
 
